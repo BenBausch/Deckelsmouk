@@ -1,0 +1,5 @@
+node_modules/
+.DS_Store
+*.log
+# Built single-file decks are reproducible with `npm run build`; remove this line to commit them.
+dist/

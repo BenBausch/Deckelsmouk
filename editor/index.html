@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deckelsmouk</title>
+<link rel="stylesheet" href="/editor/editor.css">
+</head>
+<body>
+
+<!-- Deck picker (shown when no deck is open) -->
+<div id="picker" class="picker" hidden>
+  <div class="picker-inner">
+    <h1>Deckelsmouk</h1>
+    <p class="sub">Animated HTML presentations. Edit by hand, arrange by mouse, animate by asking Claude.</p>
+    <form id="new-deck" class="new-deck">
+      <input name="name" placeholder="new-deck-name" pattern="[a-zA-Z0-9][a-zA-Z0-9._-]*" required>
+      <input name="title" placeholder="Title (optional)">
+      <select name="template" id="template-select"></select>
+      <button class="primary">Create deck</button>
+    </form>
+    <div id="deck-list" class="deck-list"></div>
+  </div>
+</div>
+
+<!-- Editor -->
+<div id="editor" class="editor" hidden>
+  <header class="top">
+    <a class="brand" href="/" title="All decks">◆</a>
+    <input id="deck-title" class="deck-title" spellcheck="false" title="Deck title">
+    <div class="group">
+      <button data-cmd="undo" title="Undo (⌘Z)">↶</button>
+      <button data-cmd="redo" title="Redo (⇧⌘Z)">↷</button>
+    </div>
+    <div class="group">
+      <button data-cmd="insert-text" title="Text box">T<span>Text</span></button>
+      <button data-cmd="insert-heading" title="Heading"><b>H</b><span>Heading</span></button>
+      <button data-cmd="insert-image" title="Image or video (or drop a file on the slide)">▣<span>Media</span></button>
+      <div class="menu-wrap">
+        <button data-menu="shapes" title="Shapes">◯<span>Shape</span></button>
+        <div class="menu" id="menu-shapes">
+          <button data-cmd="shape-rect">Rectangle</button>
+          <button data-cmd="shape-round">Rounded rectangle</button>
+          <button data-cmd="shape-ellipse">Ellipse</button>
+          <button data-cmd="shape-line">Line</button>
+          <button data-cmd="shape-card">Card (theme)</button>
+        </div>
+      </div>
+    </div>
+    <div class="group">
+      <div class="menu-wrap">
+        <button data-menu="arrange" title="Align and arrange">⊞<span>Arrange</span></button>
+        <div class="menu" id="menu-arrange">
+          <button data-cmd="align-left">Align left</button>
+          <button data-cmd="align-center">Align centre</button>
+          <button data-cmd="align-right">Align right</button>
+          <button data-cmd="align-top">Align top</button>
+          <button data-cmd="align-middle">Align middle</button>
+          <button data-cmd="align-bottom">Align bottom</button>
+          <hr>
+          <button data-cmd="distribute-h">Distribute horizontally</button>
+          <button data-cmd="distribute-v">Distribute vertically</button>
+          <hr>
+          <button data-cmd="front">Bring to front</button>
+          <button data-cmd="forward">Bring forward</button>
+          <button data-cmd="backward">Send backward</button>
+          <button data-cmd="back">Send to back</button>
+        </div>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <span id="save-state" class="save-state">Saved</span>
+    <div class="group">
+      <button data-cmd="preview" title="Play this slide here (Esc to close)">▶<span>Play</span></button>
+      <button data-cmd="present" title="Present from this slide in a new tab">⛶<span>Present</span></button>
+      <button data-cmd="export" class="primary" title="Build one self-contained HTML file">⬇<span>Export</span></button>
+    </div>
+  </header>
+
+  <main class="main">
+    <aside class="slides">
+      <iframe id="thumbs" title="Slides"></iframe>
+      <div class="slides-bar">
+        <div class="menu-wrap up">
+          <button data-menu="newslide" title="New slide">＋ Slide</button>
+          <div class="menu" id="menu-newslide">
+            <button data-cmd="slide-blank">Blank</button>
+            <button data-cmd="slide-title">Title</button>
+            <button data-cmd="slide-text">Title and text</button>
+            <button data-cmd="slide-bullets">Title and bullets</button>
+            <button data-cmd="slide-image">Title and image</button>
+            <button data-cmd="slide-stat">Big number</button>
+          </div>
+        </div>
+        <button data-cmd="slide-duplicate" title="Duplicate slide">⧉</button>
+        <button data-cmd="slide-delete" title="Delete slide">🗑</button>
+      </div>
+    </aside>
+
+    <section class="work">
+      <div id="viewport" class="viewport">
+        <iframe id="frame" title="Slide"></iframe>
+        <div id="overlay" class="overlay"></div>
+        <div id="busy" class="busy" hidden><div class="busy-card"><span class="spinner"></span><span>Claude is editing the deck…</span><button data-cmd="claude-stop">Stop</button></div></div>
+      </div>
+
+      <div class="claude" id="claude">
+        <div class="claude-log" id="claude-log" hidden></div>
+        <div class="claude-chips" id="claude-chips"></div>
+        <form class="claude-bar" id="claude-form">
+          <span class="ctx" id="claude-ctx" title="What Claude will be told you have selected">Slide 1</span>
+          <textarea id="claude-input" rows="1" placeholder="Ask Claude to arrange, restyle or animate the selection…  (⌘K)"></textarea>
+          <select id="claude-model" title="Model">
+            <option value="">Default model</option>
+            <option value="opus">Opus</option>
+            <option value="sonnet">Sonnet</option>
+            <option value="haiku">Haiku</option>
+          </select>
+          <button type="button" id="claude-new" title="Start a new conversation (Claude forgets earlier requests)">New chat</button>
+          <button class="primary" id="claude-send" title="Send (Enter; Shift+Enter for a new line)">Ask</button>
+        </form>
+      </div>
+    </section>
+
+    <aside class="inspector">
+      <nav class="tabs">
+        <button data-tab="design" class="on">Design</button>
+        <button data-tab="animate">Animate</button>
+        <button data-tab="slide">Slide</button>
+        <button data-tab="code">Code</button>
+      </nav>
+      <div class="panel" id="panel"></div>
+    </aside>
+  </main>
+</div>
+
+<!-- Slide preview (plays the real deck in a frame) -->
+<div id="preview" class="preview" hidden>
+  <div class="preview-box"><iframe id="preview-frame" title="Preview"></iframe></div>
+  <p class="preview-hint">→ / Space: next step · ←: back · Esc: close</p>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+<input type="file" id="file-input" accept="image/*,video/*,.svg" hidden multiple>
+
+<script type="module" src="/editor/js/main.js"></script>
+</body>
+</html>

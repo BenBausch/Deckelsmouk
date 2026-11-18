@@ -1,0 +1,15 @@
+{
+  "name": "deckelsmouk",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Animated HTML presentations: hand-written slides, a visual editor, and Claude Code to arrange and animate. Every deck builds to one self-contained HTML file.",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev": "node tools/server.mjs --open",
+    "start": "node tools/server.mjs",
+    "build": "node tools/build.mjs",
+    "new": "node tools/new.mjs",
+    "unpack": "node tools/unpack.mjs"
+  }
+}
