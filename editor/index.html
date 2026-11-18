@@ -102,7 +102,7 @@
       <div id="viewport" class="viewport">
         <iframe id="frame" title="Slide"></iframe>
         <div id="overlay" class="overlay"></div>
-        <div id="busy" class="busy" hidden><div class="busy-card"><span class="spinner"></span><span>Claude is editing the deck…</span><button data-cmd="claude-stop">Stop</button></div></div>
+        <div id="busy" class="busy" hidden><div class="busy-card"><span class="spinner"></span><span id="busy-text">Claude is editing the deck…</span><button data-cmd="claude-stop">Stop</button></div></div>
       </div>
 
       <div class="notes-pane" id="notes-pane">
@@ -115,13 +115,9 @@
         <div class="claude-chips" id="claude-chips"></div>
         <form class="claude-bar" id="claude-form">
           <span class="ctx" id="claude-ctx" title="What Claude will be told you have selected">Slide 1</span>
-          <textarea id="claude-input" rows="1" placeholder="Ask Claude to arrange, restyle or animate the selection…  (⌘K)"></textarea>
-          <select id="claude-model" title="Model">
-            <option value="">Default model</option>
-            <option value="opus">Opus</option>
-            <option value="sonnet">Sonnet</option>
-            <option value="haiku">Haiku</option>
-          </select>
+          <textarea id="claude-input" rows="1" placeholder="Ask the AI to arrange, restyle or animate the selection…  (⌘K)"></textarea>
+          <button type="button" id="ai-provider" class="ai-chip" title="AI settings: provider, model and sign-in">Claude Code</button>
+          <select id="claude-model" title="Model"></select>
           <button type="button" id="claude-new" title="Start a new conversation (Claude forgets earlier requests)">New chat</button>
           <button class="primary" id="claude-send" title="Send (Enter; Shift+Enter for a new line)">Ask</button>
         </form>
@@ -144,6 +140,18 @@
 <div id="preview" class="preview" hidden>
   <div class="preview-box"><iframe id="preview-frame" title="Preview"></iframe></div>
   <p class="preview-hint">→ / Space: next step · ←: back · Esc: close</p>
+</div>
+
+<!-- AI settings -->
+<div id="ai-dialog" class="modal" hidden>
+  <div class="modal-card" role="dialog" aria-label="AI settings">
+    <header class="modal-head"><h3>AI settings</h3><button type="button" class="modal-x" data-ai-close title="Close (Esc)">✕</button></header>
+    <div class="modal-body">
+      <nav id="ai-list" class="ai-list"></nav>
+      <section id="ai-pane" class="ai-pane"></section>
+    </div>
+    <footer class="modal-foot" id="ai-foot"></footer>
+  </div>
 </div>
 
 <div id="toast" class="toast" hidden></div>

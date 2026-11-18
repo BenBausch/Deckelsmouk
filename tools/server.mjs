@@ -7,6 +7,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawn, execFile } from 'node:child_process';
 import { ROOT, DECKS, DIST, MIME, deckDir, listDecks, bundle, createDeck, validName } from './lib.mjs';
+import * as ai from './ai.mjs';
 
 const args = process.argv.slice(2);
 const PORT = +(args[args.indexOf('--port') + 1] || process.env.PORT || 4800) || 4800;
@@ -18,6 +19,7 @@ const written = new Map();      // file -> hash of what this server last wrote (
 const clients = new Set();      // SSE connections
 const runs = new Map();         // deck -> running claude process
 const sessions = new Map();     // deck -> claude session id (follow-up prompts keep context)
+const chats = new Map();        // deck -> earlier turns with a chat provider: [{role, content}]
 
 /* ── Helpers ─────────────────────────────────────────────────────────────── */
 
@@ -90,8 +92,70 @@ function describe(sel) {
   return out.join('\n');
 }
 
-async function runClaude(req, res) {
+async function runAI(req, res) {
   const body = await json(req);
+  const cfg = ai.loadConfig();
+  const provider = ai.PROVIDERS[body.provider] ? body.provider : cfg.active;
+  if (provider === 'claude-code') return runClaude(body, res, cfg);
+  return runChat(body, res, cfg, provider);
+}
+
+// Chat providers (Anthropic API, Ollama, LM Studio, OpenAI-compatible): one streamed answer in edit blocks,
+// validated and applied to the deck files here.
+async function runChat(body, res, cfg, provider) {
+  const deck = body.deck;
+  if (!validName(deck) || !fs.existsSync(deckDir(deck))) return fail(res, 400, 'Unknown deck');
+  if (runs.has(deck)) return fail(res, 409, 'The AI is already working on this deck');
+  if (body.newChat) chats.delete(deck);
+  const dir = deckDir(deck);
+  const read = f => (fs.existsSync(path.join(dir, f)) ? fs.readFileSync(path.join(dir, f), 'utf8') : '');
+  const history = chats.get(deck) || [];
+
+  res.writeHead(200, { 'Content-Type': 'application/x-ndjson; charset=utf-8', 'Cache-Control': 'no-store' });
+  const emit = o => res.write(JSON.stringify(o) + '\n');
+  emit({ kind: 'start', resumed: history.length > 0, provider: ai.PROVIDERS[provider].label });
+  const ctrl = new AbortController();
+  runs.set(deck, { kill: () => ctrl.abort() });
+  broadcast({ type: 'claude', deck, running: true });
+  res.on('close', () => { if (!res.writableFinished) ctrl.abort(); });
+  const t0 = Date.now();
+  let chars = 0, lastTick = 0;
+  try {
+    const user = ai.userPrompt({ html: read('deck.html'), js: read('animations.js'), selection: body.selection, request: body.prompt, describe });
+    const answer = await ai.chat(provider, {
+      system: ai.systemPrompt(), messages: [...history, { role: 'user', content: user }],
+      model: body.model, signal: ctrl.signal,
+      onText: t => { chars += t.length; if (Date.now() - lastTick > 250) { lastTick = Date.now(); emit({ kind: 'progress', chars }); } },
+    }, cfg);
+    const blocks = ai.parseBlocks(answer);
+    if (!blocks.length) {
+      emit({ kind: 'text', text: answer.trim().slice(0, 2000) || '(empty answer)' });
+      emit({ kind: 'error', message: 'The model did not answer in the edit format, so nothing was changed. Try again, or a larger model.' });
+    } else {
+      // Read the files again: they may have changed while the model was writing.
+      const out = ai.applyBlocks(blocks, read('deck.html'), read('animations.js'));
+      out.done.forEach(d => emit({ kind: 'tool', name: 'Edit', detail: d }));
+      out.skipped.forEach(d => emit({ kind: 'error', message: 'Skipped: ' + d }));
+      if (out.done.length) {
+        fs.writeFileSync(path.join(dir, 'deck.html'), out.html);
+        if (out.js !== read('animations.js')) fs.writeFileSync(path.join(dir, 'animations.js'), out.js);
+      }
+      if (out.message) emit({ kind: 'text', text: out.message });
+      history.push({ role: 'user', content: `Request (slide ${body.selection?.slide?.id || '?'}): ${body.prompt}` },
+        { role: 'assistant', content: `<<<MESSAGE>>> ${out.message || out.done.join('; ') || 'No change.'} <<<END>>>` });
+      chats.set(deck, history.slice(-12));
+      emit({ kind: 'done', ok: out.done.length > 0, ms: Date.now() - t0 });
+    }
+  } catch (e) {
+    emit(ctrl.signal.aborted ? { kind: 'stopped' } : { kind: 'error', message: e.message });
+  } finally {
+    runs.delete(deck);
+    broadcast({ type: 'claude', deck, running: false });
+    res.end();
+  }
+}
+
+async function runClaude(body, res, cfg) {
   const deck = body.deck;
   if (!validName(deck) || !fs.existsSync(deckDir(deck))) return fail(res, 400, 'Unknown deck');
   if (runs.has(deck)) return fail(res, 409, 'Claude is already working on this deck');
@@ -108,7 +172,8 @@ async function runClaude(req, res) {
     '--permission-mode', 'acceptEdits', '--allowedTools', 'Read,Edit,Write,Glob,Grep,MultiEdit',
     '--append-system-prompt', SYSTEM];
   if (sessions.has(deck)) argv.push('--resume', sessions.get(deck));
-  if (body.model || MODEL) argv.push('--model', body.model || MODEL);
+  const model = body.model ?? cfg.providers['claude-code'].model ?? MODEL;
+  if (model || MODEL) argv.push('--model', model || MODEL);
 
   res.writeHead(200, { 'Content-Type': 'application/x-ndjson; charset=utf-8', 'Cache-Control': 'no-store' });
   const emit = o => res.write(JSON.stringify(o) + '\n');
@@ -157,6 +222,20 @@ async function runClaude(req, res) {
     res.end();
   });
   res.on('close', () => { if (!res.writableFinished && runs.get(deck) === proc) proc.kill('SIGTERM'); });
+}
+
+let loginProc = null;
+function claudeStatus() {
+  return new Promise(resolve => {
+    execFile(CLAUDE, ['--version'], { cwd: ROOT, timeout: 8000 }, (err, version) => {
+      if (err) return resolve({ installed: false });
+      execFile(CLAUDE, ['auth', 'status', '--json'], { cwd: ROOT, timeout: 8000 }, (e2, out) => {
+        let st = {}; try { st = JSON.parse(out); } catch { /* older CLI */ }
+        resolve({ installed: true, version: String(version).trim(), loggedIn: !!st.loggedIn, method: st.authMethod || null,
+          email: st.email || null, subscription: st.subscriptionType || null, signingIn: !!(loginProc && loginProc.exitCode === null) });
+      });
+    });
+  });
 }
 
 /* ── API ─────────────────────────────────────────────────────────────────── */
@@ -223,13 +302,38 @@ async function api(req, res, url) {
       fs.writeFileSync(file, src.slice(0, open.index) + body + src.slice(end));
       return send(res, 200, { ok: true });
     }
-    case 'POST /api/claude': return runClaude(req, res);
+    case 'POST /api/claude': return runAI(req, res);
+    case 'GET /api/ai': return send(res, 200, ai.publicConfig());
+    case 'PUT /api/ai': return send(res, 200, ai.updateConfig(await json(req)));
+    case 'GET /api/ai/models': {
+      const id = url.searchParams.get('provider');
+      if (!ai.PROVIDERS[id]) return fail(res, 400, 'Unknown provider');
+      try { return send(res, 200, { ok: true, models: await ai.listModels(id) }); }
+      catch (e) { return send(res, 200, { ok: false, error: e.cause?.code === 'ECONNREFUSED' ? `Nothing answers at ${ai.loadConfig().providers[id].baseUrl}. Is it running?` : e.message }); }
+    }
+    case 'GET /api/ai/claude-status': return send(res, 200, await claudeStatus());
+    case 'POST /api/ai/claude-login': {
+      // Starts `claude auth login`, which opens the browser sign-in; the editor polls claude-status until it succeeds.
+      const method = url.searchParams.get('method') === 'console' ? '--console' : '--claudeai';
+      if (loginProc && loginProc.exitCode === null) loginProc.kill();
+      let out = '';
+      loginProc = spawn(CLAUDE, ['auth', 'login', method], { cwd: ROOT, stdio: ['ignore', 'pipe', 'pipe'] });
+      loginProc.stdout.on('data', c => { out += c; });
+      loginProc.stderr.on('data', c => { out += c; });
+      loginProc.on('error', e => { out += e.message; });
+      await new Promise(r => setTimeout(r, 1500));
+      return send(res, 200, { started: true, url: (/https:\/\/\S+/.exec(out) || [])[0] || null, output: out.slice(0, 600) });
+    }
+    case 'POST /api/ai/claude-logout': {
+      await new Promise(r => execFile(CLAUDE, ['auth', 'logout'], { cwd: ROOT }, () => r()));
+      return send(res, 200, await claudeStatus());
+    }
     case 'POST /api/claude/stop': {
       const p = runs.get(deck);
       if (p) p.kill('SIGTERM');
       return send(res, 200, { ok: !!p });
     }
-    case 'POST /api/claude/reset': sessions.delete(deck); return send(res, 200, { ok: true });
+    case 'POST /api/claude/reset': sessions.delete(deck); chats.delete(deck); return send(res, 200, { ok: true });
     case 'POST /api/reveal': {
       const f = path.join(deckDir(deck), url.searchParams.get('file') === 'js' ? 'animations.js' : 'deck.html');
       execFile('code', ['-g', f], err => { if (err) execFile('open', [f], () => {}); });

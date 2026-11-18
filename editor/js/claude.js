@@ -2,6 +2,7 @@
 // streams what it does, then loads its changes into the editor as one undoable step.
 import { app, $, api, flush, currentSlide, slides, selectorFor, replaceDeck, toast } from './app.js';
 import { boxOf, stopTextEdit } from './canvas.js';
+import { activeLabel } from './aisettings.js';
 
 const CHIPS_SEL = [
   ['Animate in sequence', 'Animate the selected objects so they appear one after another on clicks, with fitting effects.'],
@@ -31,8 +32,6 @@ export function initClaude() {
     $('#claude-log').replaceChildren(); $('#claude-log').hidden = true;
     toast('New conversation: Claude starts without the earlier requests.');
   };
-  try { $('#claude-model').value = localStorage.getItem('deck-model') || ''; } catch { /* storage blocked */ }
-  $('#claude-model').onchange = e => { try { localStorage.setItem('deck-model', e.target.value); } catch { /* ignore */ } };
   app.on('select', context);
   app.on('slide', context);
   app.on('frame', context);
@@ -95,7 +94,7 @@ async function send() {
   const before = { html: app.html, js: app.js };
   const ctrl = new AbortController();
   running = ctrl;
-  let ok = false;
+  let ok = false, progress = null;
   try {
     const r = await fetch('/api/claude', {
       method: 'POST', signal: ctrl.signal,
@@ -115,6 +114,7 @@ async function send() {
         if (!line.trim()) continue;
         const m = JSON.parse(line);
         if (m.kind === 'start' && m.resumed) log('info', 'Continuing the conversation (New chat starts fresh).');
+        if (m.kind === 'progress') { progress = progress || log('tool', ''); progress.textContent = `… writing (${m.chars.toLocaleString()} characters)`; }
         if (m.kind === 'tool') log('tool', `${{ Edit: '✎', Write: '✎', MultiEdit: '✎', Read: '◦', Glob: '◦', Grep: '◦' }[m.name] || '·'} ${m.name} ${m.detail || ''}`);
         if (m.kind === 'text') log('assistant', m.text);
         if (m.kind === 'done') { ok = m.ok; log('info', `${m.ok ? 'Done' : 'Finished with an error'}${m.ms ? ` in ${(m.ms / 1000).toFixed(0)} s` : ''}${m.cost ? ` · $${m.cost.toFixed(3)}` : ''}`); }
@@ -147,4 +147,5 @@ function setBusy(on) {
   $('#busy').hidden = !on;
   $('#claude-send').disabled = on;
   $('#claude-send').textContent = on ? 'Working…' : 'Ask';
+  $('#busy-text').textContent = `${activeLabel()} is editing the deck…`;
 }
