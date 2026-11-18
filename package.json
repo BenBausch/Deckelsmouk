@@ -1,6 +1,6 @@
 {
   "name": "deckelsmouk",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Animated HTML presentations: hand-written slides, a visual editor, and Claude Code to arrange and animate. Every deck builds to one self-contained HTML file.",
   "type": "module",
