@@ -169,7 +169,7 @@ async function runClaude(body, res, cfg) {
   ].join('\n');
 
   const argv = ['-p', '--output-format', 'stream-json', '--verbose',
-    '--permission-mode', 'acceptEdits', '--allowedTools', 'Read,Edit,Write,Glob,Grep,MultiEdit',
+    '--permission-mode', 'acceptEdits', '--allowedTools', 'Read,Edit,Write,Glob,Grep,MultiEdit,Bash(node --check:*)',
     '--append-system-prompt', SYSTEM];
   if (sessions.has(deck)) argv.push('--resume', sessions.get(deck));
   const model = body.model ?? cfg.providers['claude-code'].model ?? MODEL;

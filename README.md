@@ -19,6 +19,10 @@
 </p>
 
 <p align="center">
+  <a href="docs/deckelsmouk-demo.mp4"><b>▶ Watch the 90-second demo</b></a>: manual edits, a real Claude request, playback and export.
+</p>
+
+<p align="center">
   <img src="docs/editor.png" alt="The Deckelsmouk editor: slide list, live canvas with a selected number, animation inspector, and a prompt bar asking Claude to animate the chart" width="900">
 </p>
 
@@ -121,7 +125,7 @@ Select something, or nothing to mean the whole slide, and just say it:
 
 Under the hood the editor hands Claude Code the deck, the current slide, and every selected object with its HTML,
 selector and exact box in stage pixels. Claude follows the house rules in [`CLAUDE.md`](CLAUDE.md), may only read and
-edit files (no shell), and you watch each step stream by. Follow-ups keep the conversation (*"slower"*, *"now the
+edit files and syntax-check JavaScript (no other commands), and you watch each step stream by. Follow-ups keep the conversation (*"slower"*, *"now the
 other two too"*). Pick Opus, Sonnet or Haiku per request.
 
 Prefer the terminal? Run `claude` in the repo and work on any deck directly; the open editor updates as files change.
