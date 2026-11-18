@@ -201,7 +201,14 @@ try {
     await until(() => deck.evaluate(() => document.body.classList.contains('is-black')), 2000, 'black from presenter');
     await until(async () => (await pv.textContent('#pv-flag')) === 'BLACK SCREEN', 2000, 'presenter flag');
     await pv.keyboard.press('b');
-    await pv.close();
+    await until(() => deck.evaluate(() => !document.body.classList.contains('is-black')), 2000, 'black off');
+  });
+  await check('closing the presentation closes the notes window (single file from disk)', async () => {
+    const pv = ctx.pages().find(p => p.url().includes('?presenter'));
+    assert(pv, 'notes window missing');
+    const closed = pv.waitForEvent('close', { timeout: 6000 });
+    await deck.close();
+    await closed;
   });
   await ctx.close();
 
@@ -463,7 +470,18 @@ try {
     await until(async () => (await ed.textContent('#notes-edit')) === 'Rehearsal note', 4000, 'editor shows the new notes');
     await pv.keyboard.press('ArrowRight');
     await until(() => show.evaluate(() => Deck.step === 1), 2000, 'keys in notes window drive the deck');
-    await pv.close(); await show.close();
+  });
+  await check('reloading the deck keeps the notes window; closing it closes the notes window', async () => {
+    const show = ectx.pages().find(p => p.url().includes('deck.html?notes'));
+    const pv = ectx.pages().find(p => p.url().includes('?presenter'));
+    assert(show && pv, 'windows missing');
+    await show.goto(show.url().replace(/#.*$/, '') + '#3.0');
+    await sleep(3000);
+    assert(!pv.isClosed(), 'notes window closed on reload');
+    await until(async () => (await pv.textContent('#pv-pos')).includes('Slide 3'), 3000, 'notes window follows the reloaded deck');
+    const closed = pv.waitForEvent('close', { timeout: 6000 });
+    await show.close();
+    await closed;
   });
   await check('Claude: request with selection is sent, changes load live, ⌘Z undoes them', async () => {
     fs.rmSync(LOG, { force: true });

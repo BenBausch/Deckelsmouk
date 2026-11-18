@@ -355,9 +355,10 @@
   }
   function listen(handler) {
     const h = (m, src) => {
-      if (!m || m.ch !== CH || seen.has(m.id)) return;
+      if (!m || m.ch !== CH) return;
+      if (src && src !== window) peer = src; // even for a duplicate: the BroadcastChannel copy carries no sender
+      if (seen.has(m.id)) return;
       seen.add(m.id);
-      if (src && src !== window) peer = src;
       handler(m);
     };
     addEventListener('message', e => h(e.data, e.source));
@@ -555,10 +556,28 @@
     });
     addEventListener('resize', render);
 
+    // When the presentation window goes away (closed, or navigated off the deck), this window closes too.
+    // A reload of the deck is not an ending: it reconnects within moments and this window stays.
+    let lastState = Date.now(), ending = null;
+    const deckWin = () => peer || window.opener;
+    const end = () => {
+      if (Date.now() - lastState < 1500) return; // the deck came back (reload)
+      if (editing) { clearTimeout(saveTimer); save(); }
+      window.close();
+      setTimeout(() => { // a window the user opened by hand cannot be closed by script
+        $('pv-wait').hidden = false;
+        $('pv-wait').innerHTML = '<div>The presentation has ended.</div><div style="color:#8a8f98;font-size:14px">You can close this window.</div>';
+      }, 300);
+    };
+    const maybeEnd = () => { if (!ending) ending = setTimeout(() => { ending = null; end(); }, 1800); };
+    setInterval(() => { const w = deckWin(); if (connected && w && w.closed) maybeEnd(); }, 700);
+
     listen(m => {
+      if (m.type === 'bye') { lastState = 0; maybeEnd(); return; }
       if (m.type === 'notes') { const s = slides.find(x => x.id === m.slide); if (s) { setNotes(s, m.html); if (!editing) render(); } return; }
       if (m.type !== 'state') return;
       connected = true;
+      lastState = Date.now(); clearTimeout(ending); ending = null;
       $('pv-wait').hidden = true;
       if (editing && m.slide !== st.slide) { clearTimeout(saveTimer); save(); editing = false; notesEl.blur(); }
       st = m;
@@ -641,6 +660,7 @@
     });
     addEventListener('message', e => { const m = e.data || {}; if (m.deck === 'go') go(m.slide, m.step || 0, { instant: m.instant }); });
     listen(obey);
+    addEventListener('pagehide', () => send({ type: 'bye' }));
     addEventListener('resize', fit);
     fit();
     addEventListener('hashchange', () => { const [i, n] = resolveHash(); if (i !== cur || n !== step) go(i, n, { instant: true }); });

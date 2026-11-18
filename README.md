@@ -254,7 +254,9 @@ are kept. Click **Present** and two windows open: the deck (drag it to the proje
 - elapsed time, the clock, and buttons for next, back, pause and black screen. The arrow keys and your clicker work
   in this window too.
 
-From a built single file, press **P** to open the same notes window (read-only, since there's no server to save to).
+When you close the presentation, the notes window closes with it. Reloading the deck mid-rehearsal doesn't count; the
+notes window stays and picks up where the deck is. From a built single file, press **P** to open the same notes window
+(read-only, since there's no server to save to).
 
 <details>
 <summary><b>Presenting</b></summary>
