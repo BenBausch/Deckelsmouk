@@ -15,6 +15,7 @@
   <img alt="Works offline" src="https://img.shields.io/badge/works-offline-9b6bff">
   <img alt="Node 20+" src="https://img.shields.io/badge/node-%E2%89%A520-ffb340">
   <img alt="Made for Claude Code" src="https://img.shields.io/badge/made%20for-Claude%20Code-d97757">
+  <img alt="Also Ollama and LM Studio" src="https://img.shields.io/badge/also-Ollama%20%C2%B7%20LM%20Studio-8e8e96">
 </p>
 
 <p align="center">
@@ -100,11 +101,13 @@ cd Deckelsmouk
 npm run dev
 ```
 
-That's it, with **no `npm install`** (only the test suite needs one). The editor opens at `http://localhost:4800`. Open the **example** deck for a tour
-of every feature, or create your own from the start page.
+That's it, with **no `npm install`**. The editor opens at `http://localhost:4800`. Open the **example** deck for a
+tour of every feature, or create your own from the start page.
 
-To use the prompt bar, install the [Claude Code](https://claude.com/claude-code) CLI and log in once. Claude
-runs on your machine using your own Claude Code login, with no API key to manage.
+For the prompt bar, the default is the [Claude Code](https://claude.com/claude-code) CLI. If you're not signed in yet,
+click the provider chip next to the prompt and **Sign in with your Claude account**; it opens the normal browser
+sign-in. Prefer the Anthropic API or a local model? See [Bring your own model](#bring-your-own-model). Run
+`npm install` once if you use the Anthropic API provider or the test suite.
 
 ## Talk to your slides
 
@@ -123,6 +126,28 @@ other two too"*). Pick Opus, Sonnet or Haiku per request.
 
 Prefer the terminal? Run `claude` in the repo and work on any deck directly; the open editor updates as files change.
 
+## Bring your own model
+
+The prompt bar works with the model you already have. Click the provider chip next to it to switch, sign in or
+add a key:
+
+| Provider | Speaks | Sign-in | Good for |
+|---|---|---|---|
+| **Claude Code** (default) | Claude Code CLI, as an agent | your Claude account, from inside the editor | the best results: it edits the files itself, writes new effects, several slides at once |
+| **Anthropic API** | Messages API, official SDK | API key (or `ANTHROPIC_API_KEY`, or an `ant auth login` profile) | Claude without the CLI, billed per use |
+| **Ollama** | Ollama's native API | none locally, a key for remote/cloud servers | fully offline, private decks |
+| **LM Studio** | OpenAI chat-completions | optional API token | local models with a friendly app |
+| **OpenAI-compatible** | OpenAI chat-completions | API key | OpenAI, OpenRouter, Groq, vLLM, llama.cpp … |
+
+Chat models can't touch files, so they answer in a strict edit format: whole slides, theme CSS and named effects. The
+editor checks every block before applying it. A slide must stay a slide, speaker notes the model forgot are kept,
+JavaScript is syntax-checked before it lands in `animations.js`, and anything invalid is skipped with a reason. The
+whole answer is still **one ⌘Z**. Keys and tokens are stored on your computer in `~/.config/deckelsmouk/config.json`
+(readable only by you), never in the repository, and never sent back to the browser.
+
+Tip for local models: bigger is better at following the edit format. For Ollama the editor sends a 16k context length
+by default (adjustable). In LM Studio, load the model with 16k or more.
+
 ## How it compares
 
 | | PowerPoint / Keynote | HTML frameworks | Hand-written HTML | **Deckelsmouk** |
@@ -130,6 +155,7 @@ Prefer the terminal? Run `claude` in the repo and work on any deck directly; the
 | Visual drag-and-drop editing | ✅ | ❌ | ❌ | ✅ |
 | Animation beyond the preset list | ❌ | ⚠️ | ✅ | ✅ |
 | Ask an AI to arrange and animate the selection | ⚠️ | ❌ | ❌ | ✅ |
+| Runs with local models, fully offline | ❌ | ⚠️ | ✅ | ✅ |
 | Readable, diffable source in git | ❌ | ✅ | ✅ | ✅ |
 | One portable file, plays offline anywhere | ❌ | ⚠️ | ⚠️ | ✅ |
 | Zero install, zero dependencies | ❌ | ❌ | ✅ | ✅ |
@@ -262,7 +288,8 @@ npm run unpack -- talk.html my-talk  # a built single file back into an editable
 npm test                             # end-to-end checks of every feature (Playwright; run npm install once)
 ```
 
-Environment: `PORT`, `DECK_CLAUDE_MODEL` (default model for the prompt bar), `DECK_CLAUDE_BIN` (path to `claude`).
+Environment: `PORT`, `DECK_CLAUDE_MODEL` (default Claude Code model), `DECK_CLAUDE_BIN` (path to `claude`),
+`DECKELSMOUK_CONFIG` (where AI settings and keys are stored), `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` (used when no key is saved).
 
 </details>
 
@@ -287,8 +314,9 @@ CLAUDE.md            deck format and animation API, for Claude and for you
 
 `npm test` drives a real browser through **every feature**: building and unpacking, each animation type, click steps
 and exits, magic move, slide scripts and pause, presenter sync and notes editing, every editor tool from drag and snap
-to undo, the slide list, live reload, export, and the Claude bridge (with a stand-in CLI so it's free and repeatable;
-`REAL_CLAUDE=1 npm test` adds one real call).
+to undo, the slide list, live reload, export, Claude Code sign-in, and every AI provider: Claude Code (stand-in CLI),
+LM Studio/OpenAI, Ollama and the Anthropic SDK (against a local mock server that speaks each format), so it's free and
+repeatable. `REAL_CLAUDE=1 npm test` adds one real call.
 
 ## Bring your old decks
 

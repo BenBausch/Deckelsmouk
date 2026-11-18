@@ -85,6 +85,13 @@ navigation stay correct; use transform-like properties `translate`, `scale`, `ro
 they compose with the element's own transform; never create DOM in `deck.html` from a script in a way the editor would
 need to save (scripts do not run in the editor); keep effects reusable and named for what they do.
 
+## AI providers
+
+`tools/ai.mjs` holds the providers for the editor's prompt bar. Claude Code (this agent) edits files directly. Chat
+providers (Anthropic API, Ollama, LM Studio, OpenAI-compatible) get the sections above as their reference and answer
+in the edit-block format defined there (`EDIT_FORMAT`), which the server validates and applies. Keep this file's
+section headings "deck.html rules", "Animation" and "animations.js": the chat prompt is built from them.
+
 ## Working on a request from the editor
 
 - The request names the slide (id) and the selected objects (selector + HTML + box). Change those, unless the request

@@ -5,6 +5,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn, execFileSync } from 'node:child_process';
+import os from 'node:os';
+import http from 'node:http';
 import { chromium } from 'playwright';
 import { ROOT, DECKS, DIST } from '../tools/lib.mjs';
 
@@ -13,7 +15,7 @@ const DECK = 'e2e-test', NEWDECK = 'e2e-new', UNPACKED = 'e2e-unpacked';
 const FILE = path.join(DECKS, DECK, 'deck.html');
 const LOG = path.join(ROOT, 'tests', '.fake-claude.log');
 const results = [];
-let server, browser;
+let server, browser, mock;
 
 /* ── Harness ── */
 
@@ -42,9 +44,12 @@ function cleanup() {
 
 cleanup();
 fs.cpSync(path.join(DECKS, 'example'), path.join(DECKS, DECK), { recursive: true });
-server = spawn(process.execPath, ['tools/server.mjs', '--port', String(PORT)], {
-  cwd: ROOT, env: { ...process.env, DECK_CLAUDE_BIN: path.join(ROOT, 'tests', 'fake-claude.mjs'), FAKE_CLAUDE_LOG: LOG }, stdio: 'ignore',
-});
+const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'deckelsmouk-e2e-'));
+const AI_CONFIG = path.join(TMP, 'config.json'), FAKE_STATE = path.join(TMP, 'claude-state.json');
+mock = await startMockAI();
+const serverEnv = { ...process.env, DECK_CLAUDE_BIN: path.join(ROOT, 'tests', 'fake-claude.mjs'), FAKE_CLAUDE_LOG: LOG,
+  FAKE_CLAUDE_STATE: FAKE_STATE, DECKELSMOUK_CONFIG: AI_CONFIG, ANTHROPIC_API_KEY: '', OPENAI_API_KEY: '' };
+server = spawn(process.execPath, ['tools/server.mjs', '--port', String(PORT)], { cwd: ROOT, env: serverEnv, stdio: 'ignore' });
 await until(() => fetch(`${BASE}/api/decks`).then(r => r.ok), 5000, 'server');
 browser = await chromium.launch();
 const pageErrors = [];
@@ -497,10 +502,150 @@ try {
     await until(() => ed.isHidden('#busy'), 5000, 'unlock');
     assert((await ed.textContent('#claude-log')).includes('Stopped'), 'no Stopped message');
   });
+  /* ── AI providers ── */
+  console.log('\nAI providers');
+  ed.on('dialog', d => d.accept());
+  const openSettings = async id => {
+    if (await ed.isHidden('#ai-dialog')) await ed.click('#ai-provider');
+    await ed.click(`#ai-list [data-p="${id}"]`); await sleep(150);
+  };
+  const ask = async (prompt, done = 'Changes loaded') => {
+    await ed.fill('#claude-input', prompt); await ed.click('#claude-send');
+    await until(async () => !(await ed.isDisabled('#claude-send')), 10000, 'AI run');
+    await sleep(300);
+    const log = await ed.textContent('#claude-log');
+    if (done) assert(log.includes(done), `log: ${log.slice(-500)}`);
+    return log;
+  };
+  const AGENDA_NEW = (title, notes = false) => `<section class="slide" id="agenda" data-title="Agenda">
+  <h2 class="h2" data-anim="pop" style="position:absolute;left:140px;top:120px;width:1200px">${title}</h2>
+  <ul class="list" style="position:absolute;left:140px;top:330px;width:1100px"><li data-anim="left" data-step="1">One</li></ul>${notes ? '\n  <aside class="notes"><p>New notes</p></aside>' : ''}
+</section>`;
+
+  await check('settings list every provider; Claude Code shows who is signed in', async () => {
+    await gotoSlide(2);
+    assert((await ed.textContent('#ai-provider')) === 'Claude Code', 'default provider');
+    await ed.click('#ai-provider');
+    const names = await ed.$$eval('#ai-list [data-p]', b => b.map(x => x.dataset.p).join());
+    assert(names === 'claude-code,anthropic,ollama,lmstudio,openai', names);
+    await until(async () => (await ed.textContent('#cc-status')).includes('fake@example.com'), 5000, 'status');
+  });
+  await check('Claude Code sign-out and browser sign-in', async () => {
+    await ed.click('#cc-logout');
+    await until(async () => (await ed.textContent('#cc-status')).startsWith('Not signed in'), 5000, 'signed out');
+    await ed.click('[data-login="claudeai"]');
+    await until(async () => (await ed.innerHTML('#cc-status')).includes('claude.ai/oauth/authorize'), 5000, 'sign-in link');
+    await until(async () => (await ed.textContent('#cc-status')).includes('fake@example.com'), 10000, 'signed in again');
+    const calls = fs.readFileSync(LOG, 'utf8').trim().split('\n').map(l => JSON.parse(l)).filter(c => c.args[0] === 'auth').map(c => c.args.slice(1).join(' '));
+    assert(calls.includes('logout') && calls.includes('login --claudeai'), calls.join(' | '));
+  });
+  await check('LM Studio: token is required, stored privately and never sent back to the browser', async () => {
+    await openSettings('lmstudio');
+    await ed.fill('[data-f=baseUrl]', `${mock.url}/v1`); await ed.press('[data-f=baseUrl]', 'Tab');
+    await until(async () => (await ed.textContent('#conn')).includes('token is required'), 5000, '401 shown');
+    await ed.fill('[data-f=apiKey]', 'lm-secret-token'); await ed.press('[data-f=apiKey]', 'Tab');
+    await until(async () => (await ed.textContent('#conn')).includes('2 models'), 5000, 'connected');
+    const pub = await (await fetch(`${BASE}/api/ai`)).text();
+    assert(!pub.includes('lm-secret-token') && pub.includes('••••oken'), 'key leaked or no hint');
+    assert(JSON.parse(fs.readFileSync(AI_CONFIG, 'utf8')).providers.lmstudio.apiKey === 'lm-secret-token', 'key not stored');
+    assert((fs.statSync(AI_CONFIG).mode & 0o077) === 0, 'config readable by others');
+    await ed.selectOption('#model-pick', 'mock-large');
+    await ed.click('#ai-use');
+    await until(async () => (await ed.textContent('#ai-provider')) === 'LM Studio', 3000, 'chip');
+    await until(async () => (await ed.inputValue('#claude-model')) === 'mock-large', 3000, 'model in bar');
+  });
+  await check('LM Studio: edit blocks are applied (slide, theme CSS, animations.js) and notes are kept', async () => {
+    await clickAt('#agenda .card');
+    mock.answer = `<<<REPLACE_SLIDE id="agenda">>>\n${AGENDA_NEW('Rewritten by a local model')}\n<<<END>>>
+<<<APPEND_CSS>>>\n.shine { color: gold; }\n<<<END>>>
+<<<APPEND_JS>>>\n// Pops with a spin.\nDeck.effect('spin-pop', { from: { opacity: 0, rotate: '-90deg' } });\n<<<END>>>
+<<<MESSAGE>>>Rewrote the agenda and added a spin-pop effect.<<<END>>>`;
+    const log = await ask('Make the agenda punchier');
+    assert(log.includes('Rewrote the agenda') && log.includes('Replaced slide agenda'), log.slice(-300));
+    const sec = section('agenda');
+    assert(sec.includes('Rewritten by a local model') && sec.includes('Rehearsal note'), 'slide not replaced or notes lost');
+    assert(/\.shine \{ color: gold; \}\s*\n<\/style>/.test(read()), 'css not in theme');
+    assert(fs.readFileSync(path.join(DECKS, DECK, 'animations.js'), 'utf8').includes("Deck.effect('spin-pop'"), 'js not appended');
+    await until(() => fr.locator('#agenda h2:has-text("Rewritten")').count(), 3000, 'editor reloaded');
+    const req = mock.requests.filter(r => r.path === '/v1/chat/completions').pop();
+    assert(req.headers.authorization === 'Bearer lm-secret-token', 'no token sent');
+    assert(req.body.model === 'mock-large' && req.body.stream === true, JSON.stringify(req.body).slice(0, 200));
+    const [sys, user] = req.body.messages;
+    assert(sys.role === 'system' && sys.content.includes('<<<REPLACE_SLIDE') && sys.content.includes('data-step'), 'system prompt');
+    assert(user.content.includes('Request: Make the agenda punchier') && user.content.includes('class="card"') && user.content.includes('Current slide, complete HTML'), 'user prompt');
+  });
+  await check('undo takes back everything the model changed', async () => {
+    await ed.keyboard.press('Escape'); await fr.locator('body').press('Meta+z'); await saved(); await sleep(300);
+    assert(!read().includes('Rewritten by a local model') && !read().includes('.shine'), 'deck not restored');
+    assert(!fs.readFileSync(path.join(DECKS, DECK, 'animations.js'), 'utf8').includes('spin-pop'), 'animations.js not restored');
+  });
+  await check('follow-up requests carry the conversation', async () => {
+    mock.answer = `<<<REPLACE_SLIDE id="agenda">>>\n${AGENDA_NEW('Second pass')}\n<<<END>>>\n<<<MESSAGE>>>Second pass done.<<<END>>>`;
+    await ask('Shorter');
+    const msgs = mock.requests.filter(r => r.path === '/v1/chat/completions').pop().body.messages;
+    assert(msgs.length === 4 && msgs[2].role === 'assistant' && msgs[2].content.includes('Rewrote the agenda'), msgs.map(m => m.role).join());
+    await ed.keyboard.press('Escape'); await fr.locator('body').press('Meta+z'); await saved();
+  });
+  await check('broken answers are refused: invalid JS, a non-slide, or no edit format', async () => {
+    const before = read(), beforeJs = fs.readFileSync(path.join(DECKS, DECK, 'animations.js'), 'utf8');
+    mock.answer = `<<<REPLACE_SLIDE id="agenda">>>\n<div>not a slide</div>\n<<<END>>>\n<<<APPEND_JS>>>\nDeck.effect('x', {\n<<<END>>>\n<<<MESSAGE>>>Oops.<<<END>>>`;
+    let log = await ask('Break it', null);
+    assert(log.includes('Skipped: REPLACE_SLIDE agenda') && log.includes('Skipped: APPEND_JS'), log.slice(-400));
+    mock.answer = 'Sure! Here is a nicer slide: <h1>Hi</h1>';
+    log = await ask('Talk instead', null);
+    assert(log.includes('did not answer in the edit format'), log.slice(-300));
+    assert(read() === before && fs.readFileSync(path.join(DECKS, DECK, 'animations.js'), 'utf8') === beforeJs, 'files changed');
+  });
+  await check('Stop ends a streaming answer without changing anything', async () => {
+    const before = read();
+    mock.slow = true;
+    mock.answer = `<<<REPLACE_SLIDE id="agenda">>>\n${AGENDA_NEW('Should never land')}\n<<<END>>>`;
+    await ed.fill('#claude-input', 'Slow one'); await ed.click('#claude-send');
+    await until(async () => (await ed.textContent('#claude-log')).includes('writing ('), 5000, 'progress');
+    assert((await ed.textContent('#busy-text')) === 'LM Studio is editing the deck…', await ed.textContent('#busy-text'));
+    await ed.click('#busy [data-cmd=claude-stop]');
+    await until(() => ed.isHidden('#busy'), 5000, 'unlock');
+    mock.slow = false;
+    assert((await ed.textContent('#claude-log')).includes('Stopped') && read() === before, 'not stopped cleanly');
+  });
+  await check('Ollama (native API): context length is sent; a new slide is added after the current one', async () => {
+    await openSettings('ollama');
+    await ed.fill('[data-f=baseUrl]', mock.url); await ed.press('[data-f=baseUrl]', 'Tab');
+    await until(async () => (await ed.textContent('#conn')).includes('1 model'), 5000, 'connected');
+    await ed.fill('[data-f=numCtx]', '32768'); await ed.press('[data-f=numCtx]', 'Tab'); await sleep(200);
+    await ed.click('#ai-use');
+    await until(async () => (await ed.textContent('#ai-provider')) === 'Ollama', 3000, 'chip');
+    mock.answer = `<<<ADD_SLIDE after="agenda">>>\n<section class="slide" id="agenda" data-title="Why"><h2 class="h2" style="position:absolute;left:140px;top:120px;width:1200px">Why it matters</h2></section>\n<<<END>>>\n<<<MESSAGE>>>Added a slide.<<<END>>>`;
+    await ask('Add a why slide');
+    const order = ids();
+    assert(order[order.indexOf('agenda') + 1] === 'agenda-2', `order: ${order}`);
+    const req = mock.requests.filter(r => r.path === '/api/chat').pop();
+    assert(req.body.options.num_ctx === 32768 && req.body.model === 'qwen-mock' && req.body.messages[0].role === 'system', JSON.stringify(req.body).slice(0, 300));
+    await until(async () => (await ed.frameLocator('#thumbs').locator('.slide').count()) === order.length, 3000, 'slide list updated');
+    await ed.keyboard.press('Escape'); await fr.locator('body').press('Meta+z'); await saved();
+  });
+  await check('Anthropic API through the official SDK: key, model, effort and refusal fallback are sent', async () => {
+    await openSettings('anthropic');
+    await ed.fill('[data-f=baseUrl]', mock.url); await ed.press('[data-f=baseUrl]', 'Tab');
+    await ed.fill('[data-f=apiKey]', 'sk-ant-test-key'); await ed.press('[data-f=apiKey]', 'Tab');
+    await until(async () => (await ed.textContent('#conn')).includes('2 models'), 5000, 'connected');
+    await ed.click('#ai-use');
+    mock.answer = `<<<REPLACE_SLIDE id="agenda">>>\n${AGENDA_NEW('Written by Claude via the API')}\n<<<END>>>\n<<<MESSAGE>>>Done via the API.<<<END>>>`;
+    await ask('API please');
+    assert(section('agenda').includes('Written by Claude via the API'), 'not applied');
+    const req = mock.requests.filter(r => r.path.startsWith('/v1/messages')).pop();
+    assert(req.headers.authorization === 'Bearer sk-ant-test-key' && req.headers['anthropic-version'], 'key header');
+    assert(req.body.model === 'claude-opus-5-5' && req.body.stream === true && req.body.max_tokens === 64000, JSON.stringify(req.body).slice(0, 200));
+    assert(req.body.fallbacks === 'default' && String(req.headers['anthropic-beta']).includes('server-side-fallback-2026-07-01'), 'fallback missing');
+    assert(req.body.output_config?.effort === 'medium' && typeof req.body.system === 'string' && req.body.system.includes('<<<REPLACE_SLIDE'), 'effort/system');
+    await ed.keyboard.press('Escape'); await fr.locator('body').press('Meta+z'); await saved();
+    await openSettings('claude-code'); await ed.click('#ai-use'); // back to the default for anything after this
+  });
+
   if (process.env.REAL_CLAUDE) {
     await check('Claude (real CLI, haiku): changes the selected object', async () => {
       server.kill(); await sleep(300);
-      server = spawn(process.execPath, ['tools/server.mjs', '--port', String(PORT)], { cwd: ROOT, stdio: 'ignore' });
+      server = spawn(process.execPath, ['tools/server.mjs', '--port', String(PORT)], { cwd: ROOT, env: { ...process.env, DECKELSMOUK_CONFIG: AI_CONFIG }, stdio: 'ignore' });
       await until(() => fetch(`${BASE}/api/decks`).then(r => r.ok), 5000, 'server');
       await gotoSlide(3);
       await clickAt('#numbers .stat');
@@ -515,7 +660,9 @@ try {
 } finally {
   await browser?.close();
   server?.kill();
+  mock?.close();
   cleanup();
+  fs.rmSync(TMP, { recursive: true, force: true });
 }
 
 if (pageErrors.length) { console.log('\nPage errors:'); pageErrors.forEach(e => console.log('  ' + e)); }
@@ -523,5 +670,54 @@ const failed = results.filter(r => !r.ok);
 console.log(`\n${results.length - failed.length} of ${results.length} checks passed${pageErrors.length ? `, ${pageErrors.length} page errors` : ''}.`);
 process.exit(failed.length || pageErrors.length ? 1 : 0);
 
-function require_http() { return httpModule; }
-import * as httpModule from 'node:http';
+function require_http() { return http; }
+
+// A stand-in AI server speaking three formats: OpenAI-compatible (LM Studio), Ollama native, and the Anthropic
+// Messages API (for the official SDK). It streams mock.answer and records every request.
+function startMockAI() {
+  const mock = { answer: '', slow: false, requests: [] };
+  const srv = http.createServer(async (req, res) => {
+    let raw = ''; for await (const c of req) raw += c;
+    const body = raw ? JSON.parse(raw) : null;
+    const p = req.url.split('?')[0];
+    mock.requests.push({ path: p, headers: req.headers, body });
+    const chunks = mock.answer.match(/[\s\S]{1,40}/g) || [''];
+    const pace = () => sleep(mock.slow ? 400 : 2);
+    const json = (code, o) => { res.writeHead(code, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(o)); };
+    const anthropic = !!req.headers['anthropic-version'];
+    if (p === '/v1/models' && anthropic && req.headers.authorization === 'Bearer sk-ant-test-key')
+      return json(200, { data: [{ id: 'claude-opus-5-5', type: 'model', display_name: 'Claude Opus 5.5', created_at: '2026-01-01T00:00:00Z' }, { id: 'claude-haiku-5-5', type: 'model', display_name: 'Claude Haiku 5.5', created_at: '2026-01-01T00:00:00Z' }], has_more: false, first_id: 'claude-opus-5-5', last_id: 'claude-haiku-5-5' });
+    if (p.startsWith('/v1/') && !anthropic && req.headers.authorization !== 'Bearer lm-secret-token')
+      return json(401, { error: { message: 'An LM Studio API token is required to make requests to this server.' } });
+    if (p === '/v1/models') return json(200, { data: [{ id: 'mock-small' }, { id: 'mock-large' }] });
+    if (p === '/v1/chat/completions') {
+      res.writeHead(200, { 'Content-Type': 'text/event-stream' });
+      for (const c of chunks) { if (res.destroyed) return; res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: c } }] })}\n\n`); await pace(); }
+      return res.end('data: [DONE]\n\n');
+    }
+    if (p === '/api/tags') return json(200, { models: [{ name: 'qwen-mock' }] });
+    if (p === '/api/chat') {
+      res.writeHead(200, { 'Content-Type': 'application/x-ndjson' });
+      for (const c of chunks) { if (res.destroyed) return; res.write(JSON.stringify({ message: { role: 'assistant', content: c }, done: false }) + '\n'); await pace(); }
+      return res.end(JSON.stringify({ message: { role: 'assistant', content: '' }, done: true }) + '\n');
+    }
+    if (anthropic && req.headers.authorization !== 'Bearer sk-ant-test-key') return json(401, { type: 'error', error: { type: 'authentication_error', message: 'invalid x-api-key' } });
+    if (p === '/v1/messages') {
+      res.writeHead(200, { 'Content-Type': 'text/event-stream' });
+      const ev = (type, data) => res.write(`event: ${type}\ndata: ${JSON.stringify({ type, ...data })}\n\n`);
+      ev('message_start', { message: { id: 'msg_mock', type: 'message', role: 'assistant', content: [], model: body.model, stop_reason: null, stop_sequence: null, usage: { input_tokens: 10, output_tokens: 1 } } });
+      ev('content_block_start', { index: 0, content_block: { type: 'text', text: '' } });
+      for (const c of chunks) { ev('content_block_delta', { index: 0, delta: { type: 'text_delta', text: c } }); await pace(); }
+      ev('content_block_stop', { index: 0 });
+      ev('message_delta', { delta: { stop_reason: 'end_turn', stop_sequence: null }, usage: { output_tokens: 50 } });
+      ev('message_stop', {});
+      return res.end();
+    }
+    json(404, { error: 'not found' });
+  });
+  return new Promise(ok => srv.listen(0, '127.0.0.1', () => {
+    mock.url = `http://127.0.0.1:${srv.address().port}`;
+    mock.close = () => srv.close();
+    ok(mock);
+  }));
+}

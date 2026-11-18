@@ -5,6 +5,7 @@ import * as ops from './ops.js';
 import { initInspector } from './inspector.js';
 import { initClaude, focusPrompt, stop as stopClaude } from './claude.js';
 import { initNotes } from './notes.js';
+import { initAI } from './aisettings.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -50,6 +51,7 @@ async function open(name) {
   $('#deck-title').value = titleOf(app.html);
   app.index = Math.max(0, (+params.get('slide') || 1) - 1);
   initCanvas(); initInspector(); initClaude(); initNotes();
+  initAI().catch(e => toast('AI settings: ' + e.message));
   app.on('frame', onFrame);
   app.on('slide', () => history.replaceState(null, '', `/?deck=${encodeURIComponent(app.deck)}&slide=${app.index + 1}`));
   await loadFrames();
