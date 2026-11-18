@@ -19,7 +19,11 @@
 </p>
 
 <p align="center">
-  <a href="docs/deckelsmouk-demo.mp4"><b>▶ Watch the 90-second demo</b></a>: manual edits, a real Claude request, playback and export.
+  <a href="docs/deckelsmouk-demo.mp4"><img src="docs/demo-preview.gif" alt="Demo: select a list, ask Claude to turn it into three animated cards, then click through the result" width="900"></a>
+</p>
+
+<p align="center">
+  <a href="docs/deckelsmouk-demo.mp4"><b>▶ Watch the full 90-second demo</b></a>: edit by hand, ask the AI, play, export.
 </p>
 
 <p align="center">
