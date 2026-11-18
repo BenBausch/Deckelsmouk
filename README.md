@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img alt="Zero dependencies" src="https://img.shields.io/badge/dependencies-0-30d158">
+  <img alt="Zero runtime dependencies" src="https://img.shields.io/badge/runtime%20dependencies-0-30d158">
   <img alt="Output: one HTML file" src="https://img.shields.io/badge/output-one%20HTML%20file-4c8dff">
   <img alt="Works offline" src="https://img.shields.io/badge/works-offline-9b6bff">
   <img alt="Node 20+" src="https://img.shields.io/badge/node-%E2%89%A520-ffb340">
@@ -84,8 +84,9 @@ No framework magic and no binary format. A deck is `deck.html` (slides, clearly 
 <td valign="top">
 
 ### 🎤 Ready for the stage
-Presenter window with current and next slide, notes and a timer. Clicker support, black screen, pause. Print
-to PDF for the handout. Backup slides after the end for Q&A.
+Hit **Present** and your speaker notes open in their own window: current and next slide (at the exact click step),
+notes you can still edit during rehearsal, a timer and a clock. Clicker support, black screen, pause. Print to PDF for
+the handout.
 
 </td>
 </tr>
@@ -99,7 +100,7 @@ cd Deckelsmouk
 npm run dev
 ```
 
-That's it, with **no `npm install`**. The editor opens at `http://localhost:4800`. Open the **example** deck for a tour
+That's it, with **no `npm install`** (only the test suite needs one). The editor opens at `http://localhost:4800`. Open the **example** deck for a tour
 of every feature, or create your own from the start page.
 
 To use the prompt bar, install the [Claude Code](https://claude.com/claude-code) CLI and log in once. Claude
@@ -215,10 +216,25 @@ Slide scripts get a small, safe context: loops and timers clean up when you leav
 
 </details>
 
+## Speaker notes, where you need them
+
+Type notes for each slide in the notes field under the slide, just like in PowerPoint. Bold, italics and paragraphs
+are kept. Click **Present** and two windows open: the deck (drag it to the projector and press **F**) and a separate
+**notes window** for your laptop, showing:
+
+- the current slide exactly as the audience sees it at this click, and what comes next
+- your notes, in a size you choose (A− / A+). While rehearsing you can **edit them right there**, and they're saved
+  into the deck.
+- elapsed time, the clock, and buttons for next, back, pause and black screen. The arrow keys and your clicker work
+  in this window too.
+
+From a built single file, press **P** to open the same notes window (read-only, since there's no server to save to).
+
 <details>
 <summary><b>Presenting</b></summary>
 
-Open the built `dist/<deck>.html` in any browser, or click **Present** in the editor.
+Open the built `dist/<deck>.html` in any browser, or click **Present** in the editor (it opens your notes window too;
+if your browser blocks pop-ups, the first click or key opens it).
 
 | Key | Action |
 |---|---|
@@ -226,7 +242,7 @@ Open the built `dist/<deck>.html` in any browser, or click **Present** in the ed
 | ← PageUp Backspace | back (shows the previous state instantly) |
 | Home / End | first slide / last main slide (backup slides come after End) |
 | F | fullscreen |
-| P | presenter window: current and next slide, notes, timer |
+| P | notes window: current and next slide, notes, timer, controls |
 | K | pause / resume all motion |
 | B | black screen |
 
@@ -243,6 +259,7 @@ npm run dev                          # editor + live reload (http://localhost:48
 npm run build                        # every deck → dist/<deck>.html  (or: npm run build -- my-talk)
 npm run new -- my-talk "My Talk"     # new deck from templates/default
 npm run unpack -- talk.html my-talk  # a built single file back into an editable deck
+npm test                             # end-to-end checks of every feature (Playwright; run npm install once)
 ```
 
 Environment: `PORT`, `DECK_CLAUDE_MODEL` (default model for the prompt bar), `DECK_CLAUDE_BIN` (path to `claude`).
@@ -258,12 +275,20 @@ templates/default/   the starting point for new decks; add your own themes as mo
 runtime/             the player shared by all decks; inlined into every build
 editor/              the visual editor (plain ES modules, no build step)
 tools/               dev server, build, new, unpack (Node, no dependencies)
+tests/               end-to-end suite (Playwright, dev-only)
 docs/                logo and screenshots
 dist/                built single-file decks (git-ignored by default)
 CLAUDE.md            deck format and animation API, for Claude and for you
 ```
 
 </details>
+
+## Tested, end to end
+
+`npm test` drives a real browser through **every feature**: building and unpacking, each animation type, click steps
+and exits, magic move, slide scripts and pause, presenter sync and notes editing, every editor tool from drag and snap
+to undo, the slide list, live reload, export, and the Claude bridge (with a stand-in CLI so it's free and repeatable;
+`REAL_CLAUDE=1 npm test` adds one real call).
 
 ## Bring your old decks
 

@@ -19,7 +19,7 @@
 (() => {
   'use strict';
   const params = new URLSearchParams(location.search);
-  const MODE = params.has('print') ? 'print' : params.has('edit') ? 'edit' : 'present';
+  const MODE = params.has('print') ? 'print' : params.has('edit') ? 'edit' : params.has('presenter') ? 'presenter' : 'present';
   const EASE = 'cubic-bezier(.16, 1, .3, 1)';
   const BACK = 'cubic-bezier(.34, 1.56, .64, 1)';
 
@@ -333,75 +333,245 @@
     tell();
   }
 
-  /* ── Presenter window (built in, so a single-file deck needs nothing else) ─ */
+  /* ── Presenter window ──────────────────────────────────────────────────────
+   * The same deck file opened with ?presenter: current slide (at its current step), next slide, speaker notes,
+   * timer and controls. It stays in sync with the audience window through postMessage (works for a single file
+   * opened from disk) and a BroadcastChannel (works when the editor opened the deck). When the deck is served by the
+   * Deckelsmouk dev server, notes are editable here and saved straight into deck.html.
+   */
 
-  const cleanClone = s => {
-    const c = s.cloneNode(true);
-    c.classList.remove('is-current', 'is-leaving');
-    c.querySelectorAll('.is-hidden').forEach(e => e.classList.remove('is-hidden'));
-    c.querySelectorAll('.notes, script').forEach(e => e.remove());
-    c.removeAttribute('style');
-    return c;
-  };
+  const CH = 'deckelsmouk:' + location.pathname;
+  let bc = null;
+  const embedded = window.top !== window; // e.g. the editor's preview: never part of a presentation
+  try { if (!embedded) bc = new BroadcastChannel(CH); } catch { /* not available on file:// in some browsers */ }
+  let peer = null;                       // the other window, once known
+  const seen = new Set();
+  function send(msg) {
+    if (embedded) return;
+    msg = { ...msg, ch: CH, id: Math.random().toString(36).slice(2) };
+    const targets = new Set([peer, window.opener].filter(w => w && w !== window && !w.closed));
+    targets.forEach(w => { try { w.postMessage(msg, '*'); } catch { /* closed */ } });
+    try { if (bc) bc.postMessage(msg); } catch { /* closed */ }
+  }
+  function listen(handler) {
+    const h = (m, src) => {
+      if (!m || m.ch !== CH || seen.has(m.id)) return;
+      seen.add(m.id);
+      if (src && src !== window) peer = src;
+      handler(m);
+    };
+    addEventListener('message', e => h(e.data, e.source));
+    if (bc) bc.onmessage = e => h(e.data, null);
+  }
+  const baseURL = () => location.href.split('#')[0].split('?')[0];
 
   function openPresenter() {
-    presenter = open('', 'deck-presenter', 'width=1200,height=760');
-    if (!presenter) return;
-    const d = presenter.document;
-    const css = [...document.querySelectorAll('style, link[rel=stylesheet]')].map(e => e.outerHTML).join('\n');
-    d.open();
-    d.write(`<!doctype html><html><head><meta charset="utf-8"><title>Presenter · ${document.title}</title>${css}
-<style>
-  html,body{height:100%;margin:0;overflow:hidden;background:#111;color:#eee;font:16px/1.45 -apple-system,"Helvetica Neue",Arial,sans-serif;cursor:default}
-  .pv{display:grid;grid-template-columns:1.25fr 1fr;grid-template-rows:auto 1fr auto;gap:18px;padding:18px;height:100%;box-sizing:border-box}
-  .box{position:relative;background:#000;border-radius:10px;overflow:hidden;aspect-ratio:${W()}/${H()}}
-  .box .slide{visibility:visible!important;position:absolute;inset:0;width:${W()}px;height:${H()}px;transform-origin:0 0;pointer-events:none;background:var(--bg,#000);color:var(--fg,#fff)}
-  .lbl{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:#888;margin:0 0 6px}
-  .notes{grid-column:1/3;overflow:auto;font-size:22px;line-height:1.5;background:#1b1b1d;border-radius:10px;padding:16px 22px}
-  .bar{grid-column:1/3;display:flex;gap:24px;align-items:center;font-size:20px}
-  .clock{font-variant-numeric:tabular-nums;font-size:34px;font-weight:600}
-  button{font:inherit;background:#2a2a2d;color:#eee;border:0;border-radius:8px;padding:8px 16px;cursor:pointer}
-  .paused{color:#ff9f0a;font-weight:700}
-</style></head><body><div class="pv">
-  <div><p class="lbl">Now · <span id="pos"></span></p><div class="box" id="now"></div></div>
-  <div><p class="lbl">Next</p><div class="box" id="next"></div><p id="nexttitle" style="color:#aaa;margin:8px 0 0"></p></div>
-  <div class="notes" id="notes"></div>
-  <div class="bar"><span class="clock" id="clock">0:00</span><button id="reset">Reset timer</button>
-    <button id="prev">◀ Back</button><button id="fwd">Next ▶</button><span id="state"></span></div>
-</div></body></html>`);
-    d.close();
-    const $ = id => d.getElementById(id);
-    $('reset').onclick = () => { t0 = Date.now(); tell(); };
-    $('prev').onclick = () => back();
-    $('fwd').onclick = () => next();
-    d.addEventListener('keydown', onKey);
-    clearInterval(openPresenter.timer);
-    openPresenter.timer = setInterval(() => {
-      if (presenter.closed) return clearInterval(openPresenter.timer);
-      const sec = t0 ? Math.floor((Date.now() - t0) / 1000) : 0;
-      $('clock').textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
-    }, 500);
-    tell();
+    const w = open(baseURL() + '?presenter', 'deck-presenter:' + location.pathname, 'popup,width=1280,height=820');
+    if (w) { peer = w; return true; }
+    return false;
   }
 
+  // Audience side: report the position; obey the presenter's buttons and keys.
   function tell() {
-    if (!presenter || presenter.closed) return;
-    const d = presenter.document, $ = id => d.getElementById(id);
-    if (!$('now')) return;
-    const put = (box, s) => {
+    if (MODE !== 'present') return;
+    send({ type: 'state', slide: cur, step, paused, t0, black: document.body.classList.contains('is-black') });
+  }
+  function toggleBlack() {
+    const on = !document.body.classList.contains('is-black');
+    document.body.classList.toggle('is-black', on);
+    setPaused(on);
+    tell();
+  }
+  function obey(m) {
+    if (m.type === 'hello') return tell();
+    if (m.type === 'notes') { const s = slides.find(x => x.id === m.slide); if (s) setNotes(s, m.html); return; }
+    if (m.type !== 'cmd') return;
+    if (m.cmd === 'next') next();
+    if (m.cmd === 'back') back();
+    if (m.cmd === 'go') go(m.slide, m.step || 0, { instant: true });
+    if (m.cmd === 'pause') setPaused(!paused);
+    if (m.cmd === 'black') toggleBlack();
+    if (m.cmd === 'reset') { t0 = Date.now(); tell(); }
+  }
+
+  function setNotes(s, html) {
+    let n = s.querySelector(':scope > .notes');
+    if (!n) { n = document.createElement('aside'); n.className = 'notes'; s.append(n); }
+    n.innerHTML = html;
+  }
+
+  // Presenter side.
+  function presenterView() {
+    document.body.classList.add('is-presenter', 'is-static');
+    document.title = 'Notes · ' + document.title;
+    const deckName = (/\/decks\/([^/]+)\/deck\.html$/.exec(location.pathname) || [])[1];
+    const css = document.createElement('style');
+    css.textContent = `
+      html, body { overflow: hidden; background: #111214 !important; }
+      body.is-presenter { margin: 0; color: #e8e9ec; font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif; cursor: default; }
+      body.is-presenter > .stage { display: none; }
+      .pv { position: fixed; inset: 0; display: grid; grid-template-columns: 1.35fr 1fr; grid-template-rows: auto minmax(0, 1fr) auto; gap: 16px; padding: 16px; box-sizing: border-box; }
+      .pv-lbl { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: #8a8f98; margin: 0 0 6px; display: flex; justify-content: space-between; gap: 10px; }
+      .pv-box { position: relative; overflow: hidden; border-radius: 10px; background: #000; aspect-ratio: ${W()} / ${H()}; box-shadow: 0 0 0 1px #2a2c31; }
+      .pv-box > .slide { position: absolute; left: 0; top: 0; width: ${W()}px; height: ${H()}px; visibility: visible !important; transform-origin: 0 0; pointer-events: none; background: var(--bg, #000); color: var(--fg, #fff); }
+      .pv-end { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #6b6f78; font-size: 20px; }
+      .pv-next-title { color: #a6aab3; margin: 8px 0 0; font-size: 15px; }
+      .pv-notes-wrap { grid-column: 1 / 3; display: flex; flex-direction: column; min-height: 0; }
+      .pv-notes { flex: 1; overflow: auto; background: #1a1b1e; border-radius: 10px; padding: 14px 20px; font-size: var(--nfs, 26px); line-height: 1.5; outline: none; box-shadow: 0 0 0 1px #2a2c31; }
+      .pv-notes:focus { box-shadow: 0 0 0 2px #4c8dff; }
+      .pv-notes p { margin: 0 0 .6em; }
+      .pv-notes:empty::before { content: attr(data-placeholder); color: #5d616a; }
+      .pv-bar { grid-column: 1 / 3; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+      .pv-time { font-variant-numeric: tabular-nums; font-size: 34px; font-weight: 650; min-width: 110px; }
+      .pv-clock { font-variant-numeric: tabular-nums; color: #8a8f98; font-size: 18px; }
+      .pv-pos { color: #a6aab3; font-size: 16px; margin-left: 8px; }
+      .pv-bar button { font: inherit; font-size: 14px; background: #26282c; color: #e8e9ec; border: 1px solid #34363b; border-radius: 8px; padding: 7px 12px; cursor: pointer; }
+      .pv-bar button:hover { background: #303237; }
+      .pv-bar button.primary { background: #4c8dff; border-color: #4c8dff; color: #fff; }
+      .pv-spacer { flex: 1; }
+      .pv-flag { font-weight: 700; color: #ff9f0a; }
+      .pv-save { font-size: 12px; color: #8a8f98; }
+      .pv-wait { position: fixed; inset: 0; display: flex; flex-direction: column; gap: 14px; align-items: center; justify-content: center; background: rgba(17,18,20,.94); z-index: 5; font-size: 18px; text-align: center; }
+      .pv-wait[hidden] { display: none; }
+      .pv-wait button { font: inherit; background: #4c8dff; color: #fff; border: 0; border-radius: 10px; padding: 12px 22px; cursor: pointer; }
+    `;
+    document.head.append(css);
+    const ui = document.createElement('div');
+    ui.className = 'pv';
+    ui.innerHTML = `
+      <div><p class="pv-lbl"><span>Now</span><span id="pv-step"></span></p><div class="pv-box" id="pv-now"></div></div>
+      <div><p class="pv-lbl"><span>Next</span></p><div class="pv-box" id="pv-next"></div><p class="pv-next-title" id="pv-next-title"></p></div>
+      <div class="pv-notes-wrap">
+        <p class="pv-lbl"><span>Speaker notes</span><span><span class="pv-save" id="pv-save"></span>
+          <button id="pv-smaller" title="Smaller text" style="all:unset;cursor:pointer;padding:0 6px">A−</button><button id="pv-bigger" title="Larger text" style="all:unset;cursor:pointer;padding:0 6px">A+</button></span></p>
+        <div class="pv-notes" id="pv-notes" spellcheck="false"></div>
+      </div>
+      <div class="pv-bar">
+        <span class="pv-time" id="pv-time">0:00</span><span class="pv-clock" id="pv-clock"></span>
+        <span class="pv-pos" id="pv-pos"></span><span id="pv-flag" class="pv-flag"></span>
+        <span class="pv-spacer"></span>
+        <button id="pv-reset" title="Restart the timer">Reset timer</button>
+        <button id="pv-pause" title="Pause / resume motion (K)">Pause</button>
+        <button id="pv-black" title="Black screen (B)">Black</button>
+        <button id="pv-back" title="Back (←)">◀ Back</button>
+        <button id="pv-next-btn" class="primary" title="Next (→ or Space)">Next ▶</button>
+      </div>
+      <div class="pv-wait" id="pv-wait" hidden>
+        <div>Waiting for the presentation window…</div>
+        <button id="pv-open">Open the presentation window</button>
+        <div style="color:#8a8f98;font-size:14px">Drag it to the projector and press F for fullscreen. This window keeps your notes.</div>
+      </div>`;
+    document.body.append(ui);
+    const $ = id => document.getElementById(id);
+    const notesEl = $('pv-notes');
+    let st = { slide: 0, step: 0, paused: false, t0: null, black: false }, connected = false, editing = false;
+
+    // Clone of a slide as it looks at a given step.
+    const view = (box, s, n) => {
       box.replaceChildren();
-      if (!s) return;
-      const c = d.importNode(cleanClone(s), true);
+      if (!s) { const e = document.createElement('div'); e.className = 'pv-end'; e.textContent = 'End of presentation'; box.append(e); return; }
+      const c = s.cloneNode(true);
+      c.classList.add('is-current');
+      c.removeAttribute('style');
+      c.querySelectorAll('.notes, script').forEach(e => e.remove());
+      const orig = animated(s), copy = animated(c);
+      orig.forEach((el, k) => { const show = n >= stepIn(el) && n < stepOut(el); copy[k].classList.toggle('is-hidden', !show); });
+      c.querySelectorAll('[id]').forEach(e => e.removeAttribute('id'));
       box.append(c);
       c.style.transform = `scale(${box.clientWidth / W()})`;
     };
-    const s = slides[cur];
-    put($('now'), s);
-    put($('next'), step < steps(s) ? s : slides[cur + 1]);
-    $('nexttitle').textContent = step < steps(s) ? `(same slide, step ${step + 1})` : (slides[cur + 1] ? slides[cur + 1].dataset.title || '' : 'End');
-    $('pos').textContent = `${cur + 1} / ${slides.length} · ${s.dataset.title || s.id || ''}${steps(s) ? ` · step ${step}/${steps(s)}` : ''}`;
-    $('notes').innerHTML = (s.querySelector('.notes') || {}).innerHTML || '<p style="color:#666">No notes.</p>';
-    $('state').innerHTML = paused ? '<span class="paused">PAUSED</span>' : '';
+
+    const render = () => {
+      const s = slides[st.slide];
+      if (!s) return;
+      const max = steps(s), last = st.step >= max;
+      view($('pv-now'), s, st.step);
+      view($('pv-next'), last ? slides[st.slide + 1] : s, last ? 0 : st.step + 1);
+      $('pv-next-title').textContent = last ? (slides[st.slide + 1] ? (slides[st.slide + 1].dataset.title || `Slide ${st.slide + 2}`) : '') : `Same slide, click ${st.step + 1} of ${max}`;
+      $('pv-step').textContent = max ? `click ${st.step} of ${max}` : '';
+      $('pv-pos').textContent = `Slide ${st.slide + 1} of ${slides.length} · ${s.dataset.title || s.id || ''}`;
+      $('pv-flag').textContent = st.black ? 'BLACK SCREEN' : st.paused ? 'PAUSED' : '';
+      $('pv-pause').textContent = st.paused ? 'Resume' : 'Pause';
+      if (!editing) {
+        const n = s.querySelector(':scope > .notes');
+        const html = n ? n.innerHTML.trim() : '';
+        notesEl.innerHTML = /^(<p>\s*<\/p>|\s)*$/.test(html) ? '' : html;
+        notesEl.scrollTop = 0;
+      }
+    };
+
+    // Notes: editable when served by the dev server (saved into deck.html), read-only in a built file.
+    let canSave = false, saveTimer = null, savingFor = null;
+    const save = async () => {
+      const s = slides[savingFor];
+      if (!s) return;
+      const html = notesEl.innerHTML.replace(/<(script|style)[\s\S]*?<\/\1>/gi, '').replace(/\son\w+="[^"]*"/gi, '').trim();
+      const clean = /^(<br>|\s|<p>\s*<\/p>)*$/.test(html) ? '' : /^<(p|ul|ol|div)\b/.test(html) ? html : `<p>${html}</p>`;
+      setNotes(s, clean);
+      send({ type: 'notes', slide: s.id, html: clean });
+      try {
+        const r = await fetch(`/api/notes?deck=${encodeURIComponent(deckName)}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Deck': '1' }, body: JSON.stringify({ slide: s.id, html: clean }) });
+        if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
+        $('pv-save').textContent = 'Saved to deck.html';
+      } catch (err) { $('pv-save').textContent = 'Not saved: ' + err.message; }
+    };
+    if (deckName && location.protocol.startsWith('http')) {
+      fetch('/api/decks').then(r => {
+        if (!r.ok) return;
+        canSave = true;
+        notesEl.contentEditable = 'true';
+        notesEl.dataset.placeholder = 'Click to add notes for this slide…';
+        $('pv-save').textContent = 'Notes are editable';
+      }).catch(() => {});
+    }
+    if (!notesEl.dataset.placeholder) notesEl.dataset.placeholder = 'No notes for this slide.';
+    notesEl.addEventListener('focus', () => { if (!canSave) return; editing = true; savingFor = st.slide; document.execCommand('defaultParagraphSeparator', false, 'p'); });
+    notesEl.addEventListener('input', () => { $('pv-save').textContent = 'Editing…'; clearTimeout(saveTimer); saveTimer = setTimeout(save, 700); });
+    notesEl.addEventListener('blur', () => { if (!canSave) return; clearTimeout(saveTimer); save().then(() => { editing = false; render(); }); });
+    notesEl.addEventListener('keydown', e => { if (e.key === 'Escape') notesEl.blur(); });
+    notesEl.addEventListener('paste', e => { if (!canSave) return; e.preventDefault(); document.execCommand('insertText', false, e.clipboardData.getData('text/plain')); });
+
+    const size = d => { const v = Math.max(14, Math.min(60, (parseFloat(getComputedStyle(notesEl).fontSize) || 26) + d)); notesEl.style.setProperty('--nfs', v + 'px'); try { localStorage.setItem('deck-notes-size', v); } catch { /* ignore */ } };
+    try { const v = localStorage.getItem('deck-notes-size'); if (v) notesEl.style.setProperty('--nfs', v + 'px'); } catch { /* ignore */ }
+    $('pv-smaller').onclick = () => size(-2);
+    $('pv-bigger').onclick = () => size(2);
+
+    const cmd = (c, extra = {}) => send({ type: 'cmd', cmd: c, ...extra });
+    $('pv-next-btn').onclick = () => cmd('next');
+    $('pv-back').onclick = () => cmd('back');
+    $('pv-pause').onclick = () => cmd('pause');
+    $('pv-black').onclick = () => cmd('black');
+    $('pv-reset').onclick = () => cmd('reset');
+    $('pv-open').onclick = () => { const w = open(baseURL() + `#${st.slide + 1}.${st.step}`, 'deck-audience:' + location.pathname); if (w) peer = w; };
+    addEventListener('keydown', e => {
+      if (e.metaKey || e.ctrlKey || e.altKey || e.target.closest('[contenteditable="true"], input, textarea')) return;
+      const k = e.key;
+      if (['ArrowRight', 'ArrowDown', 'PageDown', ' ', 'Enter'].includes(k)) { e.preventDefault(); cmd('next'); }
+      else if (['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'].includes(k)) { e.preventDefault(); cmd('back'); }
+      else if (k === 'Home') cmd('go', { slide: 0 });
+      else if (k === 'End') cmd('go', { slide: lastMain(), step: 99 });
+      else if (k === 'k' || k === 'K') cmd('pause');
+      else if (k === 'b' || k === 'B' || k === '.') cmd('black');
+    });
+    addEventListener('resize', render);
+
+    listen(m => {
+      if (m.type === 'notes') { const s = slides.find(x => x.id === m.slide); if (s) { setNotes(s, m.html); if (!editing) render(); } return; }
+      if (m.type !== 'state') return;
+      connected = true;
+      $('pv-wait').hidden = true;
+      if (editing && m.slide !== st.slide) { clearTimeout(saveTimer); save(); editing = false; notesEl.blur(); }
+      st = m;
+      render();
+    });
+    send({ type: 'hello' });
+    setTimeout(() => { if (!connected) $('pv-wait').hidden = false; }, 1200);
+    setInterval(() => {
+      const sec = st.t0 ? Math.floor((Date.now() - st.t0) / 1000) : 0;
+      $('pv-time').textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+      $('pv-clock').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }, 500);
+    render();
   }
 
   /* ── Input ───────────────────────────────────────────────────────────────── */
@@ -417,7 +587,7 @@
     else if (k === 'f' || k === 'F') (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen()).catch(() => {});
     else if (k === 'p' || k === 'P') openPresenter();
     else if (k === 'k' || k === 'K') setPaused(!paused);
-    else if (k === 'b' || k === 'B' || k === '.') { const on = !document.body.classList.contains('is-black'); document.body.classList.toggle('is-black', on); setPaused(on); }
+    else if (k === 'b' || k === 'B' || k === '.') toggleBlack();
   }
 
   /* ── Start ───────────────────────────────────────────────────────────────── */
@@ -454,6 +624,8 @@
       return expose();
     }
 
+    if (MODE === 'presenter') { presenterView(); return expose(); }
+
     document.body.classList.add('is-presenting');
     if (params.has('static')) document.body.classList.add('is-static');
     const black = document.createElement('div');
@@ -468,12 +640,35 @@
       hide = setTimeout(() => document.body.classList.remove('is-cursor'), 1800);
     });
     addEventListener('message', e => { const m = e.data || {}; if (m.deck === 'go') go(m.slide, m.step || 0, { instant: m.instant }); });
+    listen(obey);
     addEventListener('resize', fit);
     fit();
     addEventListener('hashchange', () => { const [i, n] = resolveHash(); if (i !== cur || n !== step) go(i, n, { instant: true }); });
     const [i, n] = resolveHash();
     go(i, n);
     expose();
+    // ?notes (used by the editor's Present button): open the notes window right away, or on the first click or key
+    // if the browser blocks pop-ups that no click asked for.
+    if (params.has('notes') && !openPresenter()) askForNotes();
+  }
+
+  function askForNotes() {
+    const card = document.createElement('div');
+    card.className = 'deck-notes-ask';
+    card.innerHTML = '<b>Click or press any key to start</b><span>Your speaker notes open in a separate window. (To skip this, allow pop-ups for this site.)</span>';
+    card.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:60;display:flex;flex-direction:column;gap:4px;align-items:center;text-align:center;padding:14px 22px;border-radius:14px;background:rgba(28,29,33,.92);color:#e8e9ec;font:15px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.5);cursor:pointer';
+    card.querySelector('span').style.cssText = 'color:#9a9ca5;font-size:13px';
+    document.body.append(card);
+    const go = e => {
+      if (e.type === 'keydown' && /^(f|F|Shift|Meta|Control|Alt)$/.test(e.key)) return; // fullscreen first is fine
+      e.preventDefault(); e.stopImmediatePropagation();
+      removeEventListener('keydown', go, true); removeEventListener('pointerdown', go, true);
+      if (e.type === 'pointerdown') addEventListener('click', ev => { ev.stopImmediatePropagation(); ev.preventDefault(); }, { capture: true, once: true });
+      card.remove();
+      openPresenter();
+    };
+    addEventListener('keydown', go, true);
+    addEventListener('pointerdown', go, true);
   }
 
   // Edit mode: show one slide (all steps visible, nothing hidden).

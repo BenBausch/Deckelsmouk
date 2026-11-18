@@ -256,8 +256,6 @@ function animate() {
 
 function slideTab() {
   const s = currentSlide();
-  const notes = s.querySelector(':scope > .notes');
-  const notesText = notes ? [...notes.querySelectorAll('p')].map(p => p.textContent).join('\n\n') || notes.textContent.trim() : '';
   const bg = s.style.background || s.style.backgroundColor || '';
   panel().innerHTML = `
     <div class="sec"><h4>Slide ${app.index + 1} of ${slides().length}</h4>
@@ -269,10 +267,7 @@ function slideTab() {
       ${swatches('slidebg')}
       <div class="row"><label>Backup</label><input data-k="backup" type="checkbox" ${s.hasAttribute('data-backup') ? 'checked' : ''} style="flex:none;width:auto"><span class="hint" style="margin:0">after the end (End key skips it)</span></div>
     </div>
-    <div class="sec"><h4>Speaker notes</h4>
-      <textarea data-k="notes" rows="9" style="width:100%;resize:vertical" placeholder="Shown in the presenter window (P)">${esc(notesText)}</textarea>
-      ${notes && notes.querySelector(':not(p)') ? '<p class="hint">These notes contain formatting; editing here keeps paragraphs only.</p>' : ''}
-    </div>
+    <div class="sec"><h4>Speaker notes</h4><p class="hint">Write them in the notes field under the slide. When you press <b>Present</b>, they open in a separate window, where you can also edit them.</p></div>
     <div class="sec"><h4>Files</h4><div class="btns">
       <button data-open="html">Open deck.html</button><button data-open="js">Open animations.js</button></div>
       <p class="hint" style="margin-top:8px">Opens in VS Code. Changes on disk show up here at once.</p></div>`;
@@ -284,11 +279,6 @@ function slideTab() {
     bg: v => { s.style.background = v; },
     bgtext: v => { s.style.background = v; },
     backup: v => { if (v) s.setAttribute('data-backup', ''); else s.removeAttribute('data-backup'); },
-    notes: v => {
-      let n = s.querySelector(':scope > .notes');
-      if (!n) { n = app.doc.createElement('aside'); n.className = 'notes'; s.append(n); }
-      n.replaceChildren(...v.split(/\n\s*\n/).filter(t => t.trim()).map(t => { const p = app.doc.createElement('p'); p.textContent = t.trim(); return p; }));
-    },
   }, 'Slide');
   $$('[data-swatch]', panel()).forEach(btn => btn.onclick = () => { s.style.background = btn.dataset.var; commit('Slide background'); syncThumbs(); slideTab(); });
   $$('[data-open]', panel()).forEach(b => b.onclick = () => api.post(`/api/reveal?deck=${app.deck}&file=${b.dataset.open}`));

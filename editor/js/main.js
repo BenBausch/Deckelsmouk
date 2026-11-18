@@ -4,6 +4,7 @@ import { initCanvas, attachCanvas, insertFile, startTextEdit, stopTextEdit, text
 import * as ops from './ops.js';
 import { initInspector } from './inspector.js';
 import { initClaude, focusPrompt, stop as stopClaude } from './claude.js';
+import { initNotes } from './notes.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -48,7 +49,7 @@ async function open(name) {
   document.title = `${titleOf(app.html)} · Deckelsmouk`;
   $('#deck-title').value = titleOf(app.html);
   app.index = Math.max(0, (+params.get('slide') || 1) - 1);
-  initCanvas(); initInspector(); initClaude();
+  initCanvas(); initInspector(); initClaude(); initNotes();
   app.on('frame', onFrame);
   app.on('slide', () => history.replaceState(null, '', `/?deck=${encodeURIComponent(app.deck)}&slide=${app.index + 1}`));
   await loadFrames();
@@ -111,7 +112,7 @@ const commands = {
   'slide-blank': () => ops.addSlide('blank'), 'slide-title': () => ops.addSlide('title'), 'slide-text': () => ops.addSlide('text'),
   'slide-bullets': () => ops.addSlide('bullets'), 'slide-image': () => ops.addSlide('image'), 'slide-stat': () => ops.addSlide('stat'),
   'slide-duplicate': ops.duplicateSlide, 'slide-delete': ops.deleteSlide,
-  preview, present: () => window.open(`/decks/${app.deck}/deck.html#${app.index + 1}`, `deck-${app.deck}`),
+  preview, present: () => window.open(`/decks/${app.deck}/deck.html?notes#${app.index + 1}`, `deck-${app.deck}`),
   export: exportDeck,
   'claude-stop': stopClaude,
 };
@@ -131,7 +132,7 @@ function wire() {
     if (!e.target.closest('.menu')) closeMenus();
   });
   document.addEventListener('keydown', onKey);
-  document.addEventListener('paste', e => { if (!e.target.closest('input, textarea')) onPaste(e); });
+  document.addEventListener('paste', e => { if (!e.target.closest('input, textarea, [contenteditable="true"]')) onPaste(e); });
   $('#file-input').onchange = async e => { for (const f of e.target.files) await insertFile(f); e.target.value = ''; };
   $('#deck-title').onchange = e => {
     const t = e.target.value.replace(/[<&]/g, '').trim() || app.deck;
@@ -167,6 +168,11 @@ function onKey(e) {
     if (K === 'a') { handled(); return ops.selectAll(); }
     if (K === 'c') { if (ops.copy()) handled(); return; }
     if (K === 'x') { if (ops.copy(true)) handled(); return; }
+    if (K === 'v') { // the paste event normally handles this; fall back to the editor's own clipboard if it never comes
+      app._pasted = false;
+      setTimeout(() => { if (!app._pasted && app.clipboard) ops.paste(); }, 120);
+      return;
+    }
     if (K === 'enter') { handled(); return run('preview'); }
     return;
   }

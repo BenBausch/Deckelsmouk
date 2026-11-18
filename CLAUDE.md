@@ -23,6 +23,7 @@ dist/<name>.html             built single-file deck (npm run build); never edit 
   `<!-- ===== Slide N · id ===== -->` (the editor renumbers these; keep them when you add slides).
   Nothing but slides and their marker comments goes between the markers. Comments you want to keep go *inside* a section.
 - A slide: `<section class="slide" id="unique-id" data-title="Human title">…<aside class="notes"><p>…</p></aside></section>`.
+  Speaker notes are the `<aside class="notes">` (paragraphs, simple formatting); they appear in the notes window (`?presenter`, key P).
   Optional: `data-transition="fade|none|push|zoom"`, `data-transition-dur="0.6"`, `data-backup` (after the end).
 - **Every top-level object on a slide is absolutely positioned with inline `left`, `top`, `width` (and `height` when it
   matters) in px**, e.g. `style="position:absolute;left:140px;top:120px;width:1200px"`. That is what the editor moves and
@@ -96,7 +97,7 @@ need to save (scripts do not run in the editor); keep effects reusable and named
 ## Commands
 
 `npm run dev` (editor at http://localhost:4800) · `npm run build [deck]` → `dist/<deck>.html` · `npm run new -- <name>` ·
-`npm run unpack -- <file.html> <name>`.
+`npm run unpack -- <file.html> <name>` · `npm test` (end-to-end suite; run it after changing runtime/, editor/ or tools/).
 
 ## Converting an older presentation
 

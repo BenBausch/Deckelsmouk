@@ -142,8 +142,9 @@ function onDown(e) {
   app.frame.focus();
   let drill = null;
   const holder = app.selection.find(s => s.contains(t));
-  if (holder && !e.shiftKey && !e.altKey) {
-    drill = holder !== t ? pickFor(t) : null; // a plain click (no drag) goes one level deeper
+  if (holder && !e.shiftKey) {
+    // Dragging moves the selection; a click without a drag goes one level deeper (⌥: straight to the exact element).
+    drill = holder !== t ? (e.altKey ? svgRoot(t) : pickFor(t)) : null;
   } else {
     const obj = e.altKey || e.metaKey ? svgRoot(t) : topOf(svgRoot(t));
     if (e.shiftKey) setSelection(app.selection.includes(obj) ? app.selection.filter(x => x !== obj) : [...app.selection, obj]);
@@ -253,8 +254,8 @@ function onHandleDown(e) {
   const media = el.matches('img, video, svg, canvas, picture');
   const ratio = s.width / (s.height || 1);
   const sx = e.clientX, sy = e.clientY;
+  // Listen on the window: the handle itself is redrawn (replaced) on every move.
   viewport.classList.add('dragging');
-  e.target.setPointerCapture(e.pointerId);
   const move = ev => {
     const k = scale();
     let dx = (ev.clientX - sx) / k, dy = (ev.clientY - sy) / k;
@@ -278,13 +279,15 @@ function onHandleDown(e) {
     draw();
   };
   const up = () => {
-    e.target.removeEventListener('pointermove', move);
-    e.target.removeEventListener('pointerup', up);
+    removeEventListener('pointermove', move);
+    removeEventListener('pointerup', up);
+    removeEventListener('pointercancel', up);
     viewport.classList.remove('dragging');
     commit('Resize');
   };
-  e.target.addEventListener('pointermove', move);
-  e.target.addEventListener('pointerup', up);
+  addEventListener('pointermove', move);
+  addEventListener('pointerup', up);
+  addEventListener('pointercancel', up);
 }
 
 /* ── Marquee ── */
@@ -370,6 +373,7 @@ export function textKey(e) {
 /* ── Paste and drop ── */
 
 export async function onPaste(e) {
+  app._pasted = true;
   if (app.editing) { // plain text only, so pasted styles don't leak in
     e.preventDefault();
     app.doc.execCommand('insertText', false, e.clipboardData.getData('text/plain'));

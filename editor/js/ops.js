@@ -74,7 +74,7 @@ export function copy(cut = false) {
   const r = roots();
   if (!r.length) return false;
   app.clipboard = r.map(cleanHTML);
-  try { navigator.clipboard.writeText(app.clipboard.join('\n')); } catch { /* not allowed: internal clipboard still works */ }
+  try { navigator.clipboard.writeText(app.clipboard.join('\n')).catch(() => {}); } catch { /* not allowed: internal clipboard still works */ }
   if (cut) deleteSelection();
   return true;
 }

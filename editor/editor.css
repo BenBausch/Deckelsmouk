@@ -120,6 +120,16 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
 .spinner { width: 14px; height: 14px; border: 2px solid var(--muted); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ── Speaker notes ── */
+.notes-pane { flex: none; border-top: 1px solid var(--line); background: var(--panel); padding: 6px 12px 8px; }
+.notes-head { display: flex; gap: 10px; align-items: baseline; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 4px; }
+.notes-hint { text-transform: none; letter-spacing: 0; font-weight: 400; opacity: .7; }
+.notes-edit { min-height: 38px; max-height: 64px; overflow: auto; padding: 6px 10px; border-radius: 6px; background: #18191c; border: 1px solid var(--line); font-size: 14px; line-height: 1.5; outline: none; transition: max-height .15s; }
+.notes-edit:focus { border-color: var(--accent); max-height: 220px; }
+.notes-edit:empty::before { content: attr(data-placeholder); color: #6b6e76; }
+.notes-edit p { margin: 0 0 .4em; }
+.notes-edit p:last-child { margin-bottom: 0; }
+
 /* ── Claude ── */
 .claude { flex: none; border-top: 1px solid var(--line); background: var(--panel); padding: 8px 12px 10px; }
 .claude-log { max-height: 220px; overflow: auto; margin-bottom: 8px; padding: 2px 2px 6px; display: flex; flex-direction: column; gap: 6px; }

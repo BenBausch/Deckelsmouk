@@ -204,6 +204,25 @@ async function api(req, res, url) {
       fs.writeFileSync(path.join(DIST, `${deck}.html`), html);
       return send(res, 200, { path: `/dist/${deck}.html`, kb: Math.round(Buffer.byteLength(html) / 1024), assets });
     }
+    case 'POST /api/notes': {
+      // From the presenter window: replace one slide's <aside class="notes"> in deck.html, leaving the rest untouched.
+      // Written like an outside edit, so an open editor reloads it.
+      const file = path.join(deckDir(deck), 'deck.html');
+      const { slide, html } = await json(req);
+      if (!/^[\w-]+$/.test(slide || '')) return fail(res, 400, 'Bad slide id');
+      const notes = String(html || '').replace(/<(script|style)[\s\S]*?<\/\1>/gi, '').replace(/<\/?aside\b[^>]*>/gi, '');
+      const src = fs.readFileSync(file, 'utf8');
+      const open = new RegExp(`<section\\b[^>]*\\bid=["']${slide}["'][^>]*>`).exec(src);
+      if (!open) return fail(res, 404, `No slide with id "${slide}"`);
+      const end = src.indexOf('</section>', open.index);
+      let body = src.slice(open.index, end);
+      const aside = /<aside\b[^>]*class=["'][^"']*\bnotes\b[^"']*["'][^>]*>[\s\S]*?<\/aside>/i;
+      const block = `<aside class="notes">${notes}</aside>`;
+      if (aside.test(body)) body = body.replace(aside, () => block);
+      else body = body.replace(/\s*$/, '') + `\n  ${block}\n`;
+      fs.writeFileSync(file, src.slice(0, open.index) + body + src.slice(end));
+      return send(res, 200, { ok: true });
+    }
     case 'POST /api/claude': return runClaude(req, res);
     case 'POST /api/claude/stop': {
       const p = runs.get(deck);

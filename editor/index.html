@@ -73,7 +73,7 @@
     <span id="save-state" class="save-state">Saved</span>
     <div class="group">
       <button data-cmd="preview" title="Play this slide here (Esc to close)">▶<span>Play</span></button>
-      <button data-cmd="present" title="Present from this slide in a new tab">⛶<span>Present</span></button>
+      <button data-cmd="present" title="Present from this slide: the deck opens in a new tab, your notes in a separate window">⛶<span>Present</span></button>
       <button data-cmd="export" class="primary" title="Build one self-contained HTML file">⬇<span>Export</span></button>
     </div>
   </header>
@@ -103,6 +103,11 @@
         <iframe id="frame" title="Slide"></iframe>
         <div id="overlay" class="overlay"></div>
         <div id="busy" class="busy" hidden><div class="busy-card"><span class="spinner"></span><span>Claude is editing the deck…</span><button data-cmd="claude-stop">Stop</button></div></div>
+      </div>
+
+      <div class="notes-pane" id="notes-pane">
+        <div class="notes-head"><span>Speaker notes</span><span class="notes-hint">shown in the notes window when you present</span></div>
+        <div class="notes-edit" id="notes-edit" contenteditable="true" spellcheck="true" data-placeholder="Click to add speaker notes for this slide…"></div>
       </div>
 
       <div class="claude" id="claude">
