@@ -37,7 +37,8 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
 /* ── Picker ── */
 .picker { position: fixed; inset: 0; overflow: auto; }
 .picker-inner { max-width: 980px; margin: 0 auto; padding: 64px 24px; }
-.picker h1 { font-size: 40px; letter-spacing: -.02em; margin: 0; }
+.picker h1 { font-size: 40px; letter-spacing: -.02em; margin: 0; display: flex; align-items: center; gap: 14px; }
+.picker-logo { height: 52px; }
 .picker .sub { color: var(--muted); font-size: 16px; margin: 6px 0 28px; }
 .new-deck { display: flex; gap: 8px; margin-bottom: 28px; flex-wrap: wrap; }
 .new-deck input { flex: 1 1 160px; padding: 9px 12px; }
@@ -57,7 +58,8 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
 .top button span { color: var(--muted); font-size: 12px; }
 .top button:hover span { color: var(--text); }
 .top button.primary span { color: #fff; }
-.brand { color: var(--accent); text-decoration: none; font-size: 20px; padding: 0 4px; }
+.brand { display: flex; padding: 0 2px; }
+.brand img { height: 26px; display: block; }
 .deck-title { width: 240px; background: transparent; border-color: transparent; font-weight: 600; font-size: 14px; }
 .deck-title:hover { border-color: var(--line); }
 .spacer { flex: 1; }

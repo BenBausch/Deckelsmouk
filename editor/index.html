@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Deckelsmouk</title>
+<link rel="icon" href="/editor/logo.svg">
 <link rel="stylesheet" href="/editor/editor.css">
 </head>
 <body>
@@ -11,7 +12,7 @@
 <!-- Deck picker (shown when no deck is open) -->
 <div id="picker" class="picker" hidden>
   <div class="picker-inner">
-    <h1>Deckelsmouk</h1>
+    <h1><img src="/editor/logo.svg" alt="" class="picker-logo">Deckelsmouk</h1>
     <p class="sub">Animated HTML presentations. Edit by hand, arrange by mouse, animate by asking Claude.</p>
     <form id="new-deck" class="new-deck">
       <input name="name" placeholder="new-deck-name" pattern="[a-zA-Z0-9][a-zA-Z0-9._-]*" required>
@@ -26,7 +27,7 @@
 <!-- Editor -->
 <div id="editor" class="editor" hidden>
   <header class="top">
-    <a class="brand" href="/" title="All decks">◆</a>
+    <a class="brand" href="/" title="All decks"><img src="/editor/logo.svg" alt="Deckelsmouk"></a>
     <input id="deck-title" class="deck-title" spellcheck="false" title="Deck title">
     <div class="group">
       <button data-cmd="undo" title="Undo (⌘Z)">↶</button>

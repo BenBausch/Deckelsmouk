@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 176" role="img" aria-label="Deckelsmouk turtle">
+  <defs>
+    <linearGradient id="shell" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8fd3ff"/>
+      <stop offset=".5" stop-color="#4c8dff"/>
+      <stop offset="1" stop-color="#9b6bff"/>
+    </linearGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7ee0a1"/>
+      <stop offset="1" stop-color="#2fb36b"/>
+    </linearGradient>
+    <clipPath id="dome"><path d="M44 118 C44 58 88 30 124 30 C164 30 204 58 204 118 Z"/></clipPath>
+  </defs>
+  <!-- legs and tail -->
+  <path d="M40 116 L18 128 L44 126 Z" fill="url(#skin)"/>
+  <rect x="62" y="108" width="28" height="44" rx="13" fill="url(#skin)"/>
+  <rect x="158" y="108" width="28" height="44" rx="13" fill="url(#skin)"/>
+  <!-- head -->
+  <path d="M190 104 C200 86 214 72 230 74 C246 76 250 96 240 106 C232 114 214 116 196 116 Z" fill="url(#skin)"/>
+  <circle cx="232" cy="88" r="5" fill="#0b0b0f"/>
+  <circle cx="233.6" cy="86.4" r="1.6" fill="#fff"/>
+  <path d="M236 102 Q241 100 244 97" fill="none" stroke="#1d7a47" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- shell -->
+  <path d="M44 118 C44 58 88 30 124 30 C164 30 204 58 204 118 Z" fill="url(#shell)"/>
+  <g clip-path="url(#dome)" fill="none" stroke="#ffffff" stroke-opacity=".38" stroke-width="3.5" stroke-linejoin="round">
+    <path d="M104 62 L124 50 L144 62 L144 86 L124 98 L104 86 Z"/>
+    <path d="M104 62 L84 50 L64 62 M144 62 L164 50 L184 62 M104 86 L84 98 L84 122 M144 86 L164 98 L164 122 M124 98 L124 122 M124 50 L124 26 M64 62 L64 86 L84 98 M184 62 L184 86 L164 98"/>
+  </g>
+  <!-- play mark: it's a presentation turtle -->
+  <path d="M118 64 L134 74 L118 84 Z" fill="#fff"/>
+  <!-- rim -->
+  <rect x="34" y="112" width="180" height="14" rx="7" fill="#2a3a8f"/>
+  <rect x="34" y="112" width="180" height="6" rx="3" fill="#ffffff" fill-opacity=".18"/>
+</svg>

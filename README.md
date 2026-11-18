@@ -1,66 +1,202 @@
-# Deckelsmouk
+<p align="center">
+  <img src="docs/logo.svg" alt="Deckelsmouk turtle" width="220">
+</p>
 
-**Animated presentations as code: written by hand, arranged by mouse, animated by asking Claude.**
+<h1 align="center">Deckelsmouk</h1>
 
-Deckelsmouk is a starter for presentations made of plain HTML and JavaScript. Each deck is one HTML page of slides
-plus one file of named animations. A visual editor, close to PowerPoint or Keynote, handles the small, precise edits.
-For the big moves you select objects or a slide and tell Claude what to do: *"line these up and bring them in one
-per click"*. When you're done, every deck builds into **one self-contained HTML file** that plays offline in any
-browser.
+<p align="center">
+  <b>Presentations that move like a keynote, edit like PowerPoint, and do what you tell them.</b><br>
+  Arrange by mouse. Animate by asking. Ship one HTML file.
+</p>
 
-```
-┌──────────── decks/my-talk/ ────────────┐        npm run build        ┌──── dist/my-talk.html ────┐
-│ deck.html       slides + theme         │  ────────────────────────▶  │ one file, everything in it │
-│ animations.js   named effects, scripts │                             │ slides · runtime ·         │
-│ assets/         images, video, fonts   │                             │ animations at the bottom   │
-└────────────────────────────────────────┘                             └────────────────────────────┘
-          ▲                    ▲
-   visual editor        Claude Code (from the editor's prompt bar, or your terminal)
-```
+<p align="center">
+  <img alt="Zero dependencies" src="https://img.shields.io/badge/dependencies-0-30d158">
+  <img alt="Output: one HTML file" src="https://img.shields.io/badge/output-one%20HTML%20file-4c8dff">
+  <img alt="Works offline" src="https://img.shields.io/badge/works-offline-9b6bff">
+  <img alt="Node 20+" src="https://img.shields.io/badge/node-%E2%89%A520-ffb340">
+  <img alt="Made for Claude Code" src="https://img.shields.io/badge/made%20for-Claude%20Code-d97757">
+</p>
 
-## Quick start
+<p align="center">
+  <img src="docs/editor.png" alt="The Deckelsmouk editor: slide list, live canvas with a selected number, animation inspector, and a prompt bar asking Claude to animate the chart" width="900">
+</p>
 
-Requires **Node 20+**. To use the prompt bar, install the **[Claude Code](https://claude.com/claude-code) CLI**
-(`claude`) and log in. No npm install is needed: there are no dependencies.
+---
+
+## Your slides deserve better than a slide tool
+
+Slide software gives you a timeline of fades and flies. Your browser gives you **everything**: SVG that draws itself,
+numbers that count up, canvases full of particles, real typography, real video, real code. What it never gave you
+was a way to *work* with it: dragging a box two pixels left meant editing a style attribute and refreshing.
+
+**Deckelsmouk closes that gap.** Your deck is plain HTML and JavaScript you own. On top of it sits a visual editor
+you already know how to use, and next to that a prompt bar connected to **Claude Code**. Select three boxes and type
+*"bring these in one per click, the chart last, drawing itself"*. A few seconds later it's done, in clean code you
+can read, and **⌘Z** takes it back if you don't like it.
+
+When the talk is ready, one command turns it into **a single HTML file**. No app, no account, no internet, no
+"which version of Keynote do you have". Email it, put it on a USB stick, open it in ten years.
+
+## Why people switch
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+### 🎯 Precise when you want it
+Drag, resize and lasso. Smart guides snap to edges and centres. Nudge by the pixel, align, distribute, change
+layer order. Double-click to edit text right on the slide. Drop images and videos straight in.
+
+</td>
+<td width="50%" valign="top">
+
+### 💬 Effortless when you don't
+Select anything and ask. Claude sees exactly what you see: the slide, your selection, every object's position.
+It arranges, restyles, writes new animations and adds slides. Its changes appear live and come out as **one undo
+step**.
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+### ✨ Motion that looks expensive
+Word-by-word headlines, counting numbers, self-drawing charts, Keynote-style **magic move**, click-by-click builds,
+exits and transitions. When that isn't enough, script anything JavaScript can draw.
+
+</td>
+<td valign="top">
+
+### 📦 One file, forever
+`npm run build` inlines slides, styles, fonts, images, video and animations into **one self-contained HTML file**
+that plays offline in any browser. It can even be unpacked back into an editable deck.
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+### 🧑‍💻 Code you can read
+No framework magic and no binary format. A deck is `deck.html` (slides, clearly marked) and `animations.js`
+(effects with names). Diff it, review it, put it in git, edit it in VS Code. The editor picks up your changes live.
+
+</td>
+<td valign="top">
+
+### 🎤 Ready for the stage
+Presenter window with current and next slide, notes and a timer. Clicker support, black screen, pause. Print
+to PDF for the handout. Backup slides after the end for Q&A.
+
+</td>
+</tr>
+</table>
+
+## Start in 60 seconds
 
 ```bash
 git clone https://github.com/BenBausch/Deckelsmouk.git
 cd Deckelsmouk
-npm run dev                     # opens the editor at http://localhost:4800
+npm run dev
 ```
 
-Open the **example** deck to see every feature, or create a new deck from the start page (or with
-`npm run new -- my-talk "My Talk"`).
+That's it, with **no `npm install`**. The editor opens at `http://localhost:4800`. Open the **example** deck for a tour
+of every feature, or create your own from the start page.
 
-## The editor
+To use the prompt bar, install the [Claude Code](https://claude.com/claude-code) CLI and log in once. Claude
+runs on your machine using your own Claude Code login, with no API key to manage.
 
-| | |
+## Talk to your slides
+
+Select something, or nothing to mean the whole slide, and just say it:
+
+> *"Animate these in one per click, the chart last with a slow draw."*
+> *"Tidy this slide: align the left edges and give it more air."*
+> *"Write an effect where the logo assembles from four pieces, and use it here."*
+> *"Add a slide after this one comparing the three options as cards."*
+> *"Make the number pop, use the accent colour, and pulse it once at the end."*
+
+Under the hood the editor hands Claude Code the deck, the current slide, and every selected object with its HTML,
+selector and exact box in stage pixels. Claude follows the house rules in [`CLAUDE.md`](CLAUDE.md), may only read and
+edit files (no shell), and you watch each step stream by. Follow-ups keep the conversation (*"slower"*, *"now the
+other two too"*). Pick Opus, Sonnet or Haiku per request.
+
+Prefer the terminal? Run `claude` in the repo and work on any deck directly; the open editor updates as files change.
+
+## How it compares
+
+| | PowerPoint / Keynote | HTML frameworks | Hand-written HTML | **Deckelsmouk** |
+|---|:---:|:---:|:---:|:---:|
+| Visual drag-and-drop editing | ✅ | ❌ | ❌ | ✅ |
+| Animation beyond the preset list | ❌ | ⚠️ | ✅ | ✅ |
+| Ask an AI to arrange and animate the selection | ⚠️ | ❌ | ❌ | ✅ |
+| Readable, diffable source in git | ❌ | ✅ | ✅ | ✅ |
+| One portable file, plays offline anywhere | ❌ | ⚠️ | ⚠️ | ✅ |
+| Zero install, zero dependencies | ❌ | ❌ | ✅ | ✅ |
+
+## How it works
+
+```
+┌──────────── decks/my-talk/ ────────────┐        npm run build        ┌──── dist/my-talk.html ─────┐
+│ deck.html       slides + theme         │  ────────────────────────▶  │ one file, everything inside │
+│ animations.js   named effects, scripts │                             │ slides · player ·           │
+│ assets/         images, video, fonts   │                             │ animations at the bottom    │
+└────────────────────────────────────────┘                             └─────────────────────────────┘
+          ▲                    ▲
+   visual editor      Claude Code (prompt bar or terminal)
+```
+
+The source files are the single source of truth. The editor, Claude and your text editor all write to the same files,
+and everything stays in sync.
+
+### A slide is just HTML
+
+```html
+<!-- ===== Slide 2 · agenda ===== -->
+<section class="slide" id="agenda" data-title="Agenda">
+  <h2 class="h2" data-anim="rise" style="position:absolute;left:140px;top:120px;width:1200px">Three things</h2>
+  <ul class="list" style="position:absolute;left:140px;top:330px;width:1100px">
+    <li data-anim="left" data-step="1">First</li>
+    <li data-anim="left" data-step="2">Second</li>
+  </ul>
+  <aside class="notes"><p>Speaker notes.</p></aside>
+</section>
+```
+
+### Animation is one attribute away
+
+| Attribute | |
 |---|---|
-| **Slides** (left) | Click to open a slide, drag to reorder. **＋ Slide** offers layouts (title, bullets, image, big number…). |
-| **Canvas** (centre) | The real deck, live. Select, drag, resize, snap to edges and centres, lasso, double-click to edit text, drop or paste images and videos. |
-| **Inspector** (right) | **Design**: position, size, rotation, type style, colours from the deck's theme. **Animate**: entrance, click step, delay, exit, magic move, and the animation order of the slide. **Slide**: title, transition, background, speaker notes. **Code**: the HTML of the selection. |
-| **Prompt bar** (bottom) | Ask Claude about what you selected. It edits the files, you see the result right away, and one **⌘Z** undoes it. |
+| `data-anim="rise"` | entrance effect |
+| `data-step="2"` | appears on the 2nd click (absent: with the slide) |
+| `data-delay="0.3"` `data-dur="1.2"` | timing in seconds |
+| `data-out="fade"` `data-out-step="3"` | exit |
+| `data-magic="logo"` | glides to the element with the same key on the next slide |
 
-Every change is saved to `deck.html` immediately. Edits made elsewhere (Claude in a terminal, VS Code, `git checkout`)
-show up in the open editor within a second.
+**Built-in effects:** `fade` `rise` `drop` `left` `right` `zoom` `pop` `blur` `wipe` `wipe-up` `reveal` `words` `count`
+`draw` `pulse`.
 
-### Working with Claude
+### Anything more is code with a name
 
-Select one or more objects (or nothing, to mean the whole slide) and type a request:
+```js
+/* ===== Effects ===== */
 
-- *"Animate these in one per click, the chart last with a draw effect."*
-- *"Tidy this slide: align the left edges and balance the whitespace."*
-- *"Write a new effect where the logo assembles from four pieces, and use it here."*
-- *"Add a slide after this one comparing the three options as cards."*
+// Swings in from below with a slight turn. Use it anywhere: data-anim="swing".
+Deck.effect('swing', { from: { opacity: 0, rotate: '-8deg', translate: '0 60px' }, dur: 1100 });
 
-The editor sends Claude the deck, the current slide, and each selected object's HTML, selector and box in stage
-pixels. Claude Code runs on your machine (`claude -p`), may only read and edit files (no shell), and follows the
-conventions in [`CLAUDE.md`](CLAUDE.md). Follow-up prompts keep the conversation; **New chat** starts fresh. The model
-picker chooses Opus, Sonnet or Haiku; leaving it on the default uses your Claude Code default.
+/* ===== Slide scripts ===== */
 
-You can also open Claude Code in this folder and work on a deck directly; the editor reloads as files change.
+// Slide "orbit": particles on a canvas; the first click speeds them up.
+Deck.slide('orbit', {
+  enter(ctx) { ctx.loop((t, dt) => { /* draw a frame */ }); },
+  step(n, ctx) { /* react to clicks */ },
+});
+```
 
-### Shortcuts
+Slide scripts get a small, safe context: loops and timers clean up when you leave the slide and freeze when you press
+**K**. The full reference is in [`CLAUDE.md`](CLAUDE.md), so humans and Claude follow the same rules.
+
+<details>
+<summary><b>Editor shortcuts</b></summary>
 
 | Key | Action |
 |---|---|
@@ -77,9 +213,12 @@ You can also open Claude Code in this folder and work on a deck directly; the ed
 | ⌘Enter | play the current slide (Esc closes) |
 | T | new text box |
 
-## Presenting
+</details>
 
-Open the built `dist/<deck>.html`, or **Present** in the editor.
+<details>
+<summary><b>Presenting</b></summary>
+
+Open the built `dist/<deck>.html` in any browser, or click **Present** in the editor.
 
 | Key | Action |
 |---|---|
@@ -91,69 +230,13 @@ Open the built `dist/<deck>.html`, or **Present** in the editor.
 | K | pause / resume all motion |
 | B | black screen |
 
-The URL tracks the position (`#3.1` = slide 3, step 1; `#intro` works too). `?print` lays out every slide in its
-final state for **Print → Save as PDF**; `?static` turns off motion for screenshots.
+The URL keeps your place (`#3.1` = slide 3, step 1; `#intro` works too). Add `?print` for every slide in its final
+state, ready for **Print → Save as PDF**, or `?static` to turn off motion for screenshots.
 
-## How a deck is written
+</details>
 
-`deck.html` is ordinary HTML. The slides sit between two markers, each one labelled:
-
-```html
-<!-- ==================== SLIDES ==================== -->
-
-<!-- ===== Slide 2 · agenda ===== -->
-<section class="slide" id="agenda" data-title="Agenda">
-  <h2 class="h2" data-anim="rise" style="position:absolute;left:140px;top:120px;width:1200px">Three things</h2>
-  <ul class="list" style="position:absolute;left:140px;top:330px;width:1100px">
-    <li data-anim="left" data-step="1">First</li>
-    <li data-anim="left" data-step="2">Second</li>
-  </ul>
-  <aside class="notes"><p>Speaker notes.</p></aside>
-</section>
-
-<!-- ==================== END SLIDES ==================== -->
-```
-
-- The stage is 1920 × 1080 and scales to any screen. Top-level objects are absolutely positioned in stage pixels,
-  which is what the editor moves.
-- The theme (colours, type scale, cards…) lives in `<style id="deck-style">` as CSS variables and classes.
-
-### Animations
-
-Simple builds are attributes:
-
-| Attribute | |
-|---|---|
-| `data-anim="rise"` | entrance effect |
-| `data-step="2"` | appears on the 2nd click (absent: with the slide) |
-| `data-delay="0.3"` `data-dur="1.2"` | timing in seconds |
-| `data-out="fade"` `data-out-step="3"` | exit |
-| `data-magic="logo"` | glides to the element with the same key on the next slide |
-
-Built-in effects: `fade` `rise` `drop` `left` `right` `zoom` `pop` `blur` `wipe` `wipe-up` `reveal` `words` (word by word)
-`count` (counts up to the number in the text) `draw` (draws SVG strokes) `pulse`.
-
-Anything else goes in `animations.js` as **named** code:
-
-```js
-/* ===== Effects ===== */
-
-// Swings in from below with a slight turn. Use with data-anim="swing".
-Deck.effect('swing', { from: { opacity: 0, rotate: '-8deg', translate: '0 60px' }, dur: 1100 });
-
-/* ===== Slide scripts ===== */
-
-// Slide "orbit": particles on a canvas; step 1 speeds them up.
-Deck.slide('orbit', {
-  enter(ctx) { ctx.loop((t, dt) => { /* draw */ }); },
-  step(n, ctx) { /* react to clicks */ },
-});
-```
-
-Slide scripts get a small context (`ctx.loop`, `ctx.after`, `ctx.play`, `ctx.$`…) that is cleaned up when the slide
-is left and paused by **K**. The full reference is in [`CLAUDE.md`](CLAUDE.md), which Claude also reads.
-
-## Commands
+<details>
+<summary><b>Commands and settings</b></summary>
 
 ```bash
 npm run dev                          # editor + live reload (http://localhost:4800); `npm start` without opening a browser
@@ -164,28 +247,44 @@ npm run unpack -- talk.html my-talk  # a built single file back into an editable
 
 Environment: `PORT`, `DECK_CLAUDE_MODEL` (default model for the prompt bar), `DECK_CLAUDE_BIN` (path to `claude`).
 
-## Repository layout
+</details>
+
+<details>
+<summary><b>Repository layout</b></summary>
 
 ```
 decks/<name>/        your presentations (deck.html, animations.js, assets/)
 templates/default/   the starting point for new decks; add your own themes as more folders
-runtime/             the player shared by all decks (deck.js, deck.css); inlined into every build
+runtime/             the player shared by all decks; inlined into every build
 editor/              the visual editor (plain ES modules, no build step)
 tools/               dev server, build, new, unpack (Node, no dependencies)
+docs/                logo and screenshots
 dist/                built single-file decks (git-ignored by default)
 CLAUDE.md            deck format and animation API, for Claude and for you
 ```
 
-## Bringing in older presentations
+</details>
 
-Ask Claude Code in this folder: *"Convert ~/talks/old-pitch/index.html into a deck called old-pitch."* The
-conversion steps are in `CLAUDE.md`. A deck built with Deckelsmouk can always be unpacked again with `npm run unpack`.
+## Bring your old decks
 
-## Notes and limits
+Have a folder of HTML talks from before? Ask Claude Code in this repo:
 
-- The editor shows each slide fully built and doesn't run slide scripts (canvas drawings appear when you play the
-  slide). Use **Play** (⌘Enter) to see the motion.
-- Dragging an element that sits inside a layout (a list item, a flex child) offsets it from its place in that layout;
-  dragging a top-level object makes it absolutely positioned.
-- The dev server only listens on `127.0.0.1` and refuses cross-site requests, because it can start Claude Code.
-- Large videos make large single files; everything is base64-inlined.
+> *"Convert ~/talks/old-pitch/index.html into a deck called old-pitch."*
+
+The conversion recipe is in `CLAUDE.md`. From then on, the old deck has an editor too.
+
+## Good to know
+
+- The editor shows each slide fully built so you can reach every element; press **Play** (⌘Enter) to see the motion.
+  Script-driven canvases come alive there.
+- Dragging an element out of a layout (a list item, a flex child) offsets it from its place in that layout. Top-level
+  objects are positioned freely, like in PowerPoint.
+- The dev server listens on `127.0.0.1` only and refuses cross-site requests, since it can start Claude Code.
+- Everything is inlined, so long videos make big files. That's the price of a deck that works anywhere.
+
+## Why a turtle?
+
+*Deckelsmouk* is Luxembourgish for **turtle**: a creature that carries its whole home on its back. So does every deck
+you build here: one file with everything inside, ready to go wherever you are. Unlike its namesake, it's fast.
+
+<p align="center"><img src="docs/logo.svg" alt="" width="64"></p>
