@@ -188,17 +188,50 @@ function uniqueSlideId(base) {
   return id;
 }
 
-export function addSlide(layout = 'blank') {
-  const s = app.doc.createElement('section');
-  s.className = 'slide';
-  s.id = uniqueSlideId('slide-' + (slides().length + 1));
-  s.dataset.title = 'New slide';
-  s.innerHTML = `${LAYOUTS[layout] || ''}\n  <aside class="notes"><p></p></aside>\n`;
+function insertSlide(s, label) {
   const cur = currentSlide();
   if (cur) cur.after(s); else app.doc.querySelector('.stage').append(s);
-  commit('New slide');
+  commit(label);
   syncThumbs(true);
   showSlide(app.index + (cur ? 1 : 0));
+}
+
+// A simple built-in layout. In a template, the new slide is a new layout: it gets a key (data-layout) and a name.
+export function addSlide(layout = 'blank', name = 'New slide') {
+  const s = app.doc.createElement('section');
+  s.className = 'slide';
+  if (app.kind === 'template') {
+    s.id = uniqueSlideId(layout === 'blank' ? 'layout' : layout);
+    s.dataset.layout = s.id;
+    s.dataset.title = name;
+  } else {
+    s.id = uniqueSlideId('slide-' + (slides().length + 1));
+    s.dataset.title = 'New slide';
+  }
+  s.innerHTML = `${LAYOUTS[layout] || ''}\n  <aside class="notes"><p></p></aside>\n`;
+  insertSlide(s, app.kind === 'template' ? 'New layout' : 'New slide');
+}
+
+/** The layouts this deck offers (from its template), parsed from <template id="deck-layouts"> in deck.html. */
+export function deckLayouts() {
+  const m = /<template id="deck-layouts">([\s\S]*?)<\/template>/.exec(app.html);
+  if (!m) return [];
+  const t = app.doc.createElement('template');
+  t.innerHTML = m[1];
+  return [...t.content.querySelectorAll('section.slide')].map(s => ({ title: s.dataset.title || s.id || 'Layout', section: s }));
+}
+
+// A new slide from one of the deck's layouts: same design (data-layout) and placeholders, fresh id and notes.
+export function addSlideFromLayout(i) {
+  const l = deckLayouts()[i];
+  if (!l) return;
+  const s = app.doc.importNode(l.section, true);
+  s.id = uniqueSlideId('slide-' + (slides().length + 1));
+  s.dataset.title = 'New slide';
+  let notes = s.querySelector(':scope > .notes');
+  if (!notes) { notes = app.doc.createElement('aside'); notes.className = 'notes'; s.append(notes); }
+  notes.innerHTML = '<p></p>';
+  insertSlide(s, 'New slide');
 }
 
 export function duplicateSlide() {

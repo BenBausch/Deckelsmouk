@@ -6,6 +6,6 @@ import { unpack } from './lib.mjs';
 const [file, name] = process.argv.slice(2);
 if (!file || !name) { console.log('Usage: npm run unpack -- <file.html> <deck-name>'); process.exit(1); }
 try {
-  const { assets } = unpack(file, name);
-  console.log(`✓ decks/${name}/ created (${assets} asset${assets === 1 ? '' : 's'} extracted)`);
+  const { assets, name: used } = unpack(file, name);
+  console.log(`✓ decks/${used}/ created (${assets} asset${assets === 1 ? '' : 's'} extracted)`);
 } catch (e) { console.error(`✗ ${e.message}`); process.exit(1); }

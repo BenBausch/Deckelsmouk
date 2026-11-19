@@ -15,13 +15,23 @@
     <h1><img src="/editor/logo.svg" alt="" class="picker-logo">Deckelsmouk</h1>
     <p class="sub">Animated HTML presentations. Edit by hand, arrange by mouse, animate by asking Claude.</p>
     <form id="new-deck" class="new-deck">
-      <input name="name" placeholder="new-deck-name" pattern="[a-zA-Z0-9][a-zA-Z0-9._-]*" required>
+      <input name="name" placeholder="Deck name" required>
       <input name="title" placeholder="Title (optional)">
-      <select name="template" id="template-select"></select>
+      <input type="hidden" name="template" value="default">
       <button class="primary">Create deck</button>
     </form>
+    <div class="section-head"><h2>Templates</h2><span>New decks use <b id="template-chosen">Default</b>. Click a template to pick it.</span></div>
+    <div id="template-list" class="template-list"></div>
+    <div class="section-head"><h2>Decks</h2></div>
     <div id="deck-list" class="deck-list"></div>
+    <details id="archive-section" class="archive-section" hidden>
+      <summary><h2>Archived</h2><span id="archive-count"></span></summary>
+      <div id="archive-list" class="deck-list"></div>
+    </details>
   </div>
+  <div id="card-menu" class="menu card-menu" role="menu"></div>
+  <div id="drop-hint" class="drop-hint" hidden><div><b>Drop to make a template from it</b><span>PowerPoint (.pptx, .potx) · HTML presentation · PDF · .zip</span></div></div>
+  <input type="file" id="import-input" accept=".pptx,.potx,.ppsx,.pptm,.potm,.html,.htm,.pdf,.zip" hidden>
 </div>
 
 <!-- Editor -->
@@ -29,6 +39,7 @@
   <header class="top">
     <a class="brand" href="/" title="All decks"><img src="/editor/logo.svg" alt="Deckelsmouk"></a>
     <input id="deck-title" class="deck-title" spellcheck="false" title="Deck title">
+    <span class="kind-badge template-only" title="You are editing a template: each slide is a layout that decks made from it can use">Template</span>
     <div class="group">
       <button data-cmd="undo" title="Undo (⌘Z)">↶</button>
       <button data-cmd="redo" title="Redo (⇧⌘Z)">↷</button>
@@ -74,7 +85,18 @@
     <div class="group">
       <button data-cmd="preview" title="Play this slide here (Esc to close)">▶<span>Play</span></button>
       <button data-cmd="present" title="Present from this slide in a new tab">⛶<span>Present</span></button>
-      <button data-cmd="export" class="primary" title="Build one self-contained HTML file">⬇<span>Export</span></button>
+      <button data-cmd="export" class="primary deck-only" title="Build one self-contained HTML file">⬇<span>Export</span></button>
+      <button data-cmd="use-template" class="primary template-only" title="Make a new deck from this template">＋<span>New deck from it</span></button>
+      <div class="menu-wrap">
+        <button data-menu="more" title="More">⋯</button>
+        <div class="menu right" id="menu-more">
+          <button data-cmd="save-template" class="deck-only">Save design as template…</button>
+          <button data-cmd="use-template" class="template-only">New deck from this template…</button>
+          <button data-cmd="duplicate-template" class="template-only">Duplicate template…</button>
+          <hr>
+          <a href="/" class="menu-link">All decks and templates</a>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -84,14 +106,7 @@
       <div class="slides-bar">
         <div class="menu-wrap up">
           <button data-menu="newslide" title="New slide">＋ Slide</button>
-          <div class="menu" id="menu-newslide">
-            <button data-cmd="slide-blank">Blank</button>
-            <button data-cmd="slide-title">Title</button>
-            <button data-cmd="slide-text">Title and text</button>
-            <button data-cmd="slide-bullets">Title and bullets</button>
-            <button data-cmd="slide-image">Title and image</button>
-            <button data-cmd="slide-stat">Big number</button>
-          </div>
+          <div class="menu" id="menu-newslide"><!-- filled from the deck's layouts when opened --></div>
         </div>
         <button data-cmd="slide-duplicate" title="Duplicate slide">⧉</button>
         <button data-cmd="slide-delete" title="Delete slide">🗑</button>

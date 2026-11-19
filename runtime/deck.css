@@ -48,7 +48,7 @@ body.is-thumbs .stage {
 body.is-thumbs .slide {
   position: relative; visibility: visible; zoom: var(--thumb-zoom, .12);
   width: var(--deck-w, 1920px); height: var(--deck-h, 1080px);
-  background: var(--bg, #000); color: var(--fg, #fff);
+  color: var(--fg, #fff);
   margin-bottom: 120px; border-radius: 40px; cursor: pointer; pointer-events: auto;
   outline: 12px solid transparent; outline-offset: 16px;
 }
@@ -74,7 +74,10 @@ body.is-static *, body.is-static *::before, body.is-static *::after { transition
 /* Print / PDF (?print, then print to PDF): every slide on its own page, final state. */
 body.is-print { overflow: visible; height: auto; }
 body.is-print .stage { position: relative; left: 0; top: 0; transform: none !important; overflow: visible; height: auto; background: none; }
-body.is-print .slide { position: relative; visibility: visible; width: var(--deck-w, 1920px); height: var(--deck-h, 1080px); background: var(--bg, #000); break-after: page; }
+body.is-print .slide { position: relative; visibility: visible; width: var(--deck-w, 1920px); height: var(--deck-h, 1080px); break-after: page; }
+/* Thumbnails and print show each slide without the stage behind it: give it the deck background, unless the deck
+   draws its own (a template's master and layout backgrounds on .slide win, since :where() adds no specificity). */
+:where(body.is-thumbs, body.is-print) .slide { background: var(--slide-bg, var(--bg, #000)); }
 @media print {
   @page { size: 1920px 1080px; margin: 0; }
   html, body { overflow: visible !important; height: auto !important; }

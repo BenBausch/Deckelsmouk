@@ -11,7 +11,8 @@ decks/<name>/deck.html       slides + the deck's own styles (theme)
 decks/<name>/animations.js   named effects and slide scripts
 decks/<name>/assets/         images, video, fonts (referenced as assets/…)
 runtime/deck.js, deck.css    the player shared by every deck (don't change it for one deck's needs)
-templates/<name>/            starting points for new decks
+templates/<name>/            templates: decks whose slides are layouts (see Templates); source/ = imported original
+archive/<name>/              archived decks (moved out of decks/ from the start page; not built; restorable)
 dist/<name>.html             built single-file deck (npm run build); never edit by hand
 ```
 
@@ -23,7 +24,10 @@ dist/<name>.html             built single-file deck (npm run build); never edit 
   `<!-- ===== Slide N · id ===== -->` (the editor renumbers these; keep them when you add slides).
   Nothing but slides and their marker comments goes between the markers. Comments you want to keep go *inside* a section.
 - A slide: `<section class="slide" id="unique-id" data-title="Human title">…<aside class="notes"><p>…</p></aside></section>`.
-  Optional: `data-transition="fade|none|push|zoom"`, `data-transition-dur="0.6"`, `data-backup` (after the end).
+  Optional: `data-transition="fade|none|push|zoom"`, `data-transition-dur="0.6"`, `data-backup` (after the end),
+  `data-layout="key"` (the template layout whose design it uses; see Templates).
+- A deck made from a template has, after the stage, `<template id="deck-layouts">` with the template's layouts: the
+  editor's + Slide menu offers them. It is not shown or exported; leave it alone unless asked to change the layouts.
 - **Every top-level object on a slide is absolutely positioned with inline `left`, `top`, `width` (and `height` when it
   matters) in px**, e.g. `style="position:absolute;left:140px;top:120px;width:1200px"`. That is what the editor moves and
   resizes. Inside an object use any layout (flex, grid).
@@ -84,10 +88,37 @@ navigation stay correct; use transform-like properties `translate`, `scale`, `ro
 they compose with the element's own transform; never create DOM in `deck.html` from a script in a way the editor would
 need to save (scripts do not run in the editor); keep effects reusable and named for what they do.
 
+## Templates
+
+A template is a deck in `templates/<name>/` whose slides are its **layouts**, like PowerPoint's slide master and
+layouts. A deck made from it copies its theme, `animations.js` and `assets/`, starts with its first layout, and keeps
+all layouts in `<template id="deck-layouts">`. The editor opens templates too (`/?template=<name>`).
+
+- **Layouts**: each slide has a unique `id`, `data-layout="key"` (the key its CSS uses) and `data-title` (its name in
+  the + Slide menu). Slides made from a layout keep its `data-layout`, so they keep its design. Keep ids and keys
+  stable when editing a template; decks made earlier refer to the keys.
+- **Theme**: the `:root` tokens and the type classes (`.hero .h1 .h2 .h3 .lead .body .list .small`) in `#deck-style`.
+- **Master**: what repeats on every slide (logo, bars, lines, a background picture) is the `background` of `.slide`, as
+  CSS background layers, first = topmost, colour last:
+  `.slide { background: url("assets/logo.svg") right 80px top 60px / 220px auto no-repeat, linear-gradient(var(--accent), var(--accent)) 0 1040px / 100% 40px no-repeat, var(--bg); }`.
+  A layout with its own look gets `.slide[data-layout="key"] { background: …; }` (it may also override tokens such as
+  `--bg` and `--fg` for a dark title slide). Imported templates keep the master's layers in `--master` and its colour or
+  picture in `--master-bg`, so layouts reuse them: `background: url("assets/layout-x.svg") 0 0 / 100% 100% no-repeat, var(--master), var(--accent);`.
+  Never put repeated decorations as elements on every slide: they belong to the master.
+- **Placeholders**: short placeholder text in the theme classes. Image areas are `<div class="ph-image" data-el="image">`
+  (shown while editing, hidden when presenting; a picture dropped on it takes its place). `<p class="small slide-num">`
+  shows the slide number (a CSS counter).
+- **Imports**: `npm run import -- <file>` or a file dropped on the editor's start page. PowerPoint files (.pptx, .potx)
+  are converted by `tools/pptx.mjs` (report in `source/import-report.md`, the original's theme/master/layout XML in
+  `source/pptx/`). HTML, PDF and zipped presentations start as a copy of the default template with the original in
+  `source/`; their pictures and fonts are already copied to `assets/`, and Claude restyles the template.
+  `source/` is never copied into decks.
+
 ## Working on a request from the editor
 
 - The request names the slide (id) and the selected objects (selector + HTML + box). Change those, unless the request
   clearly asks for more.
+- For a template (`templates/<name>/`), the slides are layouts: follow Templates above.
 - Arrange: compute positions in stage px; align edges; keep a margin of at least ~120 px at the sides and ~100 px top/bottom.
 - Animate: prefer attributes; write a named effect or slide script only when attributes can't do it.
 - Don't reformat or rewrite unrelated slides. Keep text the user wrote unless asked to change it.
@@ -95,7 +126,8 @@ need to save (scripts do not run in the editor); keep effects reusable and named
 
 ## Commands
 
-`npm run dev` (editor at http://localhost:4800) · `npm run build [deck]` → `dist/<deck>.html` · `npm run new -- <name>` ·
+`npm run dev` (editor at http://localhost:4800) · `npm run build [deck]` → `dist/<deck>.html` ·
+`npm run new -- <name> ["Title"] [--template <name>]` · `npm run import -- <file.pptx|.potx|.html|.pdf|.zip> ["Name"]` ·
 `npm run unpack -- <file.html> <name>`.
 
 ## Converting an older presentation

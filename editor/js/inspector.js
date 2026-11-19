@@ -1,6 +1,6 @@
 // Right-hand inspector: Design (position, type, colour), Animate (effects, steps, order), Slide (title, notes,
 // transition) and Code (the HTML of the selection or slide).
-import { app, $, $$, commit, currentSlide, setSelection, slides, syncThumbs, cleanHTML, api, isObject } from './app.js';
+import { app, $, $$, commit, currentSlide, setSelection, slides, syncThumbs, cleanHTML, api, isObject, deckQuery } from './app.js';
 import { boxOf, prepare, draw, setHover } from './canvas.js';
 import { align, distribute } from './ops.js';
 
@@ -46,6 +46,13 @@ function typeClasses() {
     .filter(r => r.selectorText && /^\.[a-z][\w-]*$/i.test(r.selectorText) && r.style.fontSize)
     .map(r => ({ name: r.selectorText.slice(1), size: parseFloat(r.style.fontSize) || 0 }))
     .sort((a, b) => b.size - a.size);
+}
+// Layout keys the deck knows: styled in the theme (.slide[data-layout="…"]) or used by its slides and layouts.
+function layoutKeys() {
+  const keys = new Set();
+  deckRules().forEach(r => { const m = /\[data-layout="([^"]+)"\]/.exec(r.selectorText || ''); if (m) keys.add(m[1]); });
+  for (const m of app.html.matchAll(/data-layout="([^"]+)"/g)) keys.add(m[1]);
+  return [...keys];
 }
 const effectNames = () => Object.keys((app.win && app.win.Deck && app.win.Deck.effects) || {});
 
@@ -249,7 +256,7 @@ function animate() {
     Promise.all([].concat(res || []).map(a => a.finished)).finally(() => { if (el.innerHTML !== html0 && el.textContent === text0) el.innerHTML = html0; draw(); });
   };
   const oj = $('[data-open-js]', panel());
-  if (oj) oj.onclick = e => { e.preventDefault(); api.post(`/api/reveal?deck=${app.deck}&file=js`); };
+  if (oj) oj.onclick = e => { e.preventDefault(); api.post(`/api/reveal?${deckQuery()}&file=js`); };
 }
 
 /* ── Slide ── */
@@ -259,10 +266,13 @@ function slideTab() {
   const notes = s.querySelector(':scope > .notes');
   const notesText = notes ? [...notes.querySelectorAll('p')].map(p => p.textContent).join('\n\n') || notes.textContent.trim() : '';
   const bg = s.style.background || s.style.backgroundColor || '';
+  const tpl = app.kind === 'template';
   panel().innerHTML = `
-    <div class="sec"><h4>Slide ${app.index + 1} of ${slides().length}</h4>
-      <div class="row"><label>Title</label><input data-k="title" value="${esc(s.dataset.title || '')}"></div>
+    <div class="sec"><h4>${tpl ? 'Layout' : 'Slide'} ${app.index + 1} of ${slides().length}</h4>
+      <div class="row"><label>${tpl ? 'Name' : 'Title'}</label><input data-k="title" value="${esc(s.dataset.title || '')}" ${tpl ? 'title="Shown in the + Slide menu of decks made from this template"' : ''}></div>
       <div class="row"><label>ID</label><input data-k="id" value="${esc(s.id)}" title="Used in animations.js: Deck.slide('id')"></div>
+      <div class="row"><label>Layout</label><input data-k="layout" list="layout-keys" value="${esc(s.dataset.layout || '')}" placeholder="master only"
+        title="Which layout design (background, decorations) this slide uses: the key of a .slide[data-layout] rule in the theme"><datalist id="layout-keys">${layoutKeys().map(k => `<option value="${esc(k)}">`).join('')}</datalist></div>
       <div class="row"><label>Transition</label><select data-k="transition">${['fade', 'none', 'push', 'zoom'].map(t => `<option ${(s.dataset.transition || 'fade') === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
       <div class="row"><label>Duration</label><input data-k="tdur" type="number" step="0.1" min="0" value="${s.dataset.transitionDur || ''}" placeholder="0.6 s"></div>
       <div class="row color-row"><label>Background</label><input type="color" data-k="bg" value="${toHex(app.win.getComputedStyle(s).backgroundColor)}"><input data-k="bgtext" value="${esc(bg)}" placeholder="theme"></div>
@@ -279,6 +289,7 @@ function slideTab() {
   bind({
     title: v => { s.dataset.title = v; },
     id: v => { const id = v.trim().replace(/[^\w-]+/g, '-'); if (id && !slides().some(o => o !== s && o.id === id)) s.id = id; },
+    layout: v => { v = v.trim().replace(/["\\]/g, ''); if (v) s.dataset.layout = v; else delete s.dataset.layout; },
     transition: v => { if (v === 'fade') delete s.dataset.transition; else s.dataset.transition = v; },
     tdur: v => { if (v) s.dataset.transitionDur = v; else delete s.dataset.transitionDur; },
     bg: v => { s.style.background = v; },
@@ -291,7 +302,7 @@ function slideTab() {
     },
   }, 'Slide');
   $$('[data-swatch]', panel()).forEach(btn => btn.onclick = () => { s.style.background = btn.dataset.var; commit('Slide background'); syncThumbs(); slideTab(); });
-  $$('[data-open]', panel()).forEach(b => b.onclick = () => api.post(`/api/reveal?deck=${app.deck}&file=${b.dataset.open}`));
+  $$('[data-open]', panel()).forEach(b => b.onclick = () => api.post(`/api/reveal?${deckQuery()}&file=${b.dataset.open}`));
 }
 
 /* ── Code ── */
@@ -302,15 +313,18 @@ function code() {
   panel().innerHTML = `<div class="sec"><h4>${r.length === 1 ? 'Selected element' : 'Whole slide'} · HTML</h4>
     <textarea class="code" id="code-text" spellcheck="false">${esc(cleanHTML(el))}</textarea>
     <div class="btns" style="margin-top:8px"><button class="primary" id="code-apply">Apply</button><button id="code-reset">Reset</button></div>
+    <p class="hint err" id="code-err" hidden></p>
     <p class="hint" style="margin-top:8px">Edits the deck directly. Select one object to edit just that element.</p></div>`;
   $('#code-reset', panel()).onclick = code;
+  const problem = msg => { const p = $('#code-err', panel()); p.textContent = msg; p.hidden = false; };
+  $('#code-text', panel()).addEventListener('input', () => { $('#code-err', panel()).hidden = true; });
   $('#code-apply', panel()).onclick = () => {
     const t = app.doc.createElement('template');
     t.innerHTML = $('#code-text', panel()).value.trim();
     const next = t.content.firstElementChild;
-    if (!next || t.content.children.length !== 1) return alert('Please keep exactly one root element.');
+    if (!next || t.content.children.length !== 1) return problem('Keep exactly one root element.');
     const wasSlide = el === currentSlide();
-    if (wasSlide && !next.classList.contains('slide')) return alert('The slide must stay a <section class="slide">.');
+    if (wasSlide && !next.classList.contains('slide')) return problem('The slide must stay a <section class="slide">.');
     el.replaceWith(next);
     commit('Edit HTML');
     syncThumbs(true);

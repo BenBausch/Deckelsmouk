@@ -6,7 +6,9 @@ export const SLIDES_START = '<!-- ==================== SLIDES ==================
 export const SLIDES_END = '<!-- ==================== END SLIDES ==================== -->';
 
 export const app = {
-  deck: null,          // deck name (folder in decks/)
+  deck: null,          // what is open: a deck name (decks/<name>) or templates/<name>
+  kind: 'deck',        // 'deck' or 'template' (a template's slides are its layouts)
+  base: '',            // URL of its folder: /decks/<name> or /templates/<name>
   html: '',            // deck.html as saved
   js: '',              // animations.js as saved
   index: 0,            // current slide
@@ -23,6 +25,8 @@ export const app = {
 };
 
 export const $ = (sel, root = document) => root.querySelector(sel);
+// Query string naming what is open, for API calls.
+export const deckQuery = () => `deck=${encodeURIComponent(app.deck)}`;
 export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
 /* ── Server ── */
@@ -36,7 +40,41 @@ export const api = {
   },
   put(path, body) { return this.send('PUT', path, body); },
   post(path, body, raw) { return this.send('POST', path, body, raw); },
+  del(path) { return this.send('DELETE', path); },
 };
+
+/**
+ * An in-page dialog, styled like the editor (never the browser's alert/confirm/prompt).
+ * With `input` (the initial text) it asks for a value and resolves to the trimmed text; without, it resolves to true.
+ * Cancel, Escape or a click outside resolve to null.
+ */
+export function dialog({ title, text = '', input = null, placeholder = '', ok = 'OK', cancel = 'Cancel', danger = false }) {
+  return new Promise(resolve => {
+    const d = document.createElement('dialog');
+    d.className = 'dialog';
+    d.innerHTML = `<form><h3></h3>${text ? '<p></p>' : ''}${input !== null ? '<input autocomplete="off" spellcheck="false">' : ''}
+      <div class="dialog-btns"><button type="button" data-cancel></button><button type="submit" class="${danger ? 'danger' : 'primary'}"></button></div></form>`;
+    d.querySelector('h3').textContent = title;
+    if (text) d.querySelector('p').textContent = text;
+    d.querySelector('[data-cancel]').textContent = cancel;
+    d.querySelector('[type=submit]').textContent = ok;
+    const field = d.querySelector('input');
+    if (field) { field.value = input; field.placeholder = placeholder; }
+    const done = v => { d.close(); d.remove(); resolve(v); };
+    d.querySelector('form').onsubmit = e => {
+      e.preventDefault();
+      if (field && !field.value.trim()) return field.focus();
+      done(field ? field.value.trim() : true);
+    };
+    d.querySelector('[data-cancel]').onclick = () => done(null);
+    d.addEventListener('cancel', e => { e.preventDefault(); done(null); }); // Escape
+    d.addEventListener('mousedown', e => { if (e.target === d) done(null); }); // outside the box
+    document.body.append(d);
+    d.showModal();
+    // Focus the field; for a destructive question, Cancel (so Enter never deletes by accident).
+    if (field) { field.focus(); field.select(); } else d.querySelector(danger ? '[data-cancel]' : '[type=submit]').focus();
+  });
+}
 
 export function toast(html, ms = 3500) {
   const t = $('#toast');
@@ -115,7 +153,7 @@ function setSaveState(text, err) { const s = $('#save-state'); s.textContent = t
 
 export function save(files = { html: app.html }) {
   setSaveState('Saving…');
-  saving = saving.then(() => api.put(`/api/deck?deck=${app.deck}`, files))
+  saving = saving.then(() => api.put(`/api/deck?${deckQuery()}`, files))
     .then(() => setSaveState('Saved'), e => setSaveState('Not saved: ' + e.message, true));
   return saving;
 }
@@ -210,7 +248,7 @@ export function showSlide(i, { keep = false } = {}) {
 
 /* ── Frames ── */
 
-const frameURL = extra => `/decks/${app.deck}/deck.html?edit${extra}&v=${Date.now()}`;
+const frameURL = extra => `${app.base}/deck.html?edit${extra}&v=${Date.now()}`;
 
 function loadFrame(iframe, url) {
   return new Promise(resolve => {

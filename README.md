@@ -129,6 +129,7 @@ Prefer the terminal? Run `claude` in the repo and work on any deck directly; the
 | Visual drag-and-drop editing | ✅ | ❌ | ❌ | ✅ |
 | Animation beyond the preset list | ❌ | ⚠️ | ✅ | ✅ |
 | Ask an AI to arrange and animate the selection | ⚠️ | ❌ | ❌ | ✅ |
+| Your organisation's PowerPoint template, with its layouts | ✅ | ❌ | ❌ | ✅ |
 | Readable, diffable source in git | ❌ | ✅ | ✅ | ✅ |
 | One portable file, plays offline anywhere | ❌ | ⚠️ | ⚠️ | ✅ |
 | Zero install, zero dependencies | ❌ | ❌ | ✅ | ✅ |
@@ -241,7 +242,8 @@ state, ready for **Print → Save as PDF**, or `?static` to turn off motion for 
 ```bash
 npm run dev                          # editor + live reload (http://localhost:4800); `npm start` without opening a browser
 npm run build                        # every deck → dist/<deck>.html  (or: npm run build -- my-talk)
-npm run new -- my-talk "My Talk"     # new deck from templates/default
+npm run new -- my-talk "My Talk"     # new deck from templates/default (add --template <name> for another)
+npm run import -- uni.potx "Uni"     # a template from a PowerPoint file, an HTML presentation or a PDF
 npm run unpack -- talk.html my-talk  # a built single file back into an editable deck
 ```
 
@@ -254,10 +256,11 @@ Environment: `PORT`, `DECK_CLAUDE_MODEL` (default model for the prompt bar), `DE
 
 ```
 decks/<name>/        your presentations (deck.html, animations.js, assets/)
-templates/default/   the starting point for new decks; add your own themes as more folders
+archive/<name>/      archived presentations (⋯ → Archive on the start page; ⋯ → Restore brings them back)
+templates/<name>/    templates: theme, master and layouts (default, plus your own and imported ones)
 runtime/             the player shared by all decks; inlined into every build
 editor/              the visual editor (plain ES modules, no build step)
-tools/               dev server, build, new, unpack (Node, no dependencies)
+tools/               dev server, build, new, unpack, import (Node, no dependencies)
 docs/                logo and screenshots
 dist/                built single-file decks (git-ignored by default)
 CLAUDE.md            deck format and animation API, for Claude and for you
@@ -265,13 +268,30 @@ CLAUDE.md            deck format and animation API, for Claude and for you
 
 </details>
 
+## Your house style, in one drop
+
+Drop your university's or company's PowerPoint template (`.pptx` or `.potx`) on the start page, and it becomes a
+Deckelsmouk template: theme colours and fonts, the slide master's logo, bars and backgrounds, and every slide layout
+with its placeholders. New decks start from it, and **＋ Slide** offers its layouts, just like in PowerPoint.
+
+- **From PowerPoint:** converted on your machine in a second, with no upload and no AI needed. If something isn't quite
+  like the original, the *Polish import* suggestion asks Claude to compare each layout with the PowerPoint file.
+- **From an old HTML presentation (or a .zip of one) or a PDF:** Claude reads it and builds the template in its style.
+- **From scratch, or from a deck you like:** *New template* on the start page, or **⋯ → Save design as template** in
+  the editor.
+
+A template is simply a deck whose slides are its layouts, so you edit it in the same editor (**Edit** on its card).
+Things that repeat on every slide, like the logo, live in the theme, behind every slide, where nobody drags them by
+accident. Drop a picture on an image placeholder and it fills it.
+
 ## Bring your old decks
 
 Have a folder of HTML talks from before? Ask Claude Code in this repo:
 
 > *"Convert ~/talks/old-pitch/index.html into a deck called old-pitch."*
 
-The conversion recipe is in `CLAUDE.md`. From then on, the old deck has an editor too.
+The conversion recipe is in `CLAUDE.md`. From then on, the old deck has an editor too. (To reuse only its *look*,
+drop it on the start page instead: that makes a template.)
 
 ## Good to know
 
@@ -286,5 +306,12 @@ The conversion recipe is in `CLAUDE.md`. From then on, the old deck has an edito
 
 *Deckelsmouk* is Luxembourgish for **turtle**: a creature that carries its whole home on its back. So does every deck
 you build here: one file with everything inside, ready to go wherever you are. Unlike its namesake, it's fast.
+
+## License
+
+Copyright © 2026 Ben Bausch. Free for personal and other noncommercial use under the
+[PolyForm Noncommercial License 1.0.0](LICENSE.md): use it, change it, share it, as long as no money is being made with
+it. Commercial use needs a separate license; open an issue on
+[GitHub](https://github.com/BenBausch/Deckelsmouk) to ask.
 
 <p align="center"><img src="docs/logo.svg" alt="" width="64"></p>
