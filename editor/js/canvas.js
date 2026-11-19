@@ -1,5 +1,5 @@
 // Direct manipulation on the slide: select, move, resize, snap, marquee, edit text, drop files.
-import { app, $, commit, currentSlide, setSelection, isObject, deckSize, toast } from './app.js';
+import { app, $, commit, currentSlide, setSelection, isObject, deckSize, toast, deckQuery } from './app.js';
 import { paste } from './ops.js';
 
 const SNAP_PX = 7;           // snapping distance in screen pixels
@@ -400,17 +400,20 @@ async function onDrop(e) {
   if (!files.length || !currentSlide()) return;
   const s = currentSlide().getBoundingClientRect(), k = scale();
   const at = { x: (e.clientX - s.left) / k, y: (e.clientY - s.top) / k };
-  for (const f of files) await insertFile(f, at);
+  // Dropped on an image placeholder: the picture takes its place.
+  const ph = app.doc.elementFromPoint(e.clientX, e.clientY)?.closest('.ph-image');
+  for (const f of files) await insertFile(f, at, ph && ph.isConnected ? ph : null);
 }
 
 export async function upload(file) {
-  const r = await fetch(`/api/upload?deck=${app.deck}&name=${encodeURIComponent(file.name || 'pasted.png')}`, { method: 'POST', headers: { 'X-Deck': '1' }, body: file });
+  const r = await fetch(`/api/upload?${deckQuery()}&name=${encodeURIComponent(file.name || 'pasted.png')}`, { method: 'POST', headers: { 'X-Deck': '1' }, body: file });
   if (!r.ok) throw new Error('Upload failed');
   return (await r.json()).path;
 }
 
-// Uploads a file into the deck's assets and places it on the slide (centred, or at a drop point).
-export async function insertFile(file, at) {
+// Uploads a file into the deck's assets and places it on the slide (centred, at a drop point, or filling an image
+// placeholder).
+export async function insertFile(file, at, placeholder = null) {
   if (!/^(image|video)\//.test(file.type) && !/\.svg$/i.test(file.name)) return toast(`Can't insert ${file.name}: only images and videos.`);
   let src;
   try { src = await upload(file); } catch (err) { return toast(err.message); }
@@ -429,6 +432,19 @@ export async function insertFile(file, at) {
     el.style.position = 'absolute'; el.style.visibility = 'hidden';
     currentSlide().append(el);
   });
+  if (placeholder && placeholder.isConnected) {
+    const ps = placeholder.style, radius = app.win.getComputedStyle(placeholder).borderRadius;
+    el.removeAttribute('style');
+    Object.assign(el.style, { position: 'absolute', left: ps.left, top: ps.top, width: ps.width, height: ps.height, objectFit: 'cover' });
+    if (radius && radius !== '0px') el.style.borderRadius = radius;
+    for (const a of ['data-anim', 'data-step', 'data-delay', 'data-dur', 'data-out', 'data-out-step', 'data-magic']) {
+      if (placeholder.hasAttribute(a)) el.setAttribute(a, placeholder.getAttribute(a));
+    }
+    placeholder.replaceWith(el);
+    commit('Fill placeholder');
+    setSelection([el]);
+    return;
+  }
   let [w, h] = dims;
   const f = Math.min(1, (W * 0.6) / w, (H * 0.6) / h);
   w = Math.round(w * f); h = Math.round(h * f);

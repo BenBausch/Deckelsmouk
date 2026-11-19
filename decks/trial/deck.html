@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>trial</title>
+<link rel="stylesheet" href="../../runtime/deck.css">
+<style id="deck-style">
+  /* ── Theme ── Deck-wide design. The stage is 1920 x 1080 px; every size below is in stage pixels. */
+  :root {
+    --bg: #0b0b0f;
+    --fg: #f5f5f7;
+    --muted: #8e8e96;
+    --line: #26262b;
+    --accent: #4c8dff;
+    --accent-2: #ffb340;
+    --good: #30d158;
+    --bad: #ff453a;
+    --font: -apple-system, "SF Pro Display", BlinkMacSystemFont, "Helvetica Neue", Inter, "Segoe UI", Arial, sans-serif;
+    --mono: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  }
+  .stage { font-family: var(--font); }
+  .stage p, .stage h1, .stage h2, .stage h3 { margin: 0; }
+
+  /* Type scale */
+  .hero    { font-size: 150px; font-weight: 700; letter-spacing: -.045em; line-height: 1.02; }
+  .h1      { font-size: 110px; font-weight: 700; letter-spacing: -.04em; line-height: 1.04; }
+  .h2      { font-size: 76px;  font-weight: 650; letter-spacing: -.03em; line-height: 1.08; }
+  .h3      { font-size: 48px;  font-weight: 650; letter-spacing: -.02em; line-height: 1.15; }
+  .lead    { font-size: 42px;  font-weight: 500; color: var(--muted); line-height: 1.3; }
+  .body    { font-size: 34px;  line-height: 1.45; }
+  .small   { font-size: 26px;  color: var(--muted); line-height: 1.4; }
+  .eyebrow { font-size: 28px;  font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+  .mono    { font-family: var(--mono); }
+  .muted   { color: var(--muted); }
+  .accent  { color: var(--accent); }
+  .accent-2 { color: var(--accent-2); }
+  .center  { text-align: center; }
+  .grad    { background: linear-gradient(95deg, #8fd3ff, var(--accent) 55%, #9b6bff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+  /* Building blocks */
+  .card  { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09); border-radius: 32px; padding: 44px; box-sizing: border-box; }
+  .pill  { display: inline-block; padding: 8px 22px; border-radius: 40px; background: rgba(76,141,255,.16); color: var(--accent); font-weight: 600; font-size: 26px; }
+  .list  { list-style: none; padding: 0; margin: 0; display: grid; gap: 28px; font-size: 40px; font-weight: 550; }
+  .list li::before { content: ""; display: inline-block; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); margin-right: 26px; vertical-align: middle; }
+  .stat  { font-size: 190px; font-weight: 700; letter-spacing: -.05em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .glow  { border-radius: 50%; filter: blur(140px); opacity: .3; pointer-events: none; }
+  .slide.is-current .glow { animation: deck-breathe 9s ease-in-out infinite alternate; }
+  @keyframes deck-breathe { from { scale: 1; } to { scale: 1.15; translate: 30px -20px; } }
+  img.fit { object-fit: cover; border-radius: 24px; }
+</style>
+</head>
+<body>
+<div class="stage" data-width="1920" data-height="1080">
+<!-- ==================== SLIDES ==================== -->
+
+<!-- ===== Slide 1 · title ===== -->
+<section class="slide" id="title" data-title="Title">
+  <div class="glow" style="position:absolute;left:560px;top:160px;width:800px;height:600px;background:var(--accent)"></div>
+  <h1 class="hero center" data-anim="words" style="position: absolute; left: 137px; top: 691px; width: 1600px;">Your title here</h1>
+  <p class="lead center" data-anim="rise" data-delay="0.5" style="position:absolute;left:360px;top:580px;width:1200px">A subtitle that says what this is about</p>
+  <p class="body" style="position:absolute;left:510px;top:460px;width:900px" data-el="text">Text</p><div style="position: absolute; left: 48px; top: 35px; width: 400px; height: 400px; background: var(--accent); border-radius: 50%;" data-el="shape"></div><aside class="notes"><p>Speaker notes for this slide.</p></aside>
+</section>
+
+<!-- ==================== END SLIDES ==================== -->
+</div>
+<script src="../../runtime/deck.js"></script>
+<script src="animations.js"></script>
+</body>
+</html>

@@ -1,0 +1,399 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:sldLayout xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" preserve="1" userDrawn="1">
+<p:cSld name="TC_TitleSlide_Uni_LightBlueBackground">
+<p:bg>
+<p:bgPr>
+<a:solidFill>
+<a:srgbClr val="AFDEF6"/>
+</a:solidFill>
+<a:effectLst/>
+</p:bgPr>
+</p:bg>
+<p:spTree>
+<p:nvGrpSpPr>
+<p:cNvPr id="1" name=""/>
+<p:cNvGrpSpPr/>
+<p:nvPr/>
+</p:nvGrpSpPr>
+<p:grpSpPr>
+<a:xfrm>
+<a:off x="0" y="0"/>
+<a:ext cx="0" cy="0"/>
+<a:chOff x="0" y="0"/>
+<a:chExt cx="0" cy="0"/>
+</a:xfrm>
+</p:grpSpPr>
+<p:sp>
+<p:nvSpPr>
+<p:cNvPr id="12" name="Rectangle 11">
+<a:extLst>
+<a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+<a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{57B01302-2E66-134B-81B7-DAC0092FB56C}"/>
+</a:ext>
+</a:extLst>
+</p:cNvPr>
+<p:cNvSpPr/>
+<p:nvPr userDrawn="1"/>
+</p:nvSpPr>
+<p:spPr>
+<a:xfrm>
+<a:off x="-22200" y="0"/>
+<a:ext cx="12236400" cy="1437597"/>
+</a:xfrm>
+<a:prstGeom prst="rect">
+<a:avLst/>
+</a:prstGeom>
+<a:solidFill>
+<a:schemeClr val="bg1"/>
+</a:solidFill>
+<a:ln>
+<a:noFill/>
+</a:ln>
+</p:spPr>
+<p:style>
+<a:lnRef idx="2">
+<a:schemeClr val="accent1">
+<a:shade val="50000"/>
+</a:schemeClr>
+</a:lnRef>
+<a:fillRef idx="1">
+<a:schemeClr val="accent1"/>
+</a:fillRef>
+<a:effectRef idx="0">
+<a:schemeClr val="accent1"/>
+</a:effectRef>
+<a:fontRef idx="minor">
+<a:schemeClr val="lt1"/>
+</a:fontRef>
+</p:style>
+<p:txBody>
+<a:bodyPr rtlCol="0" anchor="ctr"/>
+<a:lstStyle/>
+<a:p>
+<a:pPr algn="ctr"/>
+<a:endParaRPr lang="en-LU"/>
+</a:p>
+</p:txBody>
+</p:sp>
+<p:pic>
+<p:nvPicPr>
+<p:cNvPr id="4" name="Picture 3">
+<a:extLst>
+<a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+<a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{01066C30-E683-CA88-E951-865E9EC1F477}"/>
+</a:ext>
+</a:extLst>
+</p:cNvPr>
+<p:cNvPicPr>
+<a:picLocks noChangeAspect="1"/>
+</p:cNvPicPr>
+<p:nvPr userDrawn="1"/>
+</p:nvPicPr>
+<p:blipFill>
+<a:blip r:embed="rId2"/>
+<a:stretch>
+<a:fillRect/>
+</a:stretch>
+</p:blipFill>
+<p:spPr>
+<a:xfrm>
+<a:off x="9026200" y="478800"/>
+<a:ext cx="2705100" cy="520700"/>
+</a:xfrm>
+<a:prstGeom prst="rect">
+<a:avLst/>
+</a:prstGeom>
+</p:spPr>
+</p:pic>
+<p:pic>
+<p:nvPicPr>
+<p:cNvPr id="3" name="Image 4">
+<a:extLst>
+<a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+<a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{F623545D-4C8E-832C-B949-A62B44726C02}"/>
+</a:ext>
+</a:extLst>
+</p:cNvPr>
+<p:cNvPicPr>
+<a:picLocks noChangeAspect="1"/>
+</p:cNvPicPr>
+<p:nvPr userDrawn="1"/>
+</p:nvPicPr>
+<p:blipFill>
+<a:blip r:embed="rId3"/>
+<a:stretch>
+<a:fillRect/>
+</a:stretch>
+</p:blipFill>
+<p:spPr>
+<a:xfrm rot="16200000">
+<a:off x="-2755377" y="2895118"/>
+<a:ext cx="5455920" cy="2468880"/>
+</a:xfrm>
+<a:prstGeom prst="rect">
+<a:avLst/>
+</a:prstGeom>
+</p:spPr>
+</p:pic>
+<p:sp>
+<p:nvSpPr>
+<p:cNvPr id="13" name="Title 1">
+<a:extLst>
+<a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+<a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{CADA3E21-EBBA-2E40-B50A-1CD6190E5474}"/>
+</a:ext>
+</a:extLst>
+</p:cNvPr>
+<p:cNvSpPr>
+<a:spLocks noGrp="1"/>
+</p:cNvSpPr>
+<p:nvPr>
+<p:ph type="ctrTitle" hasCustomPrompt="1"/>
+</p:nvPr>
+</p:nvSpPr>
+<p:spPr>
+<a:xfrm>
+<a:off x="1805049" y="2322990"/>
+<a:ext cx="6232545" cy="1389576"/>
+</a:xfrm>
+<a:prstGeom prst="rect">
+<a:avLst/>
+</a:prstGeom>
+</p:spPr>
+<p:txBody>
+<a:bodyPr anchor="ctr">
+<a:normAutofit/>
+</a:bodyPr>
+<a:lstStyle>
+<a:lvl1pPr algn="l">
+<a:defRPr sz="4400" b="1">
+<a:solidFill>
+<a:schemeClr val="accent1"/>
+</a:solidFill>
+<a:latin typeface="Arial" panose="020B0604020202020204" pitchFamily="34" charset="0"/>
+<a:cs typeface="Arial" panose="020B0604020202020204" pitchFamily="34" charset="0"/>
+</a:defRPr>
+</a:lvl1pPr>
+</a:lstStyle>
+<a:p>
+<a:r>
+<a:rPr lang="fr-CH" dirty="0" err="1"/>
+<a:t>Title</a:t>
+</a:r>
+<a:r>
+<a:rPr lang="fr-CH" dirty="0"/>
+<a:t> of </a:t>
+</a:r>
+<a:r>
+<a:rPr lang="fr-CH" dirty="0" err="1"/>
+<a:t>presentation</a:t>
+</a:r>
+<a:endParaRPr lang="en-LU" dirty="0"/>
+</a:p>
+</p:txBody>
+</p:sp>
+<p:sp>
+<p:nvSpPr>
+<p:cNvPr id="15" name="Subtitle 2">
+<a:extLst>
+<a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+<a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{50E7C5E9-A741-394C-86BE-5D22BFC7DA6E}"/>
+</a:ext>
+</a:extLst>
+</p:cNvPr>
+<p:cNvSpPr>
+<a:spLocks noGrp="1"/>
+</p:cNvSpPr>
+<p:nvPr>
+<p:ph type="subTitle" idx="1" hasCustomPrompt="1"/>
+</p:nvPr>
+</p:nvSpPr>
+<p:spPr>
+<a:xfrm>
+<a:off x="1805049" y="4286808"/>
+<a:ext cx="6133003" cy="1157390"/>
+</a:xfrm>
+<a:prstGeom prst="rect">
+<a:avLst/>
+</a:prstGeom>
+</p:spPr>
+<p:txBody>
+<a:bodyPr anchor="b"/>
+<a:lstStyle>
+<a:lvl1pPr marL="0" indent="0" algn="l">
+<a:buNone/>
+<a:defRPr sz="2400">
+<a:solidFill>
+<a:schemeClr val="accent1"/>
+</a:solidFill>
+</a:defRPr>
+</a:lvl1pPr>
+<a:lvl2pPr marL="457200" indent="0" algn="ctr">
+<a:buNone/>
+<a:defRPr/>
+</a:lvl2pPr>
+<a:lvl3pPr marL="914400" indent="0" algn="ctr">
+<a:buNone/>
+<a:defRPr/>
+</a:lvl3pPr>
+<a:lvl4pPr marL="1371600" indent="0" algn="ctr">
+<a:buNone/>
+<a:defRPr/>
+</a:lvl4pPr>
+<a:lvl5pPr marL="1828800" indent="0" algn="ctr">
+<a:buNone/>
+<a:defRPr/>
+</a:lvl5pPr>
+<a:lvl6pPr marL="2286000" indent="0" algn="ctr">
+<a:buNone/>
+<a:defRPr/>
+</a:lvl6pPr>
+<a:lvl7pPr marL="2743200" indent="0" algn="ctr">
+<a:buNone/>
+<a:defRPr/>
+</a:lvl7pPr>
+<a:lvl8pPr marL="3200400" indent="0" algn="ctr">
+<a:buNone/>
+<a:defRPr/>
+</a:lvl8pPr>
+<a:lvl9pPr marL="3657600" indent="0" algn="ctr">
+<a:buNone/>
+<a:defRPr/>
+</a:lvl9pPr>
+</a:lstStyle>
+<a:p>
+<a:r>
+<a:rPr lang="de-DE" dirty="0"/>
+<a:t>First Name </a:t>
+</a:r>
+<a:br>
+<a:rPr lang="de-DE" dirty="0"/>
+</a:br>
+<a:r>
+<a:rPr lang="de-DE" dirty="0"/>
+<a:t>Last Name </a:t>
+</a:r>
+<a:r>
+<a:rPr lang="de-DE" dirty="0" err="1"/>
+<a:t>of</a:t>
+</a:r>
+<a:r>
+<a:rPr lang="de-DE" dirty="0"/>
+<a:t>
+</a:t>
+</a:r>
+<a:r>
+<a:rPr lang="de-DE" dirty="0" err="1"/>
+<a:t>the</a:t>
+</a:r>
+<a:r>
+<a:rPr lang="de-DE" dirty="0"/>
+<a:t>
+</a:t>
+</a:r>
+<a:r>
+<a:rPr lang="de-DE" dirty="0" err="1"/>
+<a:t>speaker</a:t>
+</a:r>
+<a:endParaRPr lang="de-DE" dirty="0"/>
+</a:p>
+<a:p>
+<a:r>
+<a:rPr lang="de-DE" dirty="0" err="1"/>
+<a:t>Function</a:t>
+</a:r>
+<a:endParaRPr lang="de-DE" dirty="0"/>
+</a:p>
+</p:txBody>
+</p:sp>
+<p:sp>
+<p:nvSpPr>
+<p:cNvPr id="2" name="TextBox 1">
+<a:extLst>
+<a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+<a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{9C0BC630-B8C1-17B5-3614-D733475621BF}"/>
+</a:ext>
+</a:extLst>
+</p:cNvPr>
+<p:cNvSpPr txBox="1"/>
+<p:nvPr userDrawn="1"/>
+</p:nvSpPr>
+<p:spPr>
+<a:xfrm>
+<a:off x="11887200" y="6794695"/>
+<a:ext cx="184731" cy="400110"/>
+</a:xfrm>
+<a:prstGeom prst="rect">
+<a:avLst/>
+</a:prstGeom>
+<a:noFill/>
+</p:spPr>
+<p:txBody>
+<a:bodyPr wrap="none" rtlCol="0">
+<a:spAutoFit/>
+</a:bodyPr>
+<a:lstStyle/>
+<a:p>
+<a:pPr algn="l"/>
+<a:endParaRPr lang="en-US" sz="2000" dirty="0"/>
+</a:p>
+</p:txBody>
+</p:sp>
+<p:pic>
+<p:nvPicPr>
+<p:cNvPr id="14" name="Picture 13">
+<a:extLst>
+<a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+<a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{D16C30AB-4CC3-75E1-EE0D-AC3B452A15F4}"/>
+</a:ext>
+</a:extLst>
+</p:cNvPr>
+<p:cNvPicPr>
+<a:picLocks noChangeAspect="1"/>
+</p:cNvPicPr>
+<p:nvPr userDrawn="1"/>
+</p:nvPicPr>
+<p:blipFill rotWithShape="1">
+<a:blip r:embed="rId4"/>
+<a:srcRect l="2262" t="12561" r="40532" b="12877"/>
+<a:stretch>
+<a:fillRect/>
+</a:stretch>
+</p:blipFill>
+<p:spPr>
+<a:xfrm>
+<a:off x="8470746" y="2322990"/>
+<a:ext cx="3627690" cy="3546186"/>
+</a:xfrm>
+<a:prstGeom prst="ellipse">
+<a:avLst/>
+</a:prstGeom>
+</p:spPr>
+</p:pic>
+</p:spTree>
+<p:extLst>
+<p:ext uri="{BB962C8B-B14F-4D97-AF65-F5344CB8AC3E}">
+<p14:creationId xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main" val="4284743843"/>
+</p:ext>
+</p:extLst>
+</p:cSld>
+<p:clrMapOvr>
+<a:masterClrMapping/>
+</p:clrMapOvr>
+<p:extLst>
+<p:ext uri="{DCECCB84-F9BA-43D5-87BE-67443E8EF086}">
+<p15:sldGuideLst xmlns:p15="http://schemas.microsoft.com/office/powerpoint/2012/main">
+<p15:guide id="1" orient="horz" pos="2160" userDrawn="1">
+<p15:clr>
+<a:srgbClr val="FBAE40"/>
+</p15:clr>
+</p15:guide>
+<p15:guide id="2" pos="3840" userDrawn="1">
+<p15:clr>
+<a:srgbClr val="FBAE40"/>
+</p15:clr>
+</p15:guide>
+</p15:sldGuideLst>
+</p:ext>
+</p:extLst>
+</p:sldLayout>

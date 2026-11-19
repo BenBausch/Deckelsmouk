@@ -45,11 +45,56 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
 .deck-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
 .deck-card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; cursor: pointer; text-decoration: none; color: inherit; display: block; }
 .deck-card:hover { border-color: var(--accent); }
-.deck-card .thumb { aspect-ratio: 16 / 9; background: #000; position: relative; overflow: hidden; }
-.deck-card .thumb iframe { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; pointer-events: none; }
-.deck-card .meta { padding: 10px 14px; }
-.deck-card .meta b { display: block; font-size: 14px; }
-.deck-card .meta span { color: var(--muted); font-size: 12px; }
+.thumb { aspect-ratio: 16 / 9; background: #000; position: relative; overflow: hidden; }
+.thumb iframe { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; pointer-events: none; }
+.deck-card .meta, .template-card .meta { padding: 10px 14px; position: relative; }
+.deck-card .meta b, .template-card .meta b { display: block; font-size: 14px; }
+.deck-card .meta span, .template-card .meta span { color: var(--muted); font-size: 12px; }
+/* Deck cards: open by clicking, manage with ⋯ (duplicate, archive, delete). */
+.deck-card { position: relative; }
+.deck-card > .open { display: block; color: inherit; text-decoration: none; }
+.deck-card .meta { padding-right: 48px; }
+.deck-card .more { position: absolute; right: 9px; bottom: 9px; width: 32px; height: 30px; padding: 0; justify-content: center; font-size: 18px; line-height: 1; background: transparent; border-color: transparent; color: var(--muted); }
+.deck-card .more:hover, .deck-card .more.on { background: var(--panel-2); border-color: var(--line); color: var(--text); }
+.card-menu { position: fixed; top: 0; left: 0; min-width: 170px; z-index: 75; }
+.menu button.danger { color: var(--danger); }
+.archive-section { margin-top: 34px; }
+.archive-section summary { list-style: none; cursor: pointer; display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; }
+.archive-section summary::-webkit-details-marker { display: none; }
+.archive-section summary::before { content: "▸"; color: var(--muted); }
+.archive-section[open] summary::before { content: "▾"; }
+.archive-section summary h2 { font-size: 18px; margin: 0; }
+.archive-section summary span { color: var(--muted); font-size: 13px; }
+.archive-section .deck-card { opacity: .7; }
+.archive-section .deck-card:hover { opacity: 1; }
+.archive-section .deck-card > .open { cursor: default; }
+.section-head { display: flex; align-items: baseline; gap: 14px; margin: 8px 0 12px; flex-wrap: wrap; }
+.section-head h2 { font-size: 18px; margin: 0; }
+.section-head span { color: var(--muted); font-size: 13px; }
+.section-head span b { color: var(--text); }
+
+/* Templates on the start page: click to pick one for the new deck. */
+.template-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 34px; }
+.template-card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; cursor: pointer; text-align: left; padding: 0; display: block; color: inherit; font: inherit; }
+.template-card:hover { border-color: var(--muted); }
+.template-card.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.template-card .meta { padding: 8px 12px 10px; }
+.template-card .meta b { font-size: 13px; padding-right: 36px; }
+.template-card .meta span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.template-card .edit { position: absolute; right: 10px; top: 8px; font-size: 12px; color: var(--accent); text-decoration: none; }
+.template-card .edit:hover { text-decoration: underline; }
+.template-card.action { display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 0; white-space: normal; }
+.template-card.action .thumb { background: var(--panel-2); display: grid; place-items: center; }
+.template-card.action .thumb span { font-size: 34px; color: var(--muted); }
+.template-card.action:hover .thumb span { color: var(--accent); }
+.drop-hint { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; background: rgba(20, 22, 26, .82); pointer-events: none; }
+.drop-hint div { border: 2px dashed var(--accent); border-radius: 18px; padding: 48px 64px; text-align: center; display: grid; gap: 8px; background: var(--panel); }
+.drop-hint b { font-size: 20px; }
+.drop-hint span { color: var(--muted); }
+
+/* Deck or template: some commands exist for one only. */
+body:not(.mode-template) .template-only, body.mode-template .deck-only { display: none !important; }
+.kind-badge { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #1b1300; background: #ffb340; border-radius: 20px; padding: 2px 9px; }
 
 /* ── Layout ── */
 .editor { position: fixed; inset: 0; display: flex; flex-direction: column; }
@@ -72,9 +117,12 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
   background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 4px; box-shadow: 0 12px 40px rgba(0,0,0,.5);
 }
 .menu-wrap.up .menu { top: auto; bottom: calc(100% + 6px); }
-.menu.open { display: block; }
-.menu button { display: flex; width: 100%; border: 0; background: none; text-align: left; padding: 6px 10px; }
-.menu button:hover { background: var(--accent-soft); }
+.menu.right { left: auto; right: 0; }
+.menu.open { display: block; max-height: 70vh; overflow: auto; }
+.menu button, .menu .menu-link { display: flex; width: 100%; border: 0; background: none; text-align: left; padding: 6px 10px; box-sizing: border-box; }
+.menu .menu-link { color: var(--text); text-decoration: none; border-radius: 6px; }
+.menu button:hover, .menu .menu-link:hover { background: var(--accent-soft); }
+.menu-head { padding: 6px 10px 4px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 
 .main { flex: 1; display: flex; min-height: 0; }
 .slides { width: 220px; flex: none; display: flex; flex-direction: column; background: var(--panel); border-right: 1px solid var(--line); }
@@ -162,6 +210,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
 .swatch { width: 20px; height: 20px; border-radius: 5px; border: 1px solid rgba(255,255,255,.2); cursor: pointer; padding: 0; }
 .color-row input[type=color] { flex: none; width: 30px; height: 28px; padding: 2px; }
 .hint { color: var(--muted); font-size: 12px; line-height: 1.45; margin: 0 0 8px; }
+.hint.err { color: var(--danger); margin-top: 8px; }
 .empty { color: var(--muted); padding: 18px 14px; line-height: 1.5; }
 .anim-list { display: flex; flex-direction: column; gap: 2px; }
 .anim-item { display: flex; gap: 8px; align-items: center; padding: 5px 6px; border-radius: 6px; cursor: pointer; }
@@ -173,6 +222,18 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
 .anim-item .ef { color: var(--muted); font-family: var(--mono); font-size: 11px; }
 textarea.code { width: 100%; min-height: 300px; font: 12px/1.45 var(--mono); resize: vertical; white-space: pre; }
 .btns { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* ── Dialogs (in-page; the editor never uses the browser's alert/confirm/prompt) ── */
+.dialog { padding: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--text); width: min(440px, calc(100vw - 32px)); box-shadow: 0 24px 80px rgba(0,0,0,.6); }
+.dialog::backdrop { background: rgba(10, 10, 12, .6); }
+.dialog form { display: grid; gap: 12px; padding: 20px 22px 18px; }
+.dialog h3 { margin: 0; font-size: 16px; }
+.dialog p { margin: 0; color: var(--muted); line-height: 1.5; white-space: pre-line; }
+.dialog input { padding: 9px 12px; font-size: 14px; }
+.dialog-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+.dialog-btns button { padding: 7px 14px; }
+.dialog button.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+.dialog button.danger:hover { background: #ff6f68; }
 
 /* ── Preview, toast ── */
 .preview { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.88); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }

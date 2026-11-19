@@ -1,6 +1,6 @@
 // The prompt bar: sends the request plus what is selected (slide, objects, their HTML and boxes) to Claude Code,
 // streams what it does, then loads its changes into the editor as one undoable step.
-import { app, $, api, flush, currentSlide, slides, selectorFor, replaceDeck, toast } from './app.js';
+import { app, $, api, flush, currentSlide, slides, selectorFor, replaceDeck, toast, deckQuery } from './app.js';
 import { boxOf, stopTextEdit } from './canvas.js';
 
 const CHIPS_SEL = [
@@ -16,6 +16,15 @@ const CHIPS_SLIDE = [
   ['Next slide from this', 'Add a new slide after this one that continues the story, in the same style.'],
 ];
 
+// In a template, the slides are layouts.
+const CHIPS_TEMPLATE = [
+  ['Restyle for my brand', 'Restyle this template for <organisation>: colours <…>, fonts <…>, logo assets/<logo file> top right on every slide. Keep the layouts.'],
+  ['Add a layout', 'Add a layout after this one: <describe it, e.g. "quote with a large photo on the left">.'],
+  ['Tidy this layout', 'Tidy this layout: clear hierarchy, aligned edges, consistent margins with the other layouts.'],
+  ['Complete the set', 'Make sure this template has the usual layouts (title, section header, title + text, title + bullets, two columns, image + text, big number, closing), in its style. Add the missing ones.'],
+];
+const POLISH = ['Polish import', 'This template was converted automatically from the PowerPoint file in source/ (see source/import-report.md; the theme, master and layout XML are in source/pptx/). Compare each layout with its XML and fix what the converter missed: placeholder positions, sizes and alignment, text sizes, colours and fonts, backgrounds and decorations. Keep the ids and data-layout keys.'];
+
 let running = null;
 
 export function initClaude() {
@@ -27,7 +36,7 @@ export function initClaude() {
   });
   form.addEventListener('submit', e => { e.preventDefault(); send(); });
   $('#claude-new').onclick = async () => {
-    await api.post(`/api/claude/reset?deck=${app.deck}`);
+    await api.post(`/api/claude/reset?${deckQuery()}`);
     $('#claude-log').replaceChildren(); $('#claude-log').hidden = true;
     toast('New conversation: Claude starts without the earlier requests.');
   };
@@ -45,7 +54,8 @@ function context() {
   if (!s) return;
   const n = app.selection.length;
   $('#claude-ctx').textContent = `Slide ${app.index + 1}${n ? ` · ${n === 1 ? (app.selection[0].dataset.el || app.selection[0].tagName.toLowerCase()) : n + ' objects'}` : ''}`;
-  const chips = n ? CHIPS_SEL : CHIPS_SLIDE;
+  const fromPowerPoint = (app.source || []).some(f => /\.(pptx|potx|ppsx|pptm|potm)$/i.test(f));
+  const chips = n ? CHIPS_SEL : app.kind === 'template' ? (fromPowerPoint ? [POLISH, ...CHIPS_TEMPLATE] : CHIPS_TEMPLATE) : CHIPS_SLIDE;
   const box = $('#claude-chips');
   box.replaceChildren(...chips.map(([label, text]) => {
     const b = document.createElement('button');
@@ -56,6 +66,11 @@ function context() {
 }
 
 export function focusPrompt() { const i = $('#claude-input'); i.focus(); i.select(); }
+
+/** Sends a request as if typed (used after an import, so Claude finishes the template). */
+export function ask(text, shown) { const i = $('#claude-input'); i.value = text; grow(); return send(shown); }
+/** A line of information in the Claude panel. */
+export function note(text) { log('info', text); }
 
 function log(kind, text) {
   const l = $('#claude-log');
@@ -82,7 +97,7 @@ function selectionPayload() {
   };
 }
 
-async function send() {
+async function send(shown) {
   const input = $('#claude-input');
   const prompt = input.value.trim();
   if (!prompt || running || !app.deck) return;
@@ -90,7 +105,7 @@ async function send() {
   await flush(); // Claude must see exactly what is on screen
   input.value = ''; grow();
   const sel = selectionPayload();
-  log('user', prompt + (sel.elements.length ? `\n— ${sel.elements.length} selected on slide ${sel.slide.index + 1}` : `\n— slide ${sel.slide.index + 1}`));
+  log('user', (shown || prompt) + (sel.elements.length ? `\n— ${sel.elements.length} selected on slide ${sel.slide.index + 1}` : `\n— slide ${sel.slide.index + 1}`));
   setBusy(true);
   const before = { html: app.html, js: app.js };
   const ctrl = new AbortController();
@@ -127,7 +142,7 @@ async function send() {
   } finally {
     running = null;
     // Load whatever Claude changed (even after Stop, edits made so far are on disk) as one undo step.
-    const now = await api.get(`/api/deck?deck=${app.deck}`);
+    const now = await api.get(`/api/deck?${deckQuery()}`);
     if (now.html !== before.html || now.js !== before.js) {
       app.html = before.html; app.js = before.js;
       await replaceDeck({ html: now.html, js: now.js }, { record: true, write: false, label: 'Claude' });
@@ -139,7 +154,7 @@ async function send() {
 
 export async function stop() {
   if (!running) return;
-  await api.post(`/api/claude/stop?deck=${app.deck}`).catch(() => {});
+  await api.post(`/api/claude/stop?${deckQuery()}`).catch(() => {});
 }
 
 function setBusy(on) {
