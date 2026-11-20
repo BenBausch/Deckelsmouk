@@ -6,6 +6,7 @@ import { initInspector } from './inspector.js';
 import { initClaude, focusPrompt, ask, note, stop as stopClaude } from './claude.js';
 import { audiencePicker, audienceDialog } from './audience.js';
 import { openHistory, saveVersion } from './history.js';
+import { openFonts } from './fonts.js';
 import { readAudience, writeAudience, audienceLabel, audienceByKey, DEFAULT_AUDIENCE } from './audiences.js';
 
 const params = new URLSearchParams(location.search);
@@ -280,6 +281,7 @@ async function open(ref) {
   app.index = Math.max(0, (+params.get('slide') || 1) - 1);
   initCanvas(); initInspector(); initClaude();
   app.on('frame', onFrame);
+  app.on('font-files', files => { if (!app.busy) openFonts(files); }); // font files dropped on a slide
   const urlKey = app.kind === 'template' ? `template=${encodeURIComponent(ref.slice(10))}` : `deck=${encodeURIComponent(ref)}`;
   app.on('slide', () => history.replaceState(null, '', `/?${urlKey}&slide=${app.index + 1}`));
   await loadFrames();
@@ -368,6 +370,7 @@ const commands = {
   'save-template': saveAsTemplate, 'use-template': deckFromTemplate, 'duplicate-template': duplicateTemplate, 'delete-template': deleteThisTemplate,
   audience: changeAudience,
   history: openHistory,
+  fonts: () => openFonts(),
   'claude-stop': stopClaude,
 };
 export function run(cmd, data = {}) {

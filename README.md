@@ -291,6 +291,9 @@ with its placeholders. New decks start from it, and **＋ Slide** offers its lay
 - **From scratch, or from a deck you like:** *New template* on the start page, or **⋯ → Save design as template** in
   the editor.
 
+Brand fonts travel too: drop `.woff2`, `.woff`, `.ttf` or `.otf` files on a slide (or **⋯ → Fonts…**), pick one for
+headings and one for text, and they are inlined into the exported file, so the deck looks the same on every computer.
+
 A template is simply a deck whose slides are its layouts, so you edit it in the same editor (**⋯ → Edit** on its card).
 Things that repeat on every slide, like the logo, live in the theme, behind every slide, where nobody drags them by
 accident. Drop a picture on an image placeholder and it fills it.

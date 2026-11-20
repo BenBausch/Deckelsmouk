@@ -400,9 +400,12 @@ async function onDrop(e) {
   if (!files.length || !currentSlide()) return;
   const s = currentSlide().getBoundingClientRect(), k = scale();
   const at = { x: (e.clientX - s.left) / k, y: (e.clientY - s.top) / k };
+  // Font files go to the Fonts dialog.
+  const fonts = files.filter(f => /\.(woff2?|ttf|otf)$/i.test(f.name));
+  if (fonts.length) app.emit('font-files', fonts);
   // Dropped on an image placeholder: the picture takes its place.
   const ph = app.doc.elementFromPoint(e.clientX, e.clientY)?.closest('.ph-image');
-  for (const f of files) await insertFile(f, at, ph && ph.isConnected ? ph : null);
+  for (const f of files.filter(f => !fonts.includes(f))) await insertFile(f, at, ph && ph.isConnected ? ph : null);
 }
 
 export async function upload(file) {

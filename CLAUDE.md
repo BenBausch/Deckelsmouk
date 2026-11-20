@@ -42,7 +42,10 @@ dist/<name>.html             built single-file deck (npm run build); never edit 
   `var(--…)` colours over one-off values. Inline style is for position/size and small adjustments.
 - CSS animations that should run only while a slide is shown key on `.slide.is-current …`.
 - Classes starting with `is-` belong to the runtime; never write them into the file.
-- Fonts: system fonts by default; the built file must work offline, so put font files in `assets/` and use `@font-face`.
+- Fonts: system fonts by default; the built file must work offline, so font files go in `assets/fonts/` with
+  `@font-face`. The editor's Fonts dialog (⋯ → Fonts…) keeps them, and the heading/text choice (`--font`,
+  `--font-heading`), in a marked block at the end of `#deck-style` (`/* ── Fonts ── … */ … /* ── End fonts ── */`);
+  keep that block's format if you edit it.
 - Assets: `assets/<file>`; everything is inlined at build time.
 
 ## Animation (declarative, preferred)

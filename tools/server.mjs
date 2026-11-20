@@ -11,6 +11,7 @@ import { ROOT, DECKS, DIST, TEMPLATES, ARCHIVE, MIME, resolveRef, listDecks, lis
 import { importPresentation } from './importer.mjs';
 import { createBridge, ensureSessionNotes } from './bridge.mjs';
 import { snapshot, versions, version, forgetHistory } from './history.mjs';
+import { fontInfo } from './fonts.mjs';
 
 const args = process.argv.slice(2);
 const PORT = +(args[args.indexOf('--port') + 1] || process.env.PORT || 4800) || 4800;
@@ -162,6 +163,20 @@ async function api(req, res, url) {
       while (fs.existsSync(path.join(dir, name))) name = `${stem}-${++k}${ext}`;
       fs.writeFileSync(path.join(dir, name), await readBody(req));
       return send(res, 200, { path: `assets/${name}` });
+    }
+    // A font file for the deck: stored in assets/fonts/ and described from its own tables (tools/fonts.mjs).
+    case 'POST /api/font': {
+      const t = target(), file = path.basename(url.searchParams.get('name') || 'font');
+      const buf = await readBody(req, 40e6);
+      let info;
+      try { info = fontInfo(buf, file); } catch (e) { return fail(res, 400, e.message); }
+      const dir = path.join(t.dir, 'assets', 'fonts');
+      fs.mkdirSync(dir, { recursive: true });
+      const ext = path.extname(file).toLowerCase(), stem = path.basename(file, path.extname(file)).toLowerCase().replace(/[^a-z0-9_-]+/g, '-') || 'font';
+      let name = stem + ext, k = 1;
+      while (fs.existsSync(path.join(dir, name)) && !fs.readFileSync(path.join(dir, name)).equals(buf)) name = `${stem}-${++k}${ext}`;
+      fs.writeFileSync(path.join(dir, name), buf);
+      return send(res, 200, { ok: true, path: `assets/fonts/${name}`, ...info });
     }
     case 'POST /api/build': {
       const t = target();
