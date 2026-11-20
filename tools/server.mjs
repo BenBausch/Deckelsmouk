@@ -7,7 +7,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { ROOT, DECKS, DIST, TEMPLATES, ARCHIVE, MIME, resolveRef, listDecks, listTemplates, bundle, createDeck, createTemplate,
-  duplicateDeck, archiveDeck, restoreDeck, deleteDeck, deleteTemplate } from './lib.mjs';
+  duplicateDeck, archiveDeck, restoreDeck, deleteDeck, deleteTemplate, changeTemplate } from './lib.mjs';
 import { importPresentation } from './importer.mjs';
 import { createBridge, ensureSessionNotes } from './bridge.mjs';
 import { snapshot, versions, version, forgetHistory } from './history.mjs';
@@ -101,6 +101,13 @@ async function api(req, res, url) {
     case 'GET /api/decks': return send(res, 200, listDecks(url.searchParams.has('archived') ? ARCHIVE : DECKS));
     // Managing decks from the start page. A deck Claude is working on stays where it is.
     case 'POST /api/deck/duplicate': return send(res, 200, { ok: true, ...duplicateDeck(deck) });
+    // Another template's design for this deck (the editor saves the returned html as one undoable step).
+    case 'POST /api/deck/template': {
+      const body = await json(req), t = target();
+      const name = body.template ? (listTemplates().find(x => x.name === body.template) || {}).title || body.template : 'Blank';
+      snapshot(deck, t.dir, `Before changing the template to ${name}`);
+      return send(res, 200, { ok: true, name, ...changeTemplate(deck, body.template || '') });
+    }
     case 'POST /api/deck/archive':
     case 'POST /api/deck/restore':
     case 'DELETE /api/deck': {

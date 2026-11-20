@@ -253,6 +253,11 @@ textarea.code { width: 100%; min-height: 300px; font: 12px/1.45 var(--mono); res
 .dialog button.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
 .dialog button.danger:hover { background: #ff6f68; }
 
+/* ── Change template dialog ── */
+.dialog.change-template { width: min(980px, calc(100vw - 32px)); }
+.change-template .template-list { max-height: 60vh; overflow: auto; margin-bottom: 0; padding: 2px; }
+.change-template .meta em { color: var(--accent); font-style: normal; }
+
 /* ── Fonts dialog ── */
 .font-list { display: grid; gap: 6px; max-height: 40vh; overflow: auto; }
 .font-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: #18191c; }

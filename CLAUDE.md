@@ -100,7 +100,9 @@ need to save (scripts do not run in the editor); keep effects reusable and named
 
 A template is a deck in `templates/<name>/` whose slides are its **layouts**, like PowerPoint's slide master and
 layouts. A deck made from it copies its theme, `animations.js` and `assets/`, starts with its first layout, and keeps
-all layouts in `<template id="deck-layouts">`. The editor opens templates too (`/?template=<name>`).
+all layouts in `<template id="deck-layouts">`. The editor opens templates too (`/?template=<name>`). A deck changes
+template only when the user asks (⋯ → Change template…): its `#deck-style`, layouts block and assets are replaced, its
+slides stay, and their `data-layout` keys are mapped to the closest layouts of the new template.
 
 - **Layouts**: each slide has a unique `id`, `data-layout="key"` (the key its CSS uses) and `data-title` (its name in
   the + Slide menu). Slides made from a layout keep its `data-layout`, so they keep its design. Keep ids and keys

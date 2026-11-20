@@ -78,6 +78,8 @@ export function focusPrompt() { const i = $('#claude-input'); i.focus(); i.selec
 
 /** Sends a request as if typed (used after an import, so Claude finishes the template). */
 export function ask(text, shown) { const i = $('#claude-input'); i.value = text; grow(); return send(shown); }
+/** Puts a request into the prompt bar without sending it. */
+export function suggest(text) { const i = $('#claude-input'); i.value = text; grow(); i.focus(); }
 /** A line of information in the Claude panel. */
 export function note(text) { log('info', text); }
 

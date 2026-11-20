@@ -282,6 +282,16 @@ const copyFolder = (src, dir) => fs.cpSync(src, dir, {
   filter: f => { const rel = path.relative(src, f); return rel.split(path.sep)[0] !== 'source' && rel !== 'session.md'; },
 });
 
+/** deck.html with its layouts block (for the + Slide menu) replaced by these layouts, or removed when there are none. */
+function withLayouts(html, layouts, from) {
+  html = html.replace(LAYOUTS_RE, '\n');
+  if (!layouts.length) return html;
+  const block = `<template id="deck-layouts">\n<!-- Slide layouts from the template "${escAttr(from)}". The editor's + Slide menu offers them. -->\n${layouts.join('\n\n')}\n</template>\n`;
+  // After the stage, before the scripts.
+  const end = html.indexOf(SLIDES_END), at = html.indexOf('<script', end);
+  return at > end ? html.slice(0, at) + block + html.slice(at) : html.replace(/<\/body>/i, `${block}</body>`);
+}
+
 /** The built-in blank deck (tools/blank/), used when there is no template. It can't be deleted with the templates. */
 export const BLANK = path.join(ROOT, 'tools', 'blank');
 const hasTemplate = name => !!name && validName(name) && fs.existsSync(path.join(TEMPLATES, name, 'deck.html'));
@@ -314,12 +324,7 @@ export function createDeck(input, { template = 'default', title, audience = null
   const first = (layouts[0] || '<section class="slide" id="title" data-title="Title">\n  <aside class="notes"><p></p></aside>\n</section>')
     .replace(/<aside class="notes">[\s\S]*?<\/aside>/, '<aside class="notes"><p></p></aside>'); // notes about the layout don't belong in the deck
   html = withSlides(html, [first]);
-  if (layouts.length) {
-    const block = `<template id="deck-layouts">\n<!-- Slide layouts from the template "${escAttr(titleOf(html) || template)}". The editor's + Slide menu offers them. -->\n${layouts.join('\n\n')}\n</template>\n`;
-    // After the stage, before the scripts.
-    const end = html.indexOf(SLIDES_END), at = html.indexOf('<script', end);
-    html = at > end ? html.slice(0, at) + block + html.slice(at) : html.replace(/<\/body>/i, `${block}</body>`);
-  }
+  html = withLayouts(html, layouts, titleOf(html) || template);
   html = writeAudience(setMeta(setMeta(setTitle(html, title), 'description', ''), 'deck-template', template), audience);
   fs.writeFileSync(file, html);
   return dir;
@@ -345,4 +350,77 @@ export function createTemplate(input, { from, title, description } = {}) {
   html = writeAudience(html, null); // a template is a design; each deck picks its own audience
   fs.writeFileSync(file, html);
   return name;
+}
+
+/* ── Changing a deck's template (by hand, from the editor) ── */
+
+// What kind of layout a key or name describes, to find the closest layout in another template.
+const ROLES = [
+  ['blank', /blank|empty/], ['title-only', /title[ -]?only/], ['section', /section|chapter|divider|\bpart\b/],
+  ['closing', /closing|thank|questions|contact|outro|\bend\b/], ['two', /two|comparison|colum|2[ -]?col/], // not "-2": a variant number
+  ['image', /image|picture|photo|media|\bpic/], ['stat', /\bstat|number|kpi|big ?figure/],
+  ['title', /^title$|title[ -]?(slide|page)|cover|opening/], ['content', /content|text|bullet|list|body|\bobj/],
+];
+const roleOf = s => (ROLES.find(([, re]) => re.test(String(s).toLowerCase())) || [])[0] || null;
+const attrOf = (s, name) => (new RegExp(`^<section\\b[^>]*\\b${name}="([^"]*)"`).exec(s) || [])[1];
+
+/**
+ * Gives decks/<name>/ the design of another template (or of the blank deck with template ''), like choosing another
+ * theme in PowerPoint: its theme (#deck-style, fonts included), master, layouts and assets. The slides, their content,
+ * animations.js and the audience stay. Each slide keeps its layout where the new template has the same key, else gets
+ * the closest one by kind, else the master's look. Template assets whose name is taken by another file in the deck are
+ * copied under a new name. Copies the assets and returns { html, report } (the caller saves the html).
+ */
+export function changeTemplate(name, template) {
+  const dir = existingDeck(DECKS, name);
+  if (template && !hasTemplate(template)) throw Object.assign(new Error(`No template "${template}"`), { status: 400 });
+  const src = template ? templateDir(template) : BLANK;
+  const srcHtml = fs.readFileSync(path.join(src, 'deck.html'), 'utf8');
+  let html = fs.readFileSync(path.join(dir, 'deck.html'), 'utf8');
+
+  // Assets: copy what the deck doesn't have yet; rename on a clash with a different file.
+  const renames = [];
+  const copy = (from, to, rel = '') => {
+    if (!fs.existsSync(from)) return;
+    for (const e of fs.readdirSync(from, { withFileTypes: true })) {
+      const f = path.join(from, e.name), r = rel ? `${rel}/${e.name}` : e.name;
+      if (e.isDirectory()) { copy(f, path.join(to, e.name), r); continue; }
+      fs.mkdirSync(to, { recursive: true });
+      let target = e.name, k = 1;
+      const ext = path.extname(e.name), stem = path.basename(e.name, ext);
+      while (fs.existsSync(path.join(to, target)) && !fs.readFileSync(path.join(to, target)).equals(fs.readFileSync(f))) target = `${stem}-${++k}${ext}`;
+      if (!fs.existsSync(path.join(to, target))) fs.copyFileSync(f, path.join(to, target));
+      if (target !== e.name) renames.push([`assets/${r}`, `assets/${rel ? rel + '/' : ''}${target}`]);
+    }
+  };
+  copy(path.join(src, 'assets'), path.join(dir, 'assets'));
+  const relink = s => renames.reduce((t, [a, b]) => t.split(`"${a}"`).join(`"${b}"`).split(`(${a})`).join(`(${b})`), s);
+
+  // Theme and master.
+  const style = (/<style id="deck-style">[\s\S]*?<\/style>/.exec(srcHtml) || [])[0];
+  if (style) html = html.replace(/<style id="deck-style">[\s\S]*?<\/style>/, () => relink(style));
+
+  // Layouts, and each slide's layout.
+  const oldLayouts = new Map(layoutsOf(html).map(l => [attrOf(l, 'data-layout'), attrOf(l, 'data-title') || '']));
+  const layouts = template ? slidesOf(srcHtml).map(relink) : [];
+  const keys = layouts.map(l => ({ key: attrOf(l, 'data-layout'), role: roleOf(`${attrOf(l, 'data-layout')} ${attrOf(l, 'data-title')}`) })).filter(l => l.key);
+  const report = { kept: 0, matched: 0, plain: 0 };
+  const slides = slidesOf(html).map(s => s.replace(/^<section\b[^>]*>/, tag => {
+    const key = attrOf(tag, 'data-layout');
+    if (!key) return tag;
+    if (keys.some(l => l.key === key)) { report.kept++; return tag; }
+    const role = roleOf(`${key} ${oldLayouts.get(key) || ''}`);
+    const match = role && keys.find(l => l.role === role);
+    if (match) { report.matched++; return tag.replace(/\bdata-layout="[^"]*"/, `data-layout="${match.key}"`); }
+    report.plain++;
+    return tag.replace(/\s*\bdata-layout="[^"]*"/, '');
+  }));
+  html = withSlides(withLayouts(html, layouts, titleOf(srcHtml) || template), slides);
+  html = setMeta(html, 'deck-template', template || '');
+
+  // A template with another slide size: the slides keep theirs, but positions were made for the other one.
+  const size = h => (/<div class="stage"[^>]*data-width="(\d+)"[^>]*data-height="(\d+)"/.exec(h) || []).slice(1).join(' × ');
+  if (size(srcHtml) && size(html) && size(srcHtml) !== size(html)) report.size = `The template is made for ${size(srcHtml)} px slides and this deck has ${size(html)} px: some decorations may not line up.`;
+  report.renamed = renames.length;
+  return { html, report };
 }

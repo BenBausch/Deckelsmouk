@@ -1,9 +1,9 @@
 // Boot, start page (decks, templates, import), toolbar, keyboard shortcuts, slide list, live reload, preview and export.
-import { app, $, $$, api, toast, dialog, loadFrames, showSlide, slides, currentSlide, undo, redo, replaceDeck, fitThumbs, setSelection, save, syncThumbs, deckQuery } from './app.js';
+import { app, $, $$, api, toast, dialog, loadFrames, showSlide, slides, currentSlide, undo, redo, replaceDeck, fitThumbs, setSelection, save, flush, syncThumbs, deckQuery } from './app.js';
 import { initCanvas, attachCanvas, insertFile, startTextEdit, stopTextEdit, textKey, onPaste, draw, closeMenus } from './canvas.js';
 import * as ops from './ops.js';
 import { initInspector } from './inspector.js';
-import { initClaude, focusPrompt, ask, note, stop as stopClaude } from './claude.js';
+import { initClaude, focusPrompt, ask, note, suggest, stop as stopClaude } from './claude.js';
 import { audiencePicker, audienceDialog } from './audience.js';
 import { openHistory, saveVersion } from './history.js';
 import { openFonts } from './fonts.js';
@@ -371,6 +371,7 @@ const commands = {
   audience: changeAudience,
   history: openHistory,
   fonts: () => openFonts(),
+  'change-template': changeTemplateDialog,
   'claude-stop': stopClaude,
 };
 export function run(cmd, data = {}) {
@@ -444,6 +445,67 @@ async function duplicateTemplate() {
     const r = await api.post('/api/template', { name, from: app.deck });
     location.href = `/?template=${encodeURIComponent(r.name)}`;
   } catch (e) { toast(esc(e.message)); }
+}
+
+// Gives this deck another template's design (never automatic: only when asked, here).
+async function changeTemplateDialog() {
+  let templates;
+  try { templates = await api.get('/api/templates'); } catch (e) { return toast(esc(e.message)); }
+  const current = (/<meta name="deck-template" content="([^"]*)"/.exec(app.html) || [])[1] || '';
+  const d = document.createElement('dialog');
+  d.className = 'dialog wide change-template';
+  d.innerHTML = `<form><h3>Change template</h3>
+    <p>The deck gets the new template’s theme, fonts, decorations and layouts. Its slides, their content and animations stay. A version is saved first, and ⌘Z undoes the change.</p>
+    <div class="template-list"></div>
+    <div class="dialog-btns"><button type="button" data-cancel>Cancel</button><button type="submit" class="primary" disabled>Apply template</button></div></form>`;
+  const list = d.querySelector('.template-list'), apply = d.querySelector('[type=submit]');
+  let picked = null;
+  const card = (name, title, sub, preview) => {
+    const c = document.createElement('div');
+    c.className = 'template-card' + (name === '' ? ' blank-card' : '');
+    c.dataset.name = name;
+    c.append(preview);
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.innerHTML = `<b></b><span>${esc(sub)}${name === current ? ' · <em>current</em>' : ''}</span>`;
+    meta.querySelector('b').textContent = title;
+    c.append(meta);
+    c.onclick = () => {
+      picked = name;
+      list.querySelectorAll('.template-card').forEach(x => x.classList.toggle('on', x === c));
+      apply.disabled = name === current;
+      apply.textContent = name === current ? 'This is the current template' : `Apply “${title}”`;
+    };
+    list.append(c);
+  };
+  const blankThumb = document.createElement('div');
+  blankThumb.className = 'thumb'; blankThumb.innerHTML = '<span>Aa</span>';
+  card('', 'Blank', 'A plain, light design', blankThumb);
+  templates.forEach(t => card(t.name, t.title, `${t.layouts} layout${t.layouts === 1 ? '' : 's'}`, thumb(`/templates/${encodeURIComponent(t.name)}/deck.html?edit`)));
+  const done = () => { d.close(); d.remove(); };
+  d.querySelector('[data-cancel]').onclick = done;
+  d.addEventListener('cancel', e => { e.preventDefault(); done(); });
+  d.addEventListener('mousedown', e => { if (e.target === d) done(); });
+  d.querySelector('form').onsubmit = async e => {
+    e.preventDefault();
+    if (picked === null || picked === current) return;
+    apply.disabled = true; apply.textContent = 'Applying…';
+    try {
+      await flush();
+      const r = await api.post(`/api/deck/template?${deckQuery()}`, { template: picked });
+      done();
+      await replaceDeck({ html: r.html, js: app.js }, { record: true, label: 'Change template' });
+      const { kept, matched, plain, size } = r.report, n = (k, w) => `${k} slide${k === 1 ? '' : 's'} ${w}`;
+      const parts = [kept && n(kept, 'kept their layout'), matched && n(matched, 'got the closest layout'), plain && n(plain, 'use the plain master look')].filter(Boolean);
+      toast(`Template changed to <b>${esc(r.name)}</b>.${parts.length ? ' ' + esc(parts.join(', ')) + '.' : ''} ⌘Z undoes it.`, 7000);
+      if (size) note(size);
+      note(`Template changed to ${r.name}. Claude can fit the slides to it: the request is ready in the prompt bar.`);
+      suggest(`The deck now uses the template “${r.name}”. Go through the slides and fit them to it: keep content clear of its decorations (logo, bars, pictures), use its layouts’ positions for titles and text where that fits, and keep margins consistent. Keep the content.`);
+    } catch (err) { apply.disabled = false; apply.textContent = 'Apply template'; toast(esc(err.message)); }
+  };
+  document.body.append(d);
+  d.showModal();
+  list.querySelector(`.template-card[data-name="${CSS.escape(current)}"]`)?.click();
 }
 
 async function deleteThisTemplate() {
