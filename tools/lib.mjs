@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readAudience, writeAudience } from '../editor/js/audiences.js'; // shared with the editor
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const DECKS = path.join(ROOT, 'decks');
@@ -104,7 +105,7 @@ export function listDecks(root = DECKS) {
   if (!fs.existsSync(root)) return [];
   return fs.readdirSync(root, { withFileTypes: true })
     .filter(d => d.isDirectory() && validName(d.name) && fs.existsSync(path.join(root, d.name, 'deck.html')))
-    .map(d => { const { html, ...i } = info(path.join(root, d.name), d.name); return { ...i, template: metaOf(html, 'deck-template') }; })
+    .map(d => { const { html, ...i } = info(path.join(root, d.name), d.name); return { ...i, template: metaOf(html, 'deck-template'), audience: readAudience(html) }; })
     .sort((a, b) => b.modified - a.modified);
 }
 
@@ -113,7 +114,7 @@ export function listDecks(root = DECKS) {
 const existingDeck = (root, name) => {
   if (!validName(name)) throw Object.assign(new Error(`Invalid deck name: ${name}`), { status: 400 });
   const dir = path.join(root, name);
-  if (!fs.existsSync(path.join(dir, 'deck.html'))) throw Object.assign(new Error(`No deck "${name}"`), { status: 404 });
+  if (!fs.existsSync(path.join(dir, 'deck.html'))) throw Object.assign(new Error(`"${name}" doesn't exist (any more)`), { status: 404 });
   return dir;
 };
 
@@ -145,6 +146,10 @@ export function restoreDeck(name) {
 /** Deletes decks/<name>/ (or archive/<name>/) for good. */
 export function deleteDeck(name, { archived = false } = {}) {
   fs.rmSync(existingDeck(archived ? ARCHIVE : DECKS, name), { recursive: true, force: true });
+}
+/** Deletes templates/<name>/ for good (the default one too). Decks made from it keep their own copy of its design. */
+export function deleteTemplate(name) {
+  fs.rmSync(existingDeck(TEMPLATES, name), { recursive: true, force: true });
 }
 
 /** Templates: { name, title, description, layouts, modified }. The default template comes first. */
@@ -270,26 +275,42 @@ export function asTemplate(html) {
   })));
 }
 
-// Copies a deck or template folder, leaving out what belongs to the source only (the original of an import).
-const copyFolder = (src, dir) => fs.cpSync(src, dir, { recursive: true, filter: f => path.relative(src, f).split(path.sep)[0] !== 'source' });
+// Copies a deck or template folder into a new one, leaving out what belongs to the source only: the original of an
+// import (source/) and Claude's notes about it (session.md).
+const copyFolder = (src, dir) => fs.cpSync(src, dir, {
+  recursive: true,
+  filter: f => { const rel = path.relative(src, f); return rel.split(path.sep)[0] !== 'source' && rel !== 'session.md'; },
+});
+
+/** The built-in blank deck (tools/blank/), used when there is no template. It can't be deleted with the templates. */
+export const BLANK = path.join(ROOT, 'tools', 'blank');
+const hasTemplate = name => !!name && validName(name) && fs.existsSync(path.join(TEMPLATES, name, 'deck.html'));
+/** What new templates and imports start from: the default template, or the blank deck when it was deleted. */
+export const starterDir = () => (hasTemplate('default') ? path.join(TEMPLATES, 'default') : BLANK);
 
 /**
  * Creates decks/<name>/ from a template, like File → New in PowerPoint: the deck gets the template's theme, assets and
  * scripts, starts with the template's first layout, and keeps all layouts for the editor's + Slide menu.
+ * Without a template (template: '', or the default one deleted) it starts from the built-in blank deck.
  * Any input is accepted (see freeDeckName); returns the deck's directory.
  */
-export function createDeck(input, { template = 'default', title } = {}) {
+export function createDeck(input, { template = 'default', title, audience = null } = {}) {
   if (!String(input || '').trim()) throw new Error('Give the deck a name');
-  const src = templateDir(template);
-  if (!fs.existsSync(path.join(src, 'deck.html'))) throw new Error(`No template "${template}" in templates/`);
+  const fromTemplate = hasTemplate(template);
+  if (template && !fromTemplate && template !== 'default') throw new Error(`No template "${template}" in templates/`);
   const name = freeDeckName(input);
   const dir = deckDir(name);
   title = title || String(input).trim(); // "My Talk" keeps its spelling as the title
-  copyFolder(src, dir);
+  copyFolder(fromTemplate ? templateDir(template) : BLANK, dir);
   fs.mkdirSync(path.join(dir, 'assets'), { recursive: true });
   const file = path.join(dir, 'deck.html');
   let html = fs.readFileSync(file, 'utf8').replace(LAYOUTS_RE, '\n');
-  const layouts = slidesOf(html);
+  const layouts = fromTemplate ? slidesOf(html) : [];
+  if (!fromTemplate) { // the blank deck: its one slide, and the editor's built-in layouts under + Slide
+    html = writeAudience(setMeta(setTitle(html, title), 'deck-template', ''), audience);
+    fs.writeFileSync(file, html);
+    return dir;
+  }
   const first = (layouts[0] || '<section class="slide" id="title" data-title="Title">\n  <aside class="notes"><p></p></aside>\n</section>')
     .replace(/<aside class="notes">[\s\S]*?<\/aside>/, '<aside class="notes"><p></p></aside>'); // notes about the layout don't belong in the deck
   html = withSlides(html, [first]);
@@ -299,18 +320,19 @@ export function createDeck(input, { template = 'default', title } = {}) {
     const end = html.indexOf(SLIDES_END), at = html.indexOf('<script', end);
     html = at > end ? html.slice(0, at) + block + html.slice(at) : html.replace(/<\/body>/i, `${block}</body>`);
   }
-  html = setMeta(setMeta(setTitle(html, title), 'description', ''), 'deck-template', template);
+  html = writeAudience(setMeta(setMeta(setTitle(html, title), 'description', ''), 'deck-template', template), audience);
   fs.writeFileSync(file, html);
   return dir;
 }
 
 /**
- * Creates templates/<name>/: a copy of the default template, of another template (from: 'templates/x') or of a
- * deck's design (from: 'my-talk'; its slides become the layouts). Returns the template's name.
+ * Creates templates/<name>/: a copy of the default template (or of the blank deck when there is none), of another
+ * template (from: 'templates/x') or of a deck's design (from: 'my-talk'; its slides become the layouts).
+ * Returns the template's name.
  */
 export function createTemplate(input, { from, title, description } = {}) {
   if (!String(input || '').trim()) throw new Error('Give the template a name');
-  const src = from ? resolveRef(from) : resolveRef('templates/default');
+  const src = from ? resolveRef(from) : { kind: 'template', dir: starterDir(), rel: 'the default template' };
   if (!fs.existsSync(path.join(src.dir, 'deck.html'))) throw new Error(`Nothing to copy at ${src.rel}`);
   const name = freeName(input, TEMPLATES, 'template');
   const dir = templateDir(name);
@@ -320,6 +342,7 @@ export function createTemplate(input, { from, title, description } = {}) {
   let html = asTemplate(fs.readFileSync(file, 'utf8'));
   const fromDeck = src.kind === 'deck' ? `Made from the deck ${src.name}` : '';
   html = setMeta(setMeta(setTitle(html, title || String(input).trim()), 'deck-template', ''), 'description', description ?? fromDeck);
+  html = writeAudience(html, null); // a template is a design; each deck picks its own audience
   fs.writeFileSync(file, html);
   return name;
 }

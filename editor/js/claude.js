@@ -25,7 +25,12 @@ const CHIPS_TEMPLATE = [
 ];
 const POLISH = ['Polish import', 'This template was converted automatically from the PowerPoint file in source/ (see source/import-report.md; the theme, master and layout XML are in source/pptx/). Compare each layout with its XML and fix what the converter missed: placeholder positions, sizes and alignment, text sizes, colours and fonts, backgrounds and decorations. Keep the ids and data-layout keys.'];
 
+// With an audience set (the Audience button): rework for them.
+const FIT_SLIDE = ['Fit to audience', "Rework this slide for the deck's audience: depth, wording, amount of text, structure and motion. Keep the facts and the user's own key statements."];
+const FIT_SEL = ['Fit to audience', "Rework the selected objects for the deck's audience: depth, wording, amount of text and motion. Keep the facts."];
+
 let running = null;
+let shownStart = false; // said whether this conversation is new or continued
 
 export function initClaude() {
   const input = $('#claude-input'), form = $('#claude-form');
@@ -38,7 +43,8 @@ export function initClaude() {
   $('#claude-new').onclick = async () => {
     await api.post(`/api/claude/reset?${deckQuery()}`);
     $('#claude-log').replaceChildren(); $('#claude-log').hidden = true;
-    toast('New conversation: Claude starts without the earlier requests.');
+    shownStart = false;
+    toast('New conversation: Claude forgets the earlier requests but keeps the deck’s notes (session.md).');
   };
   try { $('#claude-model').value = localStorage.getItem('deck-model') || ''; } catch { /* storage blocked */ }
   $('#claude-model').onchange = e => { try { localStorage.setItem('deck-model', e.target.value); } catch { /* ignore */ } };
@@ -55,7 +61,10 @@ function context() {
   const n = app.selection.length;
   $('#claude-ctx').textContent = `Slide ${app.index + 1}${n ? ` · ${n === 1 ? (app.selection[0].dataset.el || app.selection[0].tagName.toLowerCase()) : n + ' objects'}` : ''}`;
   const fromPowerPoint = (app.source || []).some(f => /\.(pptx|potx|ppsx|pptm|potm)$/i.test(f));
-  const chips = n ? CHIPS_SEL : app.kind === 'template' ? (fromPowerPoint ? [POLISH, ...CHIPS_TEMPLATE] : CHIPS_TEMPLATE) : CHIPS_SLIDE;
+  const hasAudience = /<meta name="deck-audience" content="[^"]+"/.test(app.html);
+  const chips = n ? (hasAudience ? [...CHIPS_SEL, FIT_SEL] : CHIPS_SEL)
+    : app.kind === 'template' ? (fromPowerPoint ? [POLISH, ...CHIPS_TEMPLATE] : CHIPS_TEMPLATE)
+      : hasAudience ? [FIT_SLIDE, ...CHIPS_SLIDE] : CHIPS_SLIDE;
   const box = $('#claude-chips');
   box.replaceChildren(...chips.map(([label, text]) => {
     const b = document.createElement('button');
@@ -129,7 +138,11 @@ async function send(shown) {
         const line = buf.slice(0, i); buf = buf.slice(i + 1);
         if (!line.trim()) continue;
         const m = JSON.parse(line);
-        if (m.kind === 'start' && m.resumed) log('info', 'Continuing the conversation (New chat starts fresh).');
+        if (m.kind === 'start' && !shownStart) {
+          shownStart = true; // once per editor visit: the conversation itself goes on
+          log('info', m.resumed ? 'Continuing this deck’s conversation with Claude (New chat starts over).' : 'New conversation: Claude starts from this deck’s notes (session.md).');
+        }
+        if (m.kind === 'info') log('info', m.message);
         if (m.kind === 'tool') log('tool', `${{ Edit: '✎', Write: '✎', MultiEdit: '✎', Read: '◦', Glob: '◦', Grep: '◦' }[m.name] || '·'} ${m.name} ${m.detail || ''}`);
         if (m.kind === 'text') log('assistant', m.text);
         if (m.kind === 'done') { ok = m.ok; log('info', `${m.ok ? 'Done' : 'Finished with an error'}${m.ms ? ` in ${(m.ms / 1000).toFixed(0)} s` : ''}${m.cost ? ` · $${m.cost.toFixed(3)}` : ''}`); }
