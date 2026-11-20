@@ -5,6 +5,7 @@ import * as ops from './ops.js';
 import { initInspector } from './inspector.js';
 import { initClaude, focusPrompt, ask, note, stop as stopClaude } from './claude.js';
 import { audiencePicker, audienceDialog } from './audience.js';
+import { openHistory, saveVersion } from './history.js';
 import { readAudience, writeAudience, audienceLabel, audienceByKey, DEFAULT_AUDIENCE } from './audiences.js';
 
 const params = new URLSearchParams(location.search);
@@ -285,6 +286,11 @@ async function open(ref) {
   showSlide(Math.min(app.index, slides().length - 1));
   wire();
   liveReload();
+  // Versions for the History panel: now, and every 10 minutes while the deck is being edited.
+  saveVersion('Opened in the editor');
+  let edited = false;
+  app.on('change', () => { edited = true; });
+  setInterval(() => { if (edited) { edited = false; saveVersion('While editing'); } }, 10 * 60 * 1000);
   afterImport();
 }
 
@@ -361,6 +367,7 @@ const commands = {
   export: exportDeck,
   'save-template': saveAsTemplate, 'use-template': deckFromTemplate, 'duplicate-template': duplicateTemplate, 'delete-template': deleteThisTemplate,
   audience: changeAudience,
+  history: openHistory,
   'claude-stop': stopClaude,
 };
 export function run(cmd, data = {}) {

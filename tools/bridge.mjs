@@ -131,7 +131,7 @@ function buildPrompt(target, body, fresh, told) {
 
 /* ── The bridge ── */
 
-export function createBridge({ broadcast, writeFile, fail }) {
+export function createBridge({ broadcast, writeFile, fail, beforeRequest = () => {} }) {
   const agents = new Map(); // ref -> { proc, model, turn, … }: a running Claude
   let saved = {};
   try { saved = JSON.parse(fs.readFileSync(STORE, 'utf8')); } catch { /* none yet */ }
@@ -256,6 +256,7 @@ export function createBridge({ broadcast, writeFile, fail }) {
     if (!fs.existsSync(path.join(target.dir, 'deck.html'))) return fail(res, 400, 'Unknown deck');
     if (isRunning(ref)) return fail(res, 409, 'Claude is already working on this deck');
     ensureSessionNotes(target.dir, target.kind);
+    try { beforeRequest(target, body); } catch (e) { console.warn('Could not save a version before the request:', e.message); }
     res.writeHead(200, { 'Content-Type': 'application/x-ndjson; charset=utf-8', 'Cache-Control': 'no-store' });
     const t = {
       dir: target.dir, kind: target.kind, request: body.prompt, model: body.model || MODEL,

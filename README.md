@@ -306,6 +306,8 @@ drop it on the start page instead: that makes a template.)
 
 ## Good to know
 
+- **History** (◷ in the toolbar) keeps the last 50 versions of every deck: saved when you open it, every 10 minutes
+  while you edit and before each request to Claude. Preview any of them and restore it; restoring can be undone too.
 - The editor shows each slide fully built so you can reach every element; press **Play** (⌘Enter) to see the motion.
   Script-driven canvases come alive there.
 - Dragging an element out of a layout (a list item, a flex child) offsets it from its place in that layout. Top-level

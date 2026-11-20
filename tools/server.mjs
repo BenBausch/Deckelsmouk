@@ -10,6 +10,7 @@ import { ROOT, DECKS, DIST, TEMPLATES, ARCHIVE, MIME, resolveRef, listDecks, lis
   duplicateDeck, archiveDeck, restoreDeck, deleteDeck, deleteTemplate } from './lib.mjs';
 import { importPresentation } from './importer.mjs';
 import { createBridge, ensureSessionNotes } from './bridge.mjs';
+import { snapshot, versions, version, forgetHistory } from './history.mjs';
 
 const args = process.argv.slice(2);
 const PORT = +(args[args.indexOf('--port') + 1] || process.env.PORT || 4800) || 4800;
@@ -73,7 +74,12 @@ function watch() {
 
 /* ── Claude Code bridge (tools/bridge.mjs): one long-lived conversation per deck, plus its session.md ── */
 
-const bridge = createBridge({ broadcast, writeFile, fail });
+const oneLine = (s, n) => { s = String(s || '').replace(/\s+/g, ' ').trim(); return s.length > n ? s.slice(0, n - 1) + '…' : s; };
+const bridge = createBridge({
+  broadcast, writeFile, fail,
+  // Every Claude request can be taken back from the History panel.
+  beforeRequest: (target, body) => snapshot(body.deck, target.dir, `Before Claude: ${oneLine(body.prompt, 90)}`),
+});
 for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => { bridge.stopAll(); process.exit(0); });
 
 /* ── API ─────────────────────────────────────────────────────────────────── */
@@ -102,6 +108,7 @@ async function api(req, res, url) {
       if (route === 'POST /api/deck/archive') return send(res, 200, { ok: true, name: archiveDeck(deck) });
       if (route === 'POST /api/deck/restore') return send(res, 200, { ok: true, name: restoreDeck(deck) });
       deleteDeck(deck, { archived: url.searchParams.has('archived') });
+      forgetHistory(deck);
       return send(res, 200, { ok: true });
     }
     case 'GET /api/templates': return send(res, 200, listTemplates());
@@ -110,6 +117,7 @@ async function api(req, res, url) {
       if (bridge.isRunning(`templates/${name}`)) return fail(res, 409, 'Claude is working on this template; wait or stop it first.');
       await bridge.forget(`templates/${name}`);
       deleteTemplate(name);
+      forgetHistory(`templates/${name}`);
       return send(res, 200, { ok: true });
     }
     case 'GET /api/deck': {
@@ -162,6 +170,27 @@ async function api(req, res, url) {
       fs.mkdirSync(DIST, { recursive: true });
       fs.writeFileSync(path.join(DIST, `${t.name}.html`), html);
       return send(res, 200, { path: `/dist/${t.name}.html`, kb: Math.round(Buffer.byteLength(html) / 1024), assets });
+    }
+    // Version history (tools/history.mjs).
+    case 'GET /api/history': target(); return send(res, 200, versions(deck));
+    case 'POST /api/history/snapshot': {
+      const v = snapshot(deck, target().dir, oneLine(url.searchParams.get('label') || 'Saved', 90));
+      return send(res, 200, { ok: true, version: v });
+    }
+    case 'POST /api/history/restore': {
+      const t = target(), v = version(deck, url.searchParams.get('id'));
+      const when = new Date(versions(deck).find(e => e.id === url.searchParams.get('id'))?.time || Date.now());
+      snapshot(deck, t.dir, `Before restoring the version of ${when.toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}`);
+      writeFile(path.join(t.dir, 'deck.html'), v.html);
+      writeFile(path.join(t.dir, 'animations.js'), v.js);
+      return send(res, 200, { ok: true, html: v.html, js: v.js });
+    }
+    // A version as a page (slide thumbnails), for the History panel's preview.
+    case 'GET /api/history/view': {
+      const t = target(), v = version(deck, url.searchParams.get('id'));
+      const zoom = Math.min(1, Math.max(0.05, +url.searchParams.get('zoom') || 0.2));
+      const html = v.html.replace(/<head>/i, `<head>\n<base href="/${t.rel.split('/').map(encodeURIComponent).join('/')}/">\n<style>:root { --thumb-zoom: ${zoom}; color-scheme: dark; } html, body { background: transparent !important; } .slide.is-current { outline-color: transparent !important; } .slide.is-current::after { background: rgba(20,22,26,.82) !important; color: #c9ced6 !important; }</style>`);
+      return send(res, 200, html, 'text/html; charset=utf-8');
     }
     case 'POST /api/claude': return bridge.run(res, await json(req));
     case 'POST /api/claude/stop': return send(res, 200, { ok: bridge.stop(deck) });
