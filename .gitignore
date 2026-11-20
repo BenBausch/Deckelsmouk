@@ -1,5 +1,11 @@
 node_modules/
 .DS_Store
 *.log
+# The editor's Claude conversation ids per deck (machine-specific; each deck's session.md holds the notes).
+.deckelsmouk/
 # Built single-file decks are reproducible with `npm run build`; remove this line to commit them.
 dist/
+# Decks are personal: only the example deck belongs to the repository (archived decks too).
+decks/*
+!decks/example/
+archive/
