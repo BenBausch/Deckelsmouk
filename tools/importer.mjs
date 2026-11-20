@@ -4,7 +4,7 @@
 // default template plus the original in source/, and a prompt for Claude to restyle it.
 import fs from 'node:fs';
 import path from 'node:path';
-import { TEMPLATES, templateDir, freeName, createTemplate, unpack, isBuiltDeck, asTemplate } from './lib.mjs';
+import { TEMPLATES, templateDir, freeName, createTemplate, unpack, isBuiltDeck, asTemplate, starterDir } from './lib.mjs';
 import { pptxToTemplate } from './pptx.mjs';
 import { readZip } from './ooxml.mjs';
 
@@ -42,7 +42,7 @@ export function importPresentation(buf, filename, { name, title } = {}) {
     try {
       fs.mkdirSync(dir, { recursive: true });
       const report = pptxToTemplate(buf, dir, { title: pretty, source: path.basename(filename) });
-      fs.copyFileSync(path.join(TEMPLATES, 'default', 'animations.js'), path.join(dir, 'animations.js'));
+      fs.copyFileSync(path.join(starterDir(), 'animations.js'), path.join(dir, 'animations.js'));
       const rel = keep(dir);
       extractDesignParts(buf, path.join(dir, 'source', 'pptx'));
       fs.writeFileSync(path.join(dir, 'source', 'import-report.md'), reportText(report, filename));

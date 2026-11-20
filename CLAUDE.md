@@ -10,9 +10,11 @@ sentences what you changed.
 decks/<name>/deck.html       slides + the deck's own styles (theme)
 decks/<name>/animations.js   named effects and slide scripts
 decks/<name>/assets/         images, video, fonts (referenced as assets/…)
+decks/<name>/session.md      Claude's notes on the deck across conversations (purpose, decisions, preferences, log)
 runtime/deck.js, deck.css    the player shared by every deck (don't change it for one deck's needs)
 templates/<name>/            templates: decks whose slides are layouts (see Templates); source/ = imported original
 archive/<name>/              archived decks (moved out of decks/ from the start page; not built; restorable)
+tools/blank/                 the built-in blank deck: new decks start from it when there is no template
 dist/<name>.html             built single-file deck (npm run build); never edit by hand
 ```
 
@@ -26,6 +28,9 @@ dist/<name>.html             built single-file deck (npm run build); never edit 
 - A slide: `<section class="slide" id="unique-id" data-title="Human title">…<aside class="notes"><p>…</p></aside></section>`.
   Optional: `data-transition="fade|none|push|zoom"`, `data-transition-dur="0.6"`, `data-backup` (after the end),
   `data-layout="key"` (the template layout whose design it uses; see Templates).
+- `<meta name="deck-audience" content="colleagues|peers|keynote|students|public|custom">` in the head says who the
+  deck is for (custom: `<meta name="deck-audience-description" content="…">`). The editor gives you that audience's
+  guidance with each request (the presets are in `editor/js/audiences.js`): write and design every change for them.
 - A deck made from a template has, after the stage, `<template id="deck-layouts">` with the template's layouts: the
   editor's + Slide menu offers them. It is not shown or exported; leave it alone unless asked to change the layouts.
 - **Every top-level object on a slide is absolutely positioned with inline `left`, `top`, `width` (and `height` when it
@@ -119,6 +124,12 @@ all layouts in `<template id="deck-layouts">`. The editor opens templates too (`
 - The request names the slide (id) and the selected objects (selector + HTML + box). Change those, unless the request
   clearly asks for more.
 - For a template (`templates/<name>/`), the slides are layouts: follow Templates above.
+- The editor keeps one conversation per deck going across requests, and each request lists the slides with their line
+  numbers in deck.html: read only the lines you need.
+- `session.md` (in the deck's or template's folder) is the deck's memory across conversations: what it's for, its
+  audience, style decisions, the user's preferences and don'ts, notes. The editor puts it into the first prompt of a
+  conversation and logs every request under `## Log`. When you learn something worth keeping, add a line to the right
+  section; leave the Log alone. Working on a deck from the terminal, read its session.md first.
 - Arrange: compute positions in stage px; align edges; keep a margin of at least ~120 px at the sides and ~100 px top/bottom.
 - Animate: prefer attributes; write a named effect or slide script only when attributes can't do it.
 - Don't reformat or rewrite unrelated slides. Keep text the user wrote unless asked to change it.
@@ -127,7 +138,7 @@ all layouts in `<template id="deck-layouts">`. The editor opens templates too (`
 ## Commands
 
 `npm run dev` (editor at http://localhost:4800) · `npm run build [deck]` → `dist/<deck>.html` ·
-`npm run new -- <name> ["Title"] [--template <name>]` · `npm run import -- <file.pptx|.potx|.html|.pdf|.zip> ["Name"]` ·
+`npm run new -- <name> ["Title"] [--template <name>] [--audience <preset>|"description"]` · `npm run import -- <file.pptx|.potx|.html|.pdf|.zip> ["Name"]` ·
 `npm run unpack -- <file.html> <name>`.
 
 ## Converting an older presentation

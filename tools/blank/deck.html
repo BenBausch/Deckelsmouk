@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blank</title>
+<link rel="stylesheet" href="../../runtime/deck.css">
+<style id="deck-style">
+  /* ── Theme ── A plain, light starting point (used when there is no template). The stage is 1920 x 1080 px; every
+     size below is in stage pixels. */
+  :root {
+    --bg: #ffffff;
+    --fg: #1d1d1f;
+    --muted: #6e6e73;
+    --line: #e3e3e8;
+    --accent: #0a66ff;
+    --accent-2: #ff9500;
+    --good: #28a745;
+    --bad: #e5484d;
+    --font: -apple-system, "Segoe UI", "Helvetica Neue", Inter, Arial, sans-serif;
+    --font-heading: var(--font);
+    --mono: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  }
+  .stage { font-family: var(--font); color: var(--fg); }
+  .stage p, .stage h1, .stage h2, .stage h3, .stage ul { margin: 0; }
+
+  /* Type scale */
+  .hero    { font-family: var(--font-heading); font-size: 140px; font-weight: 700; letter-spacing: -.03em; line-height: 1.05; }
+  .h1      { font-family: var(--font-heading); font-size: 104px; font-weight: 700; letter-spacing: -.03em; line-height: 1.06; }
+  .h2      { font-family: var(--font-heading); font-size: 72px;  font-weight: 650; letter-spacing: -.02em; line-height: 1.1; }
+  .h3      { font-family: var(--font-heading); font-size: 46px;  font-weight: 650; letter-spacing: -.01em; line-height: 1.15; }
+  .lead    { font-size: 42px;  font-weight: 400; color: var(--muted); line-height: 1.3; }
+  .body    { font-size: 34px;  line-height: 1.45; }
+  .small   { font-size: 26px;  color: var(--muted); line-height: 1.4; }
+  .eyebrow { font-size: 28px;  font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+  .mono    { font-family: var(--mono); }
+  .muted   { color: var(--muted); }
+  .accent  { color: var(--accent); }
+  .accent-2 { color: var(--accent-2); }
+  .center  { text-align: center; }
+  .grad    { background: linear-gradient(95deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+  /* Building blocks */
+  .card  { background: color-mix(in srgb, var(--fg) 4%, transparent); border: 1px solid var(--line); border-radius: 24px; padding: 44px; box-sizing: border-box; }
+  .pill  { display: inline-block; padding: 8px 22px; border-radius: 40px; background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent); font-weight: 600; font-size: 26px; }
+  .list  { list-style: none; padding: 0; display: grid; align-content: start; gap: 26px; font-size: 40px; line-height: 1.3; }
+  .list li::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); margin-right: 24px; vertical-align: middle; }
+  .stat  { font-size: 180px; font-weight: 700; letter-spacing: -.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .glow  { border-radius: 50%; filter: blur(140px); opacity: .25; pointer-events: none; }
+  img.fit { object-fit: cover; border-radius: 16px; }
+
+  /* Placeholders: empty image boxes show while editing only (drop a picture on one to fill it); .slide-num shows the slide number. */
+  .ph-image { box-sizing: border-box; border: 3px dashed color-mix(in srgb, var(--fg) 25%, transparent); background: color-mix(in srgb, var(--fg) 4%, transparent); border-radius: 16px; }
+  .ph-image::after { content: "Image"; position: absolute; inset: 0; display: grid; place-items: center; font: 500 30px var(--font); color: var(--muted); }
+  body.is-presenting .ph-image, body.is-print .ph-image { visibility: hidden; }
+  .stage { counter-reset: deck-slide; }
+  .stage > .slide { counter-increment: deck-slide; }
+  .slide-num::before { content: counter(deck-slide); }
+
+  /* ── Master ── The background of every slide; add a logo as an extra background layer before var(--bg). */
+  .slide { background: var(--bg); }
+</style>
+</head>
+<body>
+<div class="stage" data-width="1920" data-height="1080">
+<!-- ==================== SLIDES ==================== -->
+
+<!-- ===== Slide 1 · title ===== -->
+<section class="slide" id="title" data-title="Title">
+  <h1 class="hero center" data-el="title" style="position:absolute;left:160px;top:390px;width:1600px">Title</h1>
+  <p class="lead center" data-el="subtitle" style="position:absolute;left:360px;top:590px;width:1200px">Subtitle</p>
+  <aside class="notes"><p></p></aside>
+</section>
+
+<!-- ==================== END SLIDES ==================== -->
+</div>
+<script src="../../runtime/deck.js"></script>
+<script src="animations.js"></script>
+</body>
+</html>

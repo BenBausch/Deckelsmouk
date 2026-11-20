@@ -284,7 +284,8 @@ function slideTab() {
       ${notes && notes.querySelector(':not(p)') ? '<p class="hint">These notes contain formatting; editing here keeps paragraphs only.</p>' : ''}
     </div>
     <div class="sec"><h4>Files</h4><div class="btns">
-      <button data-open="html">Open deck.html</button><button data-open="js">Open animations.js</button></div>
+      <button data-open="html">Open deck.html</button><button data-open="js">Open animations.js</button>
+      <button data-open="session" title="Claude's notes about this deck, carried across conversations">Open session.md</button></div>
       <p class="hint" style="margin-top:8px">Opens in VS Code. Changes on disk show up here at once.</p></div>`;
   bind({
     title: v => { s.dataset.title = v; },

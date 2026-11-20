@@ -20,6 +20,8 @@
       <input type="hidden" name="template" value="default">
       <button class="primary">Create deck</button>
     </form>
+    <div class="section-head"><h2>Audience</h2><span>Who the new deck is for. Claude shapes content, wording and motion for them; you can change it in the editor.</span></div>
+    <div id="audience-picker"></div>
     <div class="section-head"><h2>Templates</h2><span>New decks use <b id="template-chosen">Default</b>. Click a template to pick it.</span></div>
     <div id="template-list" class="template-list"></div>
     <div class="section-head"><h2>Decks</h2></div>
@@ -40,6 +42,7 @@
     <a class="brand" href="/" title="All decks"><img src="/editor/logo.svg" alt="Deckelsmouk"></a>
     <input id="deck-title" class="deck-title" spellcheck="false" title="Deck title">
     <span class="kind-badge template-only" title="You are editing a template: each slide is a layout that decks made from it can use">Template</span>
+    <button id="audience-btn" class="audience-btn deck-only" data-cmd="audience" title="Who this deck is for: Claude shapes content, wording and motion for them">◎<span id="audience-name">Audience</span></button>
     <div class="group">
       <button data-cmd="undo" title="Undo (⌘Z)">↶</button>
       <button data-cmd="redo" title="Redo (⇧⌘Z)">↷</button>
@@ -93,6 +96,7 @@
           <button data-cmd="save-template" class="deck-only">Save design as template…</button>
           <button data-cmd="use-template" class="template-only">New deck from this template…</button>
           <button data-cmd="duplicate-template" class="template-only">Duplicate template…</button>
+          <button data-cmd="delete-template" class="template-only danger">Delete template…</button>
           <hr>
           <a href="/" class="menu-link">All decks and templates</a>
         </div>
@@ -132,7 +136,7 @@
             <option value="sonnet">Sonnet</option>
             <option value="haiku">Haiku</option>
           </select>
-          <button type="button" id="claude-new" title="Start a new conversation (Claude forgets earlier requests)">New chat</button>
+          <button type="button" id="claude-new" title="Start a new conversation (Claude forgets earlier requests but keeps the deck's session.md notes)">New chat</button>
           <button class="primary" id="claude-send" title="Send (Enter; Shift+Enter for a new line)">Ask</button>
         </form>
       </div>

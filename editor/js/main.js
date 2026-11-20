@@ -4,6 +4,8 @@ import { initCanvas, attachCanvas, insertFile, startTextEdit, stopTextEdit, text
 import * as ops from './ops.js';
 import { initInspector } from './inspector.js';
 import { initClaude, focusPrompt, ask, note, stop as stopClaude } from './claude.js';
+import { audiencePicker, audienceDialog } from './audience.js';
+import { readAudience, writeAudience, audienceLabel, audienceByKey, DEFAULT_AUDIENCE } from './audiences.js';
 
 const params = new URLSearchParams(location.search);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -11,6 +13,11 @@ const store = { // sessionStorage, which may be blocked
   get(k) { try { return sessionStorage.getItem(k); } catch { return null; } },
   set(k, v) { try { sessionStorage.setItem(k, v); } catch { /* blocked */ } },
   take(k) { const v = this.get(k); try { sessionStorage.removeItem(k); } catch { /* blocked */ } return v; },
+};
+// The audience picked last, offered again for the next deck (a convenience: may be unavailable).
+const lastAudience = {
+  get() { try { const v = JSON.parse(localStorage.getItem('deck-audience')); return v && audienceByKey(v.key) ? v : { key: DEFAULT_AUDIENCE, text: '' }; } catch { return { key: DEFAULT_AUDIENCE, text: '' }; } },
+  set(v) { try { localStorage.setItem('deck-audience', JSON.stringify(v)); } catch { /* blocked */ } },
 };
 
 /* ── Start page: new deck, templates, decks ── */
@@ -27,57 +34,12 @@ function thumb(src) {
 
 async function picker() {
   $('#picker').hidden = false;
-  const templates = await api.get('/api/templates');
-  // A server started before an update answers in the old format (names only) and lacks newer routes.
-  if (templates.some(t => typeof t === 'string')) {
-    toast('The dev server is older than the editor. Restart it (Ctrl+C, then <b>npm run dev</b>) to use templates and import.', 0);
-    templates.forEach((t, i) => { if (typeof t === 'string') templates[i] = { name: t, title: t, layouts: 0, description: '' }; });
-  }
   const form = $('#new-deck');
-  let chosen = templates.some(t => t.name === store.get('deck-template')) ? store.get('deck-template') : 'default';
-  const choose = name => {
-    chosen = name; store.set('deck-template', name);
-    form.elements.template.value = name;
-    $$('.template-card').forEach(c => c.classList.toggle('on', c.dataset.name === name));
-    $('#template-chosen').textContent = (templates.find(t => t.name === name) || {}).title || name;
-  };
-
-  const tlist = $('#template-list');
-  tlist.replaceChildren();
-  templates.forEach(t => {
-    const card = document.createElement('div');
-    card.className = 'template-card';
-    card.dataset.name = t.name;
-    card.title = 'Use this template for the new deck';
-    card.append(thumb(`/templates/${encodeURIComponent(t.name)}/deck.html?edit`));
-    const meta = document.createElement('div');
-    meta.className = 'meta';
-    meta.innerHTML = `<b></b><span>${t.layouts} layout${t.layouts === 1 ? '' : 's'}${t.description ? ' · ' + esc(t.description) : ''}</span>
-      <a class="edit" href="/?template=${encodeURIComponent(t.name)}" title="Edit this template's layouts and theme">Edit</a>`;
-    meta.querySelector('b').textContent = t.title;
-    card.append(meta);
-    card.onclick = e => { if (!e.target.closest('a')) choose(t.name); };
-    tlist.append(card);
-  });
-  const action = (cls, icon, label, sub, fn) => {
-    const b = document.createElement('button');
-    b.type = 'button'; b.className = `template-card action ${cls}`;
-    b.innerHTML = `<div class="thumb"><span>${icon}</span></div><div class="meta"><b>${label}</b><span>${sub}</span></div>`;
-    b.onclick = fn;
-    tlist.append(b);
-  };
-  action('import', '⇪', 'Import a template', 'PowerPoint (.pptx, .potx), HTML or PDF. Or drop the file on this page.', () => $('#import-input').click());
-  action('blank', '＋', 'New template', 'Start from the default design', async () => {
-    const name = await dialog({ title: 'New template', text: 'It starts as a copy of the default design. Name it after your university, company or style.', input: '', placeholder: 'Template name', ok: 'Create' });
-    if (!name) return;
-    try { const r = await api.post('/api/template', { name }); location.href = `/?template=${encodeURIComponent(r.name)}`; }
-    catch (err) { toast(esc(err.message)); }
-  });
-  choose(chosen);
-
+  const audience = audiencePicker($('#audience-picker'), lastAudience.get(), v => lastAudience.set(v));
+  await renderTemplates();
   await renderDecks();
-  // The ⋯ menu closes on a click elsewhere, Escape, scrolling or resizing.
-  document.addEventListener('click', e => { if (!e.target.closest('#card-menu, .deck-card .more')) closeCardMenu(); });
+  // The ⋯ menus close on a click elsewhere, Escape, scrolling or resizing.
+  document.addEventListener('click', e => { if (!e.target.closest('#card-menu, .more')) closeCardMenu(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCardMenu(); });
   $('#picker').addEventListener('scroll', closeCardMenu);
   addEventListener('resize', closeCardMenu);
@@ -85,8 +47,10 @@ async function picker() {
   form.onsubmit = async e => {
     e.preventDefault();
     const f = new FormData(form);
+    const aud = audience.value(); // null: the custom description is still empty (the picker says so)
+    if (!aud) return toast('Describe the audience, or pick one of the others.');
     try {
-      const r = await api.post('/api/new', { name: f.get('name'), title: f.get('title'), template: f.get('template') });
+      const r = await api.post('/api/new', { name: f.get('name'), title: f.get('title'), template: f.get('template'), audience: aud });
       location.href = `/?deck=${encodeURIComponent(r.name)}`;
     } catch (err) { toast(esc(err.message)); }
   };
@@ -104,6 +68,101 @@ async function picker() {
     const f = e.dataTransfer?.files?.[0];
     if (f) importTemplate(f);
   });
+}
+
+/* ── Templates on the start page: click to use one for the next deck; ⋯ to edit, duplicate or delete ── */
+
+let chosen = null; // the template the next deck uses; '' = the built-in blank deck
+
+function choose(name, title) {
+  chosen = name;
+  store.set('deck-template', name);
+  $('#new-deck').elements.template.value = name;
+  $$('.template-card[data-name]').forEach(c => c.classList.toggle('on', c.dataset.name === name));
+  $('#template-chosen').textContent = title;
+}
+
+async function renderTemplates() {
+  const templates = await api.get('/api/templates');
+  // A server started before an update answers in the old format (names only) and lacks newer routes.
+  if (templates.some(t => typeof t === 'string')) {
+    toast('The dev server is older than the editor. Restart it (Ctrl+C, then <b>npm run dev</b>) to use templates and import.', 0);
+    templates.forEach((t, i) => { if (typeof t === 'string') templates[i] = { name: t, title: t, layouts: 0, description: '' }; });
+  }
+  const names = templates.map(t => t.name);
+  // Keep the choice while it exists; otherwise the default template, or blank when there is none.
+  const saved = chosen ?? store.get('deck-template');
+  chosen = saved === '' || names.includes(saved) ? saved : names.includes('default') ? 'default' : '';
+
+  const tlist = $('#template-list');
+  tlist.replaceChildren();
+  // Blank: the built-in plain deck, always available (and the only choice when there are no templates).
+  const blank = document.createElement('div');
+  blank.className = 'template-card blank-card';
+  blank.dataset.name = '';
+  blank.title = 'Start the new deck blank';
+  blank.innerHTML = `<div class="thumb"><span>Aa</span></div><div class="meta"><b>Blank</b><span>A plain, light deck with simple layouts</span></div>`;
+  blank.onclick = () => choose('', 'a blank deck');
+  tlist.append(blank);
+
+  templates.forEach(t => {
+    const card = document.createElement('div');
+    card.className = 'template-card';
+    card.dataset.name = t.name;
+    card.title = 'Use this template for the new deck';
+    card.append(thumb(`/templates/${encodeURIComponent(t.name)}/deck.html?edit`));
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.innerHTML = `<b></b><span>${t.layouts} layout${t.layouts === 1 ? '' : 's'}${t.description ? ' · ' + esc(t.description) : ''}</span>`;
+    meta.querySelector('b').textContent = t.title;
+    card.append(meta);
+    const more = document.createElement('button');
+    more.type = 'button'; more.className = 'more'; more.textContent = '⋯'; more.title = 'Edit, duplicate or delete';
+    more.onclick = e => {
+      e.stopPropagation();
+      cardMenu(more, `templates/${t.name}`, [['edit', 'Edit'], ['duplicate', 'Duplicate'], ['delete', 'Delete…', 'danger']], act => templateAction(act, t));
+    };
+    card.append(more);
+    card.onclick = e => { if (!e.target.closest('.more')) choose(t.name, t.title); };
+    tlist.append(card);
+  });
+
+  const action = (cls, icon, label, sub, fn) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = `template-card action ${cls}`;
+    b.innerHTML = `<div class="thumb"><span>${icon}</span></div><div class="meta"><b>${label}</b><span>${sub}</span></div>`;
+    b.onclick = fn;
+    tlist.append(b);
+  };
+  action('import', '⇪', 'Import a template', 'PowerPoint (.pptx, .potx), HTML or PDF. Or drop the file on this page.', () => $('#import-input').click());
+  const startsFrom = names.includes('default') ? 'the default design' : 'the blank design';
+  action('new', '＋', 'New template', `Start from ${startsFrom}`, async () => {
+    const name = await dialog({ title: 'New template', text: `It starts as a copy of ${startsFrom}. Name it after your university, company or style.`, input: '', placeholder: 'Template name', ok: 'Create' });
+    if (!name) return;
+    try { const r = await api.post('/api/template', { name }); location.href = `/?template=${encodeURIComponent(r.name)}`; }
+    catch (err) { toast(esc(err.message)); }
+  });
+  choose(chosen, chosen ? templates.find(t => t.name === chosen).title : 'a blank deck');
+}
+
+async function templateAction(act, t) {
+  try {
+    if (act === 'edit') { location.href = `/?template=${encodeURIComponent(t.name)}`; return; }
+    if (act === 'duplicate') {
+      const r = await api.post('/api/template', { name: `${t.title} copy`, from: `templates/${t.name}` });
+      toast(`Duplicated as <b>${esc(r.name)}</b>.`);
+    } else if (act === 'delete') {
+      const sure = await dialog({
+        title: `Delete the template “${t.title}”?`,
+        text: `This removes templates/${t.name}/ for good${t.description.startsWith('Imported') ? ', with the original it was imported from' : ''}. Decks made from it keep their design.`,
+        ok: 'Delete', danger: true,
+      });
+      if (!sure) return;
+      await api.del(`/api/template?name=${encodeURIComponent(t.name)}`);
+      toast(`Template <b>${esc(t.title)}</b> deleted.`);
+    }
+    await renderTemplates();
+  } catch (e) { toast(esc(e.message), 6000); }
 }
 
 /* ── Decks on the start page: open, or ⋯ to duplicate, archive (archive/), restore or delete ── */
@@ -127,29 +186,30 @@ function deckCard(d, archived) {
   open.append(thumb(`/${archived ? 'archive' : 'decks'}/${encodeURIComponent(d.name)}/deck.html?edit`));
   const meta = document.createElement('div');
   meta.className = 'meta';
-  meta.innerHTML = `<b></b><span>${esc(d.name)} · ${d.slides} slide${d.slides === 1 ? '' : 's'} · ${new Date(d.modified).toLocaleDateString()}</span>`;
+  meta.innerHTML = `<b></b><span>${esc(d.name)} · ${d.slides} slide${d.slides === 1 ? '' : 's'}${d.audience ? ` · for ${esc(audienceLabel(d.audience))}` : ''} · ${new Date(d.modified).toLocaleDateString()}</span>`;
   meta.querySelector('b').textContent = d.title;
   open.append(meta);
   const more = document.createElement('button');
   more.type = 'button'; more.className = 'more'; more.textContent = '⋯';
   more.title = archived ? 'Restore or delete' : 'Duplicate, archive or delete';
-  more.onclick = e => { e.preventDefault(); e.stopPropagation(); cardMenu(more, d, archived); };
-  if (archived) open.onclick = e => { e.stopPropagation(); cardMenu(more, d, archived); };
+  const items = archived
+    ? [['restore', 'Restore'], ['delete', 'Delete…', 'danger']]
+    : [['duplicate', 'Duplicate'], ['archive', 'Archive'], ['delete', 'Delete…', 'danger']];
+  const menu = () => cardMenu(more, `${archived ? 'archive' : 'decks'}/${d.name}`, items, act => deckAction(act, d, archived));
+  more.onclick = e => { e.preventDefault(); e.stopPropagation(); menu(); };
+  if (archived) open.onclick = e => { e.stopPropagation(); menu(); };
   card.append(open, more);
   return card;
 }
 
-function cardMenu(btn, d, archived) {
+// The ⋯ menu of a deck or template card: items are [action, label, class?]; pick(action) runs the chosen one.
+function cardMenu(btn, key, items, pick) {
   const menu = $('#card-menu');
-  const key = `${archived ? 'archive' : 'decks'}/${d.name}`;
   if (menu.classList.contains('open') && menu.dataset.for === key) return closeCardMenu();
   closeCardMenu();
-  const items = archived
-    ? [['restore', 'Restore'], ['delete', 'Delete…', 'danger']]
-    : [['duplicate', 'Duplicate'], ['archive', 'Archive'], ['delete', 'Delete…', 'danger']];
   menu.innerHTML = items.map(([act, label, cls]) => `<button type="button" role="menuitem" data-act="${act}" class="${cls || ''}">${label}</button>`).join('');
   menu.dataset.for = key;
-  menu.onclick = e => { const b = e.target.closest('[data-act]'); if (b) { closeCardMenu(); deckAction(b.dataset.act, d, archived); } };
+  menu.onclick = e => { const b = e.target.closest('[data-act]'); if (b) { closeCardMenu(); pick(b.dataset.act); } };
   menu.classList.add('open');
   btn.classList.add('on');
   // Under the button, right-aligned; above it when there's no room below.
@@ -159,7 +219,7 @@ function cardMenu(btn, d, archived) {
 }
 function closeCardMenu() {
   $('#card-menu').classList.remove('open');
-  $$('.deck-card .more.on').forEach(b => b.classList.remove('on'));
+  $$('.more.on').forEach(b => b.classList.remove('on'));
 }
 
 async function deckAction(act, d, archived) {
@@ -214,6 +274,8 @@ async function open(ref) {
   app.html = d.html; app.js = d.js; app.source = d.source || [];
   document.title = `${titleOf(app.html)} · Deckelsmouk`;
   $('#deck-title').value = titleOf(app.html);
+  showAudience();
+  app.on('change', showAudience); // undo, redo and outside edits can change it too
   app.index = Math.max(0, (+params.get('slide') || 1) - 1);
   initCanvas(); initInspector(); initClaude();
   app.on('frame', onFrame);
@@ -297,7 +359,8 @@ const commands = {
   'slide-duplicate': ops.duplicateSlide, 'slide-delete': ops.deleteSlide,
   preview, present: () => window.open(`${app.base}/deck.html#${app.index + 1}`, `deck-${app.deck}`),
   export: exportDeck,
-  'save-template': saveAsTemplate, 'use-template': deckFromTemplate, 'duplicate-template': duplicateTemplate,
+  'save-template': saveAsTemplate, 'use-template': deckFromTemplate, 'duplicate-template': duplicateTemplate, 'delete-template': deleteThisTemplate,
+  audience: changeAudience,
   'claude-stop': stopClaude,
 };
 export function run(cmd, data = {}) {
@@ -332,11 +395,34 @@ async function saveAsTemplate() {
   } catch (e) { toast(esc(e.message)); }
 }
 
+/* ── Audience: who the deck is for (stored in deck.html, given to Claude with every request) ── */
+
+function showAudience() {
+  const aud = readAudience(app.html);
+  $('#audience-name').textContent = aud ? audienceLabel(aud) : 'Audience';
+  $('#audience-btn').classList.toggle('unset', !aud);
+}
+
+async function changeAudience() {
+  const next = await audienceDialog(readAudience(app.html));
+  if (!next) return;
+  const html = writeAudience(app.html, next);
+  if (html === app.html) return;
+  app.history.push({ html: app.html, js: app.js, label: 'Audience' });
+  app.future = [];
+  app.html = html;
+  lastAudience.set(next);
+  save();
+  showAudience();
+  app.emit('select'); // the Claude suggestions depend on it
+  toast(`Audience: <b>${esc(audienceLabel(next))}</b>. Claude writes for them from now on; “Fit to audience” reworks a slide.`, 5000);
+}
+
 async function deckFromTemplate() {
   const name = await dialog({ title: 'New deck from this template', text: 'The deck starts with the first layout; + Slide offers the others.', input: '', placeholder: 'Deck name', ok: 'Create deck' });
   if (!name) return;
   try {
-    const r = await api.post('/api/new', { name, template: app.deck.slice('templates/'.length) });
+    const r = await api.post('/api/new', { name, template: app.deck.slice('templates/'.length), audience: lastAudience.get() });
     location.href = `/?deck=${encodeURIComponent(r.name)}`;
   } catch (e) { toast(esc(e.message)); }
 }
@@ -348,6 +434,14 @@ async function duplicateTemplate() {
     const r = await api.post('/api/template', { name, from: app.deck });
     location.href = `/?template=${encodeURIComponent(r.name)}`;
   } catch (e) { toast(esc(e.message)); }
+}
+
+async function deleteThisTemplate() {
+  const name = app.deck.slice('templates/'.length), title = titleOf(app.html);
+  const sure = await dialog({ title: `Delete the template “${title}”?`, text: `This removes templates/${name}/ for good. Decks made from it keep their design.`, ok: 'Delete', danger: true });
+  if (!sure) return;
+  try { await api.del(`/api/template?name=${encodeURIComponent(name)}`); location.href = '/'; }
+  catch (e) { toast(esc(e.message)); }
 }
 
 function wire() {

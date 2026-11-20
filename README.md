@@ -117,8 +117,18 @@ Select something, or nothing to mean the whole slide, and just say it:
 
 Under the hood the editor hands Claude Code the deck, the current slide, and every selected object with its HTML,
 selector and exact box in stage pixels. Claude follows the house rules in [`CLAUDE.md`](CLAUDE.md), may only read and
-edit files (no shell), and you watch each step stream by. Follow-ups keep the conversation (*"slower"*, *"now the
-other two too"*). Pick Opus, Sonnet or Haiku per request.
+edit files (no shell), and you watch each step stream by. Each deck keeps **one running conversation**, even across
+restarts of the editor, so follow-ups are quick and keep their context (*"slower"*, *"now the other two too"*).
+Pick Opus, Sonnet or Haiku per request.
+
+Tell it **who the deck is for** and every request is shaped for them: *Colleagues* (technical depth), *Field peers*
+(seminar or conference), *Product keynote* (big visuals, few words, dramatic reveals), *Students* (step by step, with
+a recap) or the *General public* (no jargon, stories), or describe your own audience. Pick it when you create the deck,
+change it with the **Audience** button, and let *Fit to audience* rework a slide.
+
+Every deck also has a `session.md`: Claude's notes on what the deck is for, the decisions you made and what you like
+or don't. A new conversation starts from it, so Claude never begins from zero, and you can read and edit it like any
+other file.
 
 Prefer the terminal? Run `claude` in the repo and work on any deck directly; the open editor updates as files change.
 
@@ -242,7 +252,7 @@ state, ready for **Print → Save as PDF**, or `?static` to turn off motion for 
 ```bash
 npm run dev                          # editor + live reload (http://localhost:4800); `npm start` without opening a browser
 npm run build                        # every deck → dist/<deck>.html  (or: npm run build -- my-talk)
-npm run new -- my-talk "My Talk"     # new deck from templates/default (add --template <name> for another)
+npm run new -- my-talk "My Talk"     # new deck from templates/default (--template <name>, --audience students)
 npm run import -- uni.potx "Uni"     # a template from a PowerPoint file, an HTML presentation or a PDF
 npm run unpack -- talk.html my-talk  # a built single file back into an editable deck
 ```
@@ -257,7 +267,8 @@ Environment: `PORT`, `DECK_CLAUDE_MODEL` (default model for the prompt bar), `DE
 ```
 decks/<name>/        your presentations (deck.html, animations.js, assets/)
 archive/<name>/      archived presentations (⋯ → Archive on the start page; ⋯ → Restore brings them back)
-templates/<name>/    templates: theme, master and layouts (default, plus your own and imported ones)
+templates/<name>/    templates: theme, master and layouts (default, plus your own and imported ones; ⋯ on the
+                     start page duplicates or deletes them; with none left, new decks start blank)
 runtime/             the player shared by all decks; inlined into every build
 editor/              the visual editor (plain ES modules, no build step)
 tools/               dev server, build, new, unpack, import (Node, no dependencies)
@@ -280,7 +291,7 @@ with its placeholders. New decks start from it, and **＋ Slide** offers its lay
 - **From scratch, or from a deck you like:** *New template* on the start page, or **⋯ → Save design as template** in
   the editor.
 
-A template is simply a deck whose slides are its layouts, so you edit it in the same editor (**Edit** on its card).
+A template is simply a deck whose slides are its layouts, so you edit it in the same editor (**⋯ → Edit** on its card).
 Things that repeat on every slide, like the logo, live in the theme, behind every slide, where nobody drags them by
 accident. Drop a picture on an image placeholder and it fills it.
 
