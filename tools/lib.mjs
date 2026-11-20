@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readAudience, writeAudience } from '../editor/js/audiences.js'; // shared with the editor
+import { readAudience, writeAudience, readDuration, writeDuration } from '../editor/js/audiences.js'; // shared with the editor
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const DECKS = path.join(ROOT, 'decks');
@@ -105,7 +105,7 @@ export function listDecks(root = DECKS) {
   if (!fs.existsSync(root)) return [];
   return fs.readdirSync(root, { withFileTypes: true })
     .filter(d => d.isDirectory() && validName(d.name) && fs.existsSync(path.join(root, d.name, 'deck.html')))
-    .map(d => { const { html, ...i } = info(path.join(root, d.name), d.name); return { ...i, template: metaOf(html, 'deck-template'), audience: readAudience(html) }; })
+    .map(d => { const { html, ...i } = info(path.join(root, d.name), d.name); return { ...i, template: metaOf(html, 'deck-template'), audience: readAudience(html), minutes: readDuration(html) }; })
     .sort((a, b) => b.modified - a.modified);
 }
 
@@ -304,7 +304,7 @@ export const starterDir = () => (hasTemplate('default') ? path.join(TEMPLATES, '
  * Without a template (template: '', or the default one deleted) it starts from the built-in blank deck.
  * Any input is accepted (see freeDeckName); returns the deck's directory.
  */
-export function createDeck(input, { template = 'default', title, audience = null } = {}) {
+export function createDeck(input, { template = 'default', title, audience = null, minutes = null } = {}) {
   if (!String(input || '').trim()) throw new Error('Give the deck a name');
   const fromTemplate = hasTemplate(template);
   if (template && !fromTemplate && template !== 'default') throw new Error(`No template "${template}" in templates/`);
@@ -317,7 +317,7 @@ export function createDeck(input, { template = 'default', title, audience = null
   let html = fs.readFileSync(file, 'utf8').replace(LAYOUTS_RE, '\n');
   const layouts = fromTemplate ? slidesOf(html) : [];
   if (!fromTemplate) { // the blank deck: its one slide, and the editor's built-in layouts under + Slide
-    html = writeAudience(setMeta(setTitle(html, title), 'deck-template', ''), audience);
+    html = writeDuration(writeAudience(setMeta(setTitle(html, title), 'deck-template', ''), audience), minutes);
     fs.writeFileSync(file, html);
     return dir;
   }
@@ -325,7 +325,7 @@ export function createDeck(input, { template = 'default', title, audience = null
     .replace(/<aside class="notes">[\s\S]*?<\/aside>/, '<aside class="notes"><p></p></aside>'); // notes about the layout don't belong in the deck
   html = withSlides(html, [first]);
   html = withLayouts(html, layouts, titleOf(html) || template);
-  html = writeAudience(setMeta(setMeta(setTitle(html, title), 'description', ''), 'deck-template', template), audience);
+  html = writeDuration(writeAudience(setMeta(setMeta(setTitle(html, title), 'description', ''), 'deck-template', template), audience), minutes);
   fs.writeFileSync(file, html);
   return dir;
 }
@@ -347,7 +347,7 @@ export function createTemplate(input, { from, title, description } = {}) {
   let html = asTemplate(fs.readFileSync(file, 'utf8'));
   const fromDeck = src.kind === 'deck' ? `Made from the deck ${src.name}` : '';
   html = setMeta(setMeta(setTitle(html, title || String(input).trim()), 'deck-template', ''), 'description', description ?? fromDeck);
-  html = writeAudience(html, null); // a template is a design; each deck picks its own audience
+  html = writeDuration(writeAudience(html, null), null); // a template is a design; each deck picks audience and length
   fs.writeFileSync(file, html);
   return name;
 }

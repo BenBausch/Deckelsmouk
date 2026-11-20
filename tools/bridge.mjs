@@ -8,8 +8,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { ROOT, SLIDES_START, SLIDES_END, resolveRef } from './lib.mjs';
-import { readAudience, audienceGuide, audienceLabel } from '../editor/js/audiences.js';
+import { ROOT, SLIDES_START, SLIDES_END, resolveRef, layoutsOf } from './lib.mjs';
+import { readAudience, audienceGuide, audienceLabel, readDuration, slideCount } from '../editor/js/audiences.js';
 
 const CLAUDE = process.env.DECK_CLAUDE_BIN || 'claude';
 const MODEL = process.env.DECK_CLAUDE_MODEL || '';
@@ -120,13 +120,46 @@ function buildPrompt(target, body, fresh, told) {
     try { notes = fs.readFileSync(sessionFile(target.dir), 'utf8').trim(); } catch { /* none */ }
     parts.push(`This is a new conversation about this ${target.kind}. Its session notes (${target.rel}/session.md), what earlier conversations learned:\n<session-notes>\n${notes || '(empty)'}\n</session-notes>`);
   }
-  const aud = readAudience(fs.readFileSync(path.join(target.dir, 'deck.html'), 'utf8'));
-  const sig = aud ? JSON.stringify(aud) : '';
-  if (aud && (fresh || sig !== told)) parts.push(`<audience>\n${audienceGuide(aud)}\nWrite and design every change for this audience (unless the request says otherwise).\n</audience>`);
-  else if (aud) parts.push(`Audience: ${aud.key === 'custom' ? aud.text : audienceLabel(aud)}, as described earlier in this conversation.`);
+  const deckHtml = fs.readFileSync(path.join(target.dir, 'deck.html'), 'utf8');
+  const aud = readAudience(deckHtml), min = readDuration(deckHtml);
+  const sig = aud || min ? JSON.stringify([aud, min]) : '';
+  const length = min ? `Talk length: ${min} minutes (about ${slideCount(min, aud)} slides in all).` : '';
+  if (sig && (fresh || sig !== told)) {
+    parts.push(`<audience>\n${[aud && audienceGuide(aud), length].filter(Boolean).join('\n')}\nWrite and design every change for this audience${min ? ' and length' : ''} (unless the request says otherwise).\n</audience>`);
+  } else if (sig) parts.push(`${aud ? `Audience: ${aud.key === 'custom' ? aud.text : audienceLabel(aud)}. ` : ''}${length} As described earlier in this conversation.`);
   const o = outline(target.dir, body.selection);
   parts.push(o.text, describe(body.selection, o.where), '', `Request: ${body.prompt}`);
   return { text: parts.join('\n'), told: sig };
+}
+
+/* ── Writing a whole deck from the user's material (the start page's Draft step) ── */
+
+/**
+ * The request that has Claude write the deck: from the files in its source/ folder and the pictures given, for its
+ * talk length and audience, built from the template's layouts. Returns { prompt, shown } (shown: the short version
+ * for the editor's log).
+ */
+export function draftPrompt(target, { images = [] } = {}) {
+  const html = fs.readFileSync(path.join(target.dir, 'deck.html'), 'utf8');
+  const aud = readAudience(html), min = readDuration(html) || 20, n = slideCount(min, aud);
+  const src = path.join(target.dir, 'source');
+  const files = fs.existsSync(src) ? fs.readdirSync(src).filter(f => !f.startsWith('.')).map(f => `${target.rel}/source/${f}`) : [];
+  const attr = (s, a) => (new RegExp(`^<section\\b[^>]*\\b${a}="([^"]*)"`).exec(s) || [])[1] || '';
+  const layouts = layoutsOf(html).map(l => `${attr(l, 'data-title') || attr(l, 'id')} (data-layout="${attr(l, 'data-layout')}")`);
+  const material = [...files, ...images.map(i => `${target.rel}/${i}`)];
+  const prompt = `Write this deck from the user's material: ${material.join(', ') || '(none)'}. Read all of it first (PDFs too).
+It is a ${min}-minute talk${aud ? ` for ${aud.key === 'custom' ? 'the audience described below' : audienceLabel(aud)}` : ''}: plan about ${n} slides; fewer if the material is thin, never pad.
+1. Plan the story first: a title slide, a motivation (why this matters) unless the audience or the material calls for something else, the main part in the material's own logic, and a clear end (takeaways or next steps, then a closing slide).
+2. ${layouts.length
+    ? `Build every slide from the template's layouts, which are in the <template id="deck-layouts"> block of deck.html (line numbers below): ${layouts.join('; ')}. For each slide copy the section of the layout that fits, give it a unique short id and a data-title, keep its data-layout and positions, and replace the placeholder text; delete placeholders you don't use. Your title slide replaces the deck's current first slide.`
+    : 'The deck has no layouts: build the slides with the theme classes, absolutely positioned in stage px as CLAUDE.md says. Your title slide replaces the current first slide.'}
+3. ${images.length ? `Use the user's pictures where they fit: put an <img src="…" style="…;object-fit:cover"> in an image placeholder's box (replacing it) or place it on the slide. ` : ''}Leave image placeholders you can't fill for the user.
+4. Keep the on-slide text short and right for the audience; what the speaker says goes into each slide's speaker notes (<aside class="notes"><p>…</p></aside>), written to be spoken and sized to the time.
+5. Add entrances and click steps where they help the story (data-anim, data-step).
+6. In session.md, fill in About: the topic, the audience, the length and the main message.
+Work in ${target.rel}/ only, and write deck.html in a few large edits (whole slides at a time). When done, reply with the slide titles in order.`;
+  const shown = `Write the deck from your material (${min} min${aud ? `, ${aud.key === 'custom' ? 'your audience' : audienceLabel(aud)}` : ''}): ${material.map(m => path.basename(m)).join(', ')}`;
+  return { prompt, shown };
 }
 
 /* ── The bridge ── */

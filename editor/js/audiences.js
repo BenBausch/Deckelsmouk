@@ -89,6 +89,22 @@ export function writeAudience(html, aud) {
   return set(html, 'deck-audience', ok ? aud.key : '');
 }
 
+/* ── Talk length: <meta name="deck-duration" content="20"> (minutes) ── */
+
+export const LENGTHS = [5, 10, 15, 20, 30, 45, 60];
+export const DEFAULT_LENGTH = 20;
+export function readDuration(html) {
+  const m = /<meta name="deck-duration" content="(\d+)"/i.exec(html);
+  return m ? Math.max(1, Math.min(600, +m[1])) : null;
+}
+export function writeDuration(html, minutes) {
+  html = html.replace(/\n?<meta name="deck-duration" content="[^"]*">/i, '');
+  const n = Math.round(+minutes);
+  return n > 0 ? html.replace(/(<title>[^<]*<\/title>)/i, `$1\n<meta name="deck-duration" content="${Math.min(600, n)}">`) : html;
+}
+/** About how many slides a talk of this length needs for this audience. */
+export const slideCount = (minutes, aud) => Math.max(3, Math.round(minutes * ({ keynote: 1.2, students: 0.8 }[aud?.key] || 1)));
+
 /** A short label for the toolbar and the deck cards. */
 export const audienceLabel = aud => (!aud ? '' : aud.key === CUSTOM.key ? (aud.text.length > 28 ? aud.text.slice(0, 27) + '…' : aud.text) : audienceByKey(aud.key).name);
 

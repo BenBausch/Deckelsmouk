@@ -1,8 +1,25 @@
 // Choosing a deck's audience: the five presets plus a custom description. Used on the start page (inline) and by the
 // editor's Audience button (in a dialog).
-import { AUDIENCES, CUSTOM, DEFAULT_AUDIENCE } from './audiences.js';
+import { AUDIENCES, CUSTOM, DEFAULT_AUDIENCE, LENGTHS, DEFAULT_LENGTH } from './audiences.js';
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/** Talk length in minutes: common lengths as chips, or any number. Returns { value() → minutes }. */
+export function lengthPicker(root, minutes, onChange = () => {}) {
+  let cur = +minutes || DEFAULT_LENGTH;
+  root.classList.add('length-picker');
+  root.innerHTML = `${LENGTHS.map(n => `<button type="button" class="len" data-min="${n}">${n} min</button>`).join('')}
+    <label class="len-other">or <input type="number" min="1" max="600" step="1" inputmode="numeric" aria-label="Minutes"> min</label>`;
+  const other = root.querySelector('input');
+  const show = () => {
+    root.querySelectorAll('.len').forEach(b => b.classList.toggle('on', +b.dataset.min === cur));
+    if (!LENGTHS.includes(cur)) other.value = cur; else if (document.activeElement !== other) other.value = '';
+  };
+  root.querySelectorAll('.len').forEach(b => b.onclick = () => { cur = +b.dataset.min; show(); onChange(cur); });
+  other.oninput = () => { const n = Math.round(+other.value); if (n > 0 && n <= 600) { cur = n; show(); onChange(cur); } };
+  show();
+  return { value: () => cur };
+}
 
 /**
  * Renders the choice into `root`. value = { key, text }. onChange(value) runs on every change.
@@ -34,21 +51,28 @@ export function audiencePicker(root, value, onChange = () => {}) {
       if (cur.key === CUSTOM.key && !text.value.trim()) { text.classList.add('err'); text.focus(); return null; }
       return { key: cur.key, text: cur.key === CUSTOM.key ? text.value.trim() : '' };
     },
+    /** The current choice, without checking it. */
+    peek: () => ({ ...cur }),
   };
 }
 
-/** The editor's Audience dialog (in-page). Resolves to the new { key, text }, or null when cancelled. */
-export function audienceDialog(current) {
+/**
+ * The editor's Audience dialog (in-page): who the talk is for and how long it is.
+ * Resolves to { audience: { key, text }, minutes }, or null when cancelled.
+ */
+export function audienceDialog({ audience, minutes }) {
   return new Promise(resolve => {
     const d = document.createElement('dialog');
     d.className = 'dialog wide';
-    d.innerHTML = `<form><h3>Audience</h3>
+    d.innerHTML = `<form><h3>Audience and talk length</h3>
       <p>Claude shapes content, wording, amount of text and motion for them in every request. The slides you have stay as they are until you ask (try “Fit to audience”).</p>
+      <div class="length-slot"></div>
       <div class="picker-slot"></div>
       <div class="dialog-btns"><button type="button" data-cancel>Cancel</button><button type="submit" class="primary">Save</button></div></form>`;
-    const picker = audiencePicker(d.querySelector('.picker-slot'), current);
+    const length = lengthPicker(d.querySelector('.length-slot'), minutes);
+    const picker = audiencePicker(d.querySelector('.picker-slot'), audience);
     const done = v => { d.close(); d.remove(); resolve(v); };
-    d.querySelector('form').onsubmit = e => { e.preventDefault(); const v = picker.value(); if (v) done(v); };
+    d.querySelector('form').onsubmit = e => { e.preventDefault(); const v = picker.value(); if (v) done({ audience: v, minutes: length.value() }); };
     d.querySelector('[data-cancel]').onclick = () => done(null);
     d.addEventListener('cancel', e => { e.preventDefault(); done(null); });
     d.addEventListener('mousedown', e => { if (e.target === d) done(null); });

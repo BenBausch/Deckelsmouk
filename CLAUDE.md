@@ -31,6 +31,8 @@ dist/<name>.html             built single-file deck (npm run build); never edit 
 - `<meta name="deck-audience" content="colleagues|peers|keynote|students|public|custom">` in the head says who the
   deck is for (custom: `<meta name="deck-audience-description" content="…">`). The editor gives you that audience's
   guidance with each request (the presets are in `editor/js/audiences.js`): write and design every change for them.
+  `<meta name="deck-duration" content="20">` is the talk length in minutes; size the deck and the notes to it.
+- `decks/<name>/source/` holds material the user gave for drafting the deck (notes.md, PDFs); it is not exported.
 - A deck made from a template has, after the stage, `<template id="deck-layouts">` with the template's layouts: the
   editor's + Slide menu offers them. It is not shown or exported; leave it alone unless asked to change the layouts.
 - **Every top-level object on a slide is absolutely positioned with inline `left`, `top`, `width` (and `height` when it

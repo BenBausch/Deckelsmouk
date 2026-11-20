@@ -9,7 +9,7 @@ import { execFile } from 'node:child_process';
 import { ROOT, DECKS, DIST, TEMPLATES, ARCHIVE, MIME, resolveRef, listDecks, listTemplates, bundle, createDeck, createTemplate,
   duplicateDeck, archiveDeck, restoreDeck, deleteDeck, deleteTemplate, changeTemplate } from './lib.mjs';
 import { importPresentation } from './importer.mjs';
-import { createBridge, ensureSessionNotes } from './bridge.mjs';
+import { createBridge, ensureSessionNotes, draftPrompt } from './bridge.mjs';
 import { snapshot, versions, version, forgetHistory } from './history.mjs';
 import { fontInfo } from './fonts.mjs';
 
@@ -145,9 +145,19 @@ async function api(req, res, url) {
       const body = await json(req);
       let dir;
       // template: '' starts from the built-in blank deck.
-      try { dir = createDeck(body.name, { template: body.template ?? 'default', title: body.title, audience: body.audience }); }
+      try { dir = createDeck(body.name, { template: body.template ?? 'default', title: body.title, audience: body.audience, minutes: body.minutes }); }
       catch (e) { return fail(res, 400, e.message); }
+      // Pasted material for the draft goes with the deck, in its source/ folder (not exported).
+      if (String(body.notes || '').trim()) {
+        fs.mkdirSync(path.join(dir, 'source'), { recursive: true });
+        fs.writeFileSync(path.join(dir, 'source', 'notes.md'), `# The user's notes for this deck\n\n${String(body.notes).trim()}\n`);
+      }
       return send(res, 200, { ok: true, name: path.basename(dir) });
+    }
+    // The request that has Claude write the deck from its material (see draftPrompt in bridge.mjs).
+    case 'POST /api/deck/draft': {
+      const t = target(), body = await json(req);
+      return send(res, 200, { ok: true, ...draftPrompt(t, { images: (body.images || []).filter(i => /^assets\/[\w.-]+$/.test(i)) }) });
     }
     // A new template: a copy of the default one, of another template ("templates/x") or of a deck's design ("my-talk").
     case 'POST /api/template': {
@@ -161,15 +171,17 @@ async function api(req, res, url) {
       try { return send(res, 200, { ok: true, ...importPresentation(await readBody(req), file) }); }
       catch (e) { return fail(res, 400, e.message); }
     }
+    // A file for the deck: media into assets/, or material for a draft into source/ (?to=source).
     case 'POST /api/upload': {
-      const dir = path.join(target().dir, 'assets');
+      const into = url.searchParams.get('to') === 'source' ? 'source' : 'assets';
+      const dir = path.join(target().dir, into);
       fs.mkdirSync(dir, { recursive: true });
       const orig = path.basename(url.searchParams.get('name') || 'file').toLowerCase().replace(/[^a-z0-9._-]+/g, '-');
       const ext = path.extname(orig), stem = path.basename(orig, ext) || 'file';
       let name = stem + ext, k = 1;
       while (fs.existsSync(path.join(dir, name))) name = `${stem}-${++k}${ext}`;
       fs.writeFileSync(path.join(dir, name), await readBody(req));
-      return send(res, 200, { path: `assets/${name}` });
+      return send(res, 200, { path: `${into}/${name}` });
     }
     // A font file for the deck: stored in assets/fonts/ and described from its own tables (tools/fonts.mjs).
     case 'POST /api/font': {

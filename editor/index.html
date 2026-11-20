@@ -14,16 +14,35 @@
   <div class="picker-inner">
     <h1><img src="/editor/logo.svg" alt="" class="picker-logo">Deckelsmouk</h1>
     <p class="sub">Animated HTML presentations. Edit by hand, arrange by mouse, animate by asking Claude.</p>
-    <form id="new-deck" class="new-deck">
-      <input name="name" placeholder="Deck name" required>
-      <input name="title" placeholder="Title (optional)">
+    <form id="new-deck" class="new-deck-form">
+      <div class="section-head"><h2>New deck</h2></div>
+      <div class="new-deck">
+        <input name="name" placeholder="Deck name" required>
+        <input name="title" placeholder="Title (optional)">
+      </div>
       <input type="hidden" name="template" value="default">
-      <button class="primary">Create deck</button>
+      <section class="step"><h3><span class="num">1</span>Talk length</h3>
+        <div id="length-picker"></div></section>
+      <section class="step"><h3><span class="num">2</span>Audience</h3>
+        <p class="step-hint">Claude shapes content, wording and motion for them; you can change it in the editor.</p>
+        <div id="audience-picker"></div></section>
+      <section class="step"><h3><span class="num">3</span>Template</h3>
+        <p class="step-hint">The deck uses <b id="template-chosen">Default</b>. Click a template to pick it.</p>
+        <div id="template-list" class="template-list"></div></section>
+      <section class="step"><h3><span class="num">4</span>Draft <em>optional</em></h3>
+        <p class="step-hint">Paste or drop your material and Claude writes the whole deck from it, for the length, audience and template above.</p>
+        <div id="draft" class="draft">
+          <textarea name="notes" rows="5" placeholder="Paste an outline, an abstract, notes or a script…"></textarea>
+          <div class="draft-files">
+            <button type="button" data-attach>＋ Attach files…</button>
+            <span class="hint">PDF (a paper, an old talk), text or Markdown, and pictures to use in the slides. Or drop them here.</span>
+          </div>
+          <ul class="draft-list"></ul>
+          <input type="file" multiple hidden accept=".pdf,.txt,.md,.markdown,.tex,.csv,.json,.html,.htm,.png,.jpg,.jpeg,.gif,.svg,.webp">
+        </div>
+      </section>
+      <div class="create-row"><button class="primary" id="create-btn">Create deck</button><span class="hint" id="create-hint"></span></div>
     </form>
-    <div class="section-head"><h2>Audience</h2><span>Who the new deck is for. Claude shapes content, wording and motion for them; you can change it in the editor.</span></div>
-    <div id="audience-picker"></div>
-    <div class="section-head"><h2>Templates</h2><span>New decks use <b id="template-chosen">Default</b>. Click a template to pick it.</span></div>
-    <div id="template-list" class="template-list"></div>
     <div class="section-head"><h2>Decks</h2></div>
     <div id="deck-list" class="deck-list"></div>
     <details id="archive-section" class="archive-section" hidden>

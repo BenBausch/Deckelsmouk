@@ -4,10 +4,10 @@ import { initCanvas, attachCanvas, insertFile, startTextEdit, stopTextEdit, text
 import * as ops from './ops.js';
 import { initInspector } from './inspector.js';
 import { initClaude, focusPrompt, ask, note, suggest, stop as stopClaude } from './claude.js';
-import { audiencePicker, audienceDialog } from './audience.js';
+import { audiencePicker, audienceDialog, lengthPicker } from './audience.js';
 import { openHistory, saveVersion } from './history.js';
 import { openFonts } from './fonts.js';
-import { readAudience, writeAudience, audienceLabel, audienceByKey, DEFAULT_AUDIENCE } from './audiences.js';
+import { readAudience, writeAudience, audienceLabel, audienceByKey, DEFAULT_AUDIENCE, readDuration, writeDuration, DEFAULT_LENGTH, slideCount } from './audiences.js';
 
 const params = new URLSearchParams(location.search);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -20,6 +20,10 @@ const store = { // sessionStorage, which may be blocked
 const lastAudience = {
   get() { try { const v = JSON.parse(localStorage.getItem('deck-audience')); return v && audienceByKey(v.key) ? v : { key: DEFAULT_AUDIENCE, text: '' }; } catch { return { key: DEFAULT_AUDIENCE, text: '' }; } },
   set(v) { try { localStorage.setItem('deck-audience', JSON.stringify(v)); } catch { /* blocked */ } },
+};
+const lastLength = {
+  get() { try { return +localStorage.getItem('deck-length') || DEFAULT_LENGTH; } catch { return DEFAULT_LENGTH; } },
+  set(v) { try { localStorage.setItem('deck-length', String(v)); } catch { /* blocked */ } },
 };
 
 /* ── Start page: new deck, templates, decks ── */
@@ -37,39 +41,89 @@ function thumb(src) {
 async function picker() {
   $('#picker').hidden = false;
   const form = $('#new-deck');
-  const audience = audiencePicker($('#audience-picker'), lastAudience.get(), v => lastAudience.set(v));
-  await renderTemplates();
-  await renderDecks();
+  // 1. Talk length, 2. audience, 3. template, 4. draft material.
+  const length = lengthPicker($('#length-picker'), lastLength.get(), v => { lastLength.set(v); updateCreate(); });
+  const audience = audiencePicker($('#audience-picker'), lastAudience.get(), v => { lastAudience.set(v); updateCreate(); });
   // The ⋯ menus close on a click elsewhere, Escape, scrolling or resizing.
   document.addEventListener('click', e => { if (!e.target.closest('#card-menu, .more')) closeCardMenu(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCardMenu(); });
   $('#picker').addEventListener('scroll', closeCardMenu);
   addEventListener('resize', closeCardMenu);
 
+  // Draft material: pasted text plus attached files (documents go to the deck's source/, pictures to assets/).
+  const attached = [];
+  const isPicture = f => /^image\//.test(f.type) || /\.(png|jpe?g|gif|svg|webp)$/i.test(f.name);
+  const attach = files => {
+    for (const f of files) {
+      if (/\.(docx?|pptx?|potx|key|odp|odt|pages)$/i.test(f.name)) { toast(`Claude can't read ${esc(f.name)} directly: save it as PDF and attach that.`, 6000); continue; }
+      if (!isPicture(f) && !/\.(pdf|txt|md|markdown|tex|csv|json|html?)$/i.test(f.name)) { toast(`${esc(f.name)}: attach PDFs, text, Markdown or pictures.`, 5000); continue; }
+      if (!attached.some(a => a.name === f.name && a.size === f.size)) attached.push(f);
+    }
+    renderAttached();
+  };
+  const renderAttached = () => {
+    $('.draft-list').innerHTML = attached.map((f, i) => `<li><span class="kind">${isPicture(f) ? 'Picture' : 'Material'}</span><span class="name">${esc(f.name)}</span><span class="size">${f.size > 1e6 ? (f.size / 1e6).toFixed(1) + ' MB' : Math.max(1, Math.round(f.size / 1e3)) + ' KB'}</span><button type="button" data-unattach="${i}" title="Remove">✕</button></li>`).join('');
+    updateCreate();
+  };
+  $('.draft-list').onclick = e => { const b = e.target.closest('[data-unattach]'); if (b) { attached.splice(+b.dataset.unattach, 1); renderAttached(); } };
+  $('#draft [data-attach]').onclick = () => $('#draft input[type=file]').click();
+  $('#draft input[type=file]').onchange = e => { attach([...e.target.files]); e.target.value = ''; };
+  form.elements.notes.oninput = () => updateCreate();
+  const drafting = () => !!(form.elements.notes.value.trim() || attached.length);
+  function updateCreate() {
+    const on = drafting();
+    $('#create-btn').textContent = on ? 'Create and draft with Claude' : 'Create deck';
+    $('#create-hint').textContent = on ? `Claude writes about ${slideCount(length.value(), audience.peek())} slides from your material; you watch it happen in the editor.` : '';
+  }
+  updateCreate();
+
   form.onsubmit = async e => {
     e.preventDefault();
     const f = new FormData(form);
     const aud = audience.value(); // null: the custom description is still empty (the picker says so)
     if (!aud) return toast('Describe the audience, or pick one of the others.');
+    const btn = $('#create-btn');
+    btn.disabled = true; btn.textContent = 'Creating…';
     try {
-      const r = await api.post('/api/new', { name: f.get('name'), title: f.get('title'), template: f.get('template'), audience: aud });
-      location.href = `/?deck=${encodeURIComponent(r.name)}`;
-    } catch (err) { toast(esc(err.message)); }
+      const r = await api.post('/api/new', { name: f.get('name'), title: f.get('title'), template: f.get('template'), audience: aud, minutes: length.value(), notes: f.get('notes') });
+      const q = `deck=${encodeURIComponent(r.name)}`, images = [];
+      for (const file of attached) {
+        const up = await fetch(`/api/upload?${q}&name=${encodeURIComponent(file.name)}${isPicture(file) ? '' : '&to=source'}`, { method: 'POST', headers: { 'X-Deck': '1' }, body: file });
+        if (!up.ok) throw new Error(`Could not upload ${file.name}`);
+        if (isPicture(file)) images.push((await up.json()).path);
+      }
+      if (drafting()) {
+        const d = await api.post(`/api/deck/draft?${q}`, { images });
+        store.set(`deck-ask:${r.name}`, d.prompt);
+        store.set(`deck-ask-shown:${r.name}`, d.shown);
+      }
+      location.href = `/?${q}`;
+    } catch (err) { btn.disabled = false; updateCreate(); toast(esc(err.message), 6000); }
   };
 
-  // Import: drop a file anywhere on the page, or choose one.
+  // Files dropped on the Draft box are material; anywhere else they make a template (import).
   $('#import-input').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) importTemplate(f); };
   let depth = 0;
-  const hint = $('#drop-hint');
+  const hint = $('#drop-hint'), box = $('#draft');
   const hasFiles = e => [...(e.dataTransfer?.types || [])].includes('Files');
-  addEventListener('dragenter', e => { if (hasFiles(e)) { depth++; hint.hidden = false; } });
-  addEventListener('dragleave', () => { if (--depth <= 0) { depth = 0; hint.hidden = true; } });
-  addEventListener('dragover', e => { if (hasFiles(e)) e.preventDefault(); });
-  addEventListener('drop', e => {
-    e.preventDefault(); depth = 0; hint.hidden = true;
-    const f = e.dataTransfer?.files?.[0];
-    if (f) importTemplate(f);
+  const inDraft = e => !!(e.target.closest && e.target.closest('#draft'));
+  addEventListener('dragenter', e => { if (hasFiles(e)) { depth++; hint.hidden = inDraft(e); } });
+  addEventListener('dragleave', () => { if (--depth <= 0) { depth = 0; hint.hidden = true; box.classList.remove('drag'); } });
+  addEventListener('dragover', e => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    hint.hidden = inDraft(e);
+    box.classList.toggle('drag', inDraft(e));
   });
+  addEventListener('drop', e => {
+    e.preventDefault(); depth = 0; hint.hidden = true; box.classList.remove('drag');
+    const files = [...(e.dataTransfer?.files || [])];
+    if (!files.length) return;
+    if (inDraft(e)) attach(files); else importTemplate(files[0]);
+  });
+  // The lists come last: the form already works while they load.
+  await renderTemplates();
+  await renderDecks();
 }
 
 /* ── Templates on the start page: click to use one for the next deck; ⋯ to edit, duplicate or delete ── */
@@ -188,7 +242,7 @@ function deckCard(d, archived) {
   open.append(thumb(`/${archived ? 'archive' : 'decks'}/${encodeURIComponent(d.name)}/deck.html?edit`));
   const meta = document.createElement('div');
   meta.className = 'meta';
-  meta.innerHTML = `<b></b><span>${esc(d.name)} · ${d.slides} slide${d.slides === 1 ? '' : 's'}${d.audience ? ` · for ${esc(audienceLabel(d.audience))}` : ''} · ${new Date(d.modified).toLocaleDateString()}</span>`;
+  meta.innerHTML = `<b></b><span>${esc(d.name)} · ${d.slides} slide${d.slides === 1 ? '' : 's'}${d.audience ? ` · for ${esc(audienceLabel(d.audience))}` : ''}${d.minutes ? ` · ${d.minutes} min` : ''} · ${new Date(d.modified).toLocaleDateString()}</span>`;
   meta.querySelector('b').textContent = d.title;
   open.append(meta);
   const more = document.createElement('button');
@@ -308,7 +362,8 @@ function afterImport() {
       note('Not quite like the original? The “Polish import” suggestion asks Claude to compare it with the PowerPoint file.');
     } else if (claude) note(`Imported ${file}. Claude now gives this template the original's look.`);
   }
-  if (prompt) ask(prompt, `Give this template the look of ${info ? JSON.parse(info).file : 'the original'}: theme, master decorations and layouts.`);
+  const shown = store.take(`deck-ask-shown:${app.deck}`); // a deck drafted from the start page says what it does
+  if (prompt) ask(prompt, shown || `Give this template the look of ${info ? JSON.parse(info).file : 'the original'}: theme, master decorations and layouts.`);
 }
 
 const titleOf = html => ((/<title>([^<]*)<\/title>/i.exec(html) || [])[1] || app.deck).trim();
@@ -409,24 +464,25 @@ async function saveAsTemplate() {
 /* ── Audience: who the deck is for (stored in deck.html, given to Claude with every request) ── */
 
 function showAudience() {
-  const aud = readAudience(app.html);
-  $('#audience-name').textContent = aud ? audienceLabel(aud) : 'Audience';
+  const aud = readAudience(app.html), min = readDuration(app.html);
+  $('#audience-name').textContent = [aud ? audienceLabel(aud) : 'Audience', min && `${min} min`].filter(Boolean).join(' · ');
   $('#audience-btn').classList.toggle('unset', !aud);
 }
 
 async function changeAudience() {
-  const next = await audienceDialog(readAudience(app.html));
+  const next = await audienceDialog({ audience: readAudience(app.html), minutes: readDuration(app.html) || lastLength.get() });
   if (!next) return;
-  const html = writeAudience(app.html, next);
+  const html = writeDuration(writeAudience(app.html, next.audience), next.minutes);
   if (html === app.html) return;
   app.history.push({ html: app.html, js: app.js, label: 'Audience' });
   app.future = [];
   app.html = html;
-  lastAudience.set(next);
+  lastAudience.set(next.audience);
+  lastLength.set(next.minutes);
   save();
   showAudience();
   app.emit('select'); // the Claude suggestions depend on it
-  toast(`Audience: <b>${esc(audienceLabel(next))}</b>. Claude writes for them from now on; “Fit to audience” reworks a slide.`, 5000);
+  toast(`Audience: <b>${esc(audienceLabel(next.audience))}</b>, ${next.minutes} minutes. Claude writes for them from now on; “Fit to audience” reworks a slide.`, 5000);
 }
 
 async function deckFromTemplate() {

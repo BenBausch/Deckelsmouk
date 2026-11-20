@@ -40,8 +40,37 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
 .picker h1 { font-size: 40px; letter-spacing: -.02em; margin: 0; display: flex; align-items: center; gap: 14px; }
 .picker-logo { height: 52px; }
 .picker .sub { color: var(--muted); font-size: 16px; margin: 6px 0 28px; }
-.new-deck { display: flex; gap: 8px; margin-bottom: 28px; flex-wrap: wrap; }
+.new-deck { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
 .new-deck input { flex: 1 1 160px; padding: 9px 12px; }
+/* New deck: 1 talk length, 2 audience, 3 template, 4 draft, then Create. */
+.new-deck-form { margin-bottom: 40px; padding: 20px 22px 22px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.015); }
+.new-deck-form .section-head { margin-top: 0; }
+.step { margin-bottom: 22px; }
+.step h3 { display: flex; align-items: center; gap: 10px; margin: 0 0 8px; font-size: 15px; }
+.step h3 .num { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-size: 12px; }
+.step h3 em { font-style: normal; font-weight: 400; color: var(--muted); font-size: 12px; }
+.step-hint { margin: -2px 0 10px; color: var(--muted); font-size: 13px; }
+.step .audience-picker, .step .template-list { margin-bottom: 0; }
+.length-picker { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.len { padding: 6px 12px; border-radius: 20px; background: var(--panel); }
+.len.on { border-color: var(--accent); background: var(--accent-soft); color: var(--text); }
+.len-other { display: flex; align-items: center; gap: 6px; margin-left: 6px; color: var(--muted); }
+.len-other input { width: 64px; padding: 5px 8px; }
+.draft { padding: 10px; border: 1px dashed var(--line); border-radius: 10px; background: #18191c; transition: border-color .15s, background .15s; }
+.draft.drag { border-color: var(--accent); background: var(--accent-soft); }
+.draft textarea { display: block; width: 100%; box-sizing: border-box; resize: vertical; padding: 9px 11px; line-height: 1.45; }
+.draft-files { display: flex; align-items: center; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+.draft-files .hint { margin: 0; }
+.draft-list { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; }
+.draft-list:empty { display: none; }
+.draft-list li { display: flex; align-items: center; gap: 10px; padding: 5px 8px; border-radius: 6px; background: var(--panel-2); }
+.draft-list .kind { font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--accent); width: 62px; }
+.draft-list .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.draft-list .size { color: var(--muted); font-size: 12px; }
+.draft-list button { padding: 2px 8px; }
+.create-row { display: flex; align-items: center; gap: 14px; }
+.create-row .primary { padding: 9px 20px; font-size: 14px; }
+.create-row .hint { margin: 0; }
 .deck-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
 .deck-card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; cursor: pointer; text-decoration: none; color: inherit; display: block; }
 .deck-card:hover { border-color: var(--accent); }

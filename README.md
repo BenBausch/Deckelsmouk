@@ -121,6 +121,11 @@ edit files (no shell), and you watch each step stream by. Each deck keeps **one 
 restarts of the editor, so follow-ups are quick and keep their context (*"slower"*, *"now the other two too"*).
 Pick Opus, Sonnet or Haiku per request.
 
+**Start from your material.** A new deck takes four choices: the talk length, the audience, the template, and
+(optionally) a draft: paste an outline, abstract or notes, or drop a paper (PDF) and the pictures you want to use, and
+Claude writes the whole deck from it in the template's layouts, sized to the time, with speaker notes. You watch it
+build in the editor and take it from there.
+
 Tell it **who the deck is for** and every request is shaped for them: *Colleagues* (technical depth), *Field peers*
 (seminar or conference), *Product keynote* (big visuals, few words, dramatic reveals), *Students* (step by step, with
 a recap) or the *General public* (no jargon, stories), or describe your own audience. Pick it when you create the deck,
@@ -252,7 +257,7 @@ state, ready for **Print → Save as PDF**, or `?static` to turn off motion for 
 ```bash
 npm run dev                          # editor + live reload (http://localhost:4800); `npm start` without opening a browser
 npm run build                        # every deck → dist/<deck>.html  (or: npm run build -- my-talk)
-npm run new -- my-talk "My Talk"     # new deck from templates/default (--template <name>, --audience students)
+npm run new -- my-talk "My Talk"     # new deck from templates/default (--template <name>, --audience students, --length 20)
 npm run import -- uni.potx "Uni"     # a template from a PowerPoint file, an HTML presentation or a PDF
 npm run unpack -- talk.html my-talk  # a built single file back into an editable deck
 ```
