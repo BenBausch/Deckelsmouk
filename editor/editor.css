@@ -45,6 +45,18 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
 /* New deck: 1 talk length, 2 audience, 3 template, 4 draft, then Create. */
 .new-deck-form { margin-bottom: 40px; padding: 20px 22px 22px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.015); }
 .new-deck-form .section-head { margin-top: 0; }
+/* Folded until clicked (a click elsewhere folds it again). */
+.new-deck-toggle { display: flex; align-items: baseline; gap: 14px; width: 100%; padding: 0; background: none; border: 0; text-align: left; white-space: normal; cursor: pointer; color: inherit; }
+.new-deck-toggle:hover { background: none; }
+.new-deck-toggle h2 { margin: 0; font-size: 18px; white-space: nowrap; }
+.new-deck-toggle .summary { flex: 1; color: var(--muted); font-size: 13px; }
+.new-deck-toggle .chev { align-self: center; color: var(--muted); font-size: 18px; line-height: 1; transition: rotate .2s; }
+.new-deck-form:not(.folded) .new-deck-toggle .chev { rotate: 180deg; }
+.new-deck-form.folded { padding: 16px 22px; cursor: pointer; transition: border-color .15s; }
+.new-deck-form.folded:hover { border-color: var(--accent); }
+.new-deck-form.folded .new-deck-body { display: none; }
+.new-deck-body { margin-top: 18px; }
+.new-deck input.err { border-color: var(--danger); }
 .step { margin-bottom: 22px; }
 .step h3 { display: flex; align-items: center; gap: 10px; margin: 0 0 8px; font-size: 15px; }
 .step h3 .num { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-size: 12px; }

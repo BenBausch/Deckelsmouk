@@ -69,17 +69,46 @@ async function picker() {
   $('#draft [data-attach]').onclick = () => $('#draft input[type=file]').click();
   $('#draft input[type=file]').onchange = e => { attach([...e.target.files]); e.target.value = ''; };
   form.elements.notes.oninput = () => updateCreate();
+  form.elements.name.oninput = () => form.elements.name.classList.remove('err');
   const drafting = () => !!(form.elements.notes.value.trim() || attached.length);
   function updateCreate() {
     const on = drafting();
     $('#create-btn').textContent = on ? 'Create and draft with Claude' : 'Create deck';
     $('#create-hint').textContent = on ? `Claude writes about ${slideCount(length.value(), audience.peek())} slides from your material; you watch it happen in the editor.` : '';
+    // The folded form shows what a new deck would get.
+    const aud = audience.peek(), tpl = chosen === '' ? 'Blank' : $('#template-chosen').textContent;
+    $('#new-deck-summary').textContent = [`${length.value()} min`, (aud.key === 'custom' && !aud.text.trim()) ? 'Custom audience' : audienceLabel(aud), tpl, on && 'with a draft'].filter(Boolean).join(' · ');
   }
+  afterChoose = updateCreate;
   updateCreate();
+
+  // The form stays folded until it is clicked; a click anywhere else (or Escape) folds it again.
+  const fold = closed => {
+    form.classList.toggle('folded', closed);
+    $('.new-deck-toggle').setAttribute('aria-expanded', String(!closed));
+    if (!closed) form.elements.name.focus();
+  };
+  $('.new-deck-toggle').onclick = () => fold(!form.classList.contains('folded'));
+  form.addEventListener('click', e => { if (form.classList.contains('folded') && !e.target.closest('.new-deck-toggle')) fold(false); });
+  document.addEventListener('click', e => {
+    if (form.classList.contains('folded') || !e.target.isConnected) return;
+    // Its own menus, dialogs and messages don't count as "outside".
+    if (e.target.closest('#new-deck, dialog, #card-menu, #toast, #drop-hint')) return;
+    fold(true);
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !form.classList.contains('folded') && !document.querySelector('dialog[open], #card-menu.open')) fold(true);
+  });
 
   form.onsubmit = async e => {
     e.preventDefault();
     const f = new FormData(form);
+    // In-page, not the browser's "fill in this field" bubble.
+    if (!String(f.get('name') || '').trim()) {
+      form.elements.name.classList.add('err');
+      form.elements.name.focus();
+      return toast('Give the deck a name.');
+    }
     const aud = audience.value(); // null: the custom description is still empty (the picker says so)
     if (!aud) return toast('Describe the audience, or pick one of the others.');
     const btn = $('#create-btn');
@@ -129,6 +158,7 @@ async function picker() {
 /* ── Templates on the start page: click to use one for the next deck; ⋯ to edit, duplicate or delete ── */
 
 let chosen = null; // the template the next deck uses; '' = the built-in blank deck
+let afterChoose = () => {}; // the folded New deck form's summary
 
 function choose(name, title) {
   chosen = name;
@@ -136,6 +166,7 @@ function choose(name, title) {
   $('#new-deck').elements.template.value = name;
   $$('.template-card[data-name]').forEach(c => c.classList.toggle('on', c.dataset.name === name));
   $('#template-chosen').textContent = title;
+  afterChoose();
 }
 
 async function renderTemplates() {

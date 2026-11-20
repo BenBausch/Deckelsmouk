@@ -14,10 +14,13 @@
   <div class="picker-inner">
     <h1><img src="/editor/logo.svg" alt="" class="picker-logo">Deckelsmouk</h1>
     <p class="sub">Animated HTML presentations. Edit by hand, arrange by mouse, animate by asking Claude.</p>
-    <form id="new-deck" class="new-deck-form">
-      <div class="section-head"><h2>New deck</h2></div>
+    <form id="new-deck" class="new-deck-form folded" novalidate>
+      <button type="button" class="new-deck-toggle" aria-expanded="false" aria-controls="new-deck-body">
+        <h2>＋ New deck</h2><span class="summary" id="new-deck-summary"></span><span class="chev">▾</span>
+      </button>
+      <div class="new-deck-body" id="new-deck-body">
       <div class="new-deck">
-        <input name="name" placeholder="Deck name" required>
+        <input name="name" placeholder="Deck name">
         <input name="title" placeholder="Title (optional)">
       </div>
       <input type="hidden" name="template" value="default">
@@ -42,6 +45,7 @@
         </div>
       </section>
       <div class="create-row"><button class="primary" id="create-btn">Create deck</button><span class="hint" id="create-hint"></span></div>
+      </div>
     </form>
     <div class="section-head"><h2>Decks</h2></div>
     <div id="deck-list" class="deck-list"></div>
