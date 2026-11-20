@@ -656,12 +656,50 @@ function preview() {
 }
 function closePreview() { $('#preview').hidden = true; $('#preview-frame').src = 'about:blank'; app.frame.focus(); }
 
+// Export: one self-contained HTML file (the only one with animations), PDF, PowerPoint or LibreOffice.
+const EXPORTS = [
+  ['html', 'Web page (.html)', 'One file with every animation and transition, plays offline in any browser. Best for presenting.'],
+  ['pdf', 'PDF', 'One page per slide, fully built. For handouts, printing and sending.'],
+  ['pptx', 'PowerPoint (.pptx)', 'Editable text; backgrounds, shapes and figures as pictures; speaker notes. Opens in PowerPoint, Keynote and Google Slides.'],
+  ['odp', 'LibreOffice (.odp)', 'The same in the OpenDocument format. Needs LibreOffice installed.'],
+];
+let lastExport = 'html';
 async function exportDeck() {
-  toast('Building…', 0);
-  try {
-    const r = await api.post(`/api/build?${deckQuery()}`);
-    toast(`Built <b>dist/${app.deck}.html</b> (${r.kb} KB, everything inlined) · <a href="${r.path}" target="_blank">Open</a> · <a href="${r.path}" download="${app.deck}.html">Download</a>`, 9000);
-  } catch (e) { toast('Build failed: ' + e.message); }
+  const d = document.createElement('dialog');
+  d.className = 'dialog wide export';
+  d.innerHTML = `<form><h3>Export</h3>
+    <div class="export-options">${EXPORTS.map(([k, t, s]) => `<button type="button" class="aud" data-format="${k}"><b>${t}${k === 'html' ? ' <span class="pill-mini">animations</span>' : ''}</b><span>${s}</span></button>`).join('')}</div>
+    <p class="export-note">Only the web page keeps the animations and transitions. PDF, PowerPoint and LibreOffice show every slide as it looks fully built.</p>
+    <div class="export-result" hidden></div>
+    <div class="dialog-btns"><button type="button" data-cancel>Close</button><button type="submit" class="primary">Export</button></div></form>`;
+  const $d = s => d.querySelector(s), go = $d('[type=submit]'), result = $d('.export-result');
+  let format = lastExport;
+  const pick = k => { format = lastExport = k; d.querySelectorAll('[data-format]').forEach(b => b.classList.toggle('on', b.dataset.format === k)); go.textContent = `Export ${EXPORTS.find(e => e[0] === k)[1]}`; };
+  d.querySelectorAll('[data-format]').forEach(b => b.onclick = () => pick(b.dataset.format));
+  const done = () => { d.close(); d.remove(); };
+  $d('[data-cancel]').onclick = done;
+  d.addEventListener('cancel', e => { e.preventDefault(); if (!go.disabled || go.textContent !== 'Exporting…') done(); });
+  $d('form').onsubmit = async e => {
+    e.preventDefault();
+    go.disabled = true; go.textContent = 'Exporting…';
+    result.hidden = false; result.className = 'export-result busy';
+    result.innerHTML = `<span class="spinner"></span> ${format === 'html' ? 'Building the file…' : 'Rendering the slides in a browser in the background…'}`;
+    try {
+      await flush();
+      const r = await api.post(`/api/export?${deckQuery()}&format=${format}`);
+      result.className = 'export-result';
+      result.innerHTML = `Saved <b>dist/${esc(r.file)}</b> (${r.kb >= 1024 ? (r.kb / 1024).toFixed(1) + ' MB' : r.kb + ' KB'}) · <a href="${r.path}" download="${esc(r.file)}">Download</a>${/\.(html|pdf)$/.test(r.file) ? ` · <a href="${r.path}" target="_blank">Open</a>` : ''}${r.warnings.map(w => `<br><span class="muted">${esc(w)}</span>`).join('')}`;
+    } catch (err) {
+      result.className = 'export-result err';
+      result.textContent = err.message;
+    }
+    pick(format);
+    go.disabled = false;
+  };
+  document.body.append(d);
+  d.showModal();
+  pick(format);
+  d.querySelector('[data-format].on')?.focus();
 }
 
 /* ── Live reload: edits from Claude Code in a terminal, VS Code or git show up at once ── */

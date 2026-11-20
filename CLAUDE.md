@@ -145,6 +145,8 @@ slides stay, and their `data-layout` keys are mapped to the closest layouts of t
 ## Commands
 
 `npm run dev` (editor at http://localhost:4800) · `npm run build [deck]` → `dist/<deck>.html` ·
+`npm run export -- <deck> html|pdf|pptx|odp` → `dist/<deck>.<format>` (PDF and PowerPoint render the deck in an installed
+browser; only HTML keeps animations) ·
 `npm run new -- <name> ["Title"] [--template <name>] [--audience <preset>|"description"]` · `npm run import -- <file.pptx|.potx|.html|.pdf|.zip> ["Name"]` ·
 `npm run unpack -- <file.html> <name>`.
 

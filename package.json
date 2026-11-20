@@ -11,6 +11,7 @@
     "dev": "node tools/server.mjs --open",
     "start": "node tools/server.mjs",
     "build": "node tools/build.mjs",
+    "export": "node tools/export.mjs",
     "new": "node tools/new.mjs",
     "unpack": "node tools/unpack.mjs",
     "import": "node tools/import.mjs"

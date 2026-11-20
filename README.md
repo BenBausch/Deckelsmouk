@@ -68,8 +68,10 @@ exits and transitions. When that isn't enough, script anything JavaScript can dr
 <td valign="top">
 
 ### 📦 One file, forever
-`npm run build` inlines slides, styles, fonts, images, video and animations into **one self-contained HTML file**
-that plays offline in any browser. It can even be unpacked back into an editable deck.
+**Export** inlines slides, styles, fonts, images, video and animations into **one self-contained HTML file** that
+plays offline in any browser (it can even be unpacked back into an editable deck). Need something else? Export a
+**PDF**, a **PowerPoint** file with editable text and speaker notes, or a **LibreOffice** file; those show each slide
+fully built, without the motion.
 
 </td>
 </tr>
@@ -257,6 +259,7 @@ state, ready for **Print → Save as PDF**, or `?static` to turn off motion for 
 ```bash
 npm run dev                          # editor + live reload (http://localhost:4800); `npm start` without opening a browser
 npm run build                        # every deck → dist/<deck>.html  (or: npm run build -- my-talk)
+npm run export -- my-talk pptx       # dist/my-talk.pptx (or html, pdf, odp)
 npm run new -- my-talk "My Talk"     # new deck from templates/default (--template <name>, --audience students, --length 20)
 npm run import -- uni.potx "Uni"     # a template from a PowerPoint file, an HTML presentation or a PDF
 npm run unpack -- talk.html my-talk  # a built single file back into an editable deck
@@ -276,7 +279,7 @@ templates/<name>/    templates: theme, master and layouts (default, plus your ow
                      start page duplicates or deletes them; with none left, new decks start blank)
 runtime/             the player shared by all decks; inlined into every build
 editor/              the visual editor (plain ES modules, no build step)
-tools/               dev server, build, new, unpack, import (Node, no dependencies)
+tools/               dev server, build, export, new, unpack, import (Node, no dependencies)
 docs/                logo and screenshots
 dist/                built single-file decks (git-ignored by default)
 CLAUDE.md            deck format and animation API, for Claude and for you

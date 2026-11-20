@@ -282,6 +282,15 @@ textarea.code { width: 100%; min-height: 300px; font: 12px/1.45 var(--mono); res
 .dialog button.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
 .dialog button.danger:hover { background: #ff6f68; }
 
+/* ── Export dialog ── */
+.export-options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.dialog p.export-note { color: #ffb340; }
+.export-result { padding: 10px 12px; border-radius: 8px; background: #18191c; border: 1px solid var(--line); line-height: 1.5; }
+.export-result.busy { display: flex; align-items: center; gap: 10px; color: var(--muted); }
+.export-result.err { color: var(--danger); }
+.export-result a { color: var(--accent); }
+.export-result .muted { color: var(--muted); font-size: 12px; }
+
 /* ── Change template dialog ── */
 .dialog.change-template { width: min(980px, calc(100vw - 32px)); }
 .change-template .template-list { max-height: 60vh; overflow: auto; margin-bottom: 0; padding: 2px; }

@@ -12,6 +12,7 @@ import { importPresentation } from './importer.mjs';
 import { createBridge, ensureSessionNotes, draftPrompt } from './bridge.mjs';
 import { snapshot, versions, version, forgetHistory } from './history.mjs';
 import { fontInfo } from './fonts.mjs';
+import { exportDeck } from './export.mjs';
 
 const args = process.argv.slice(2);
 const PORT = +(args[args.indexOf('--port') + 1] || process.env.PORT || 4800) || 4800;
@@ -196,6 +197,16 @@ async function api(req, res, url) {
       while (fs.existsSync(path.join(dir, name)) && !fs.readFileSync(path.join(dir, name)).equals(buf)) name = `${stem}-${++k}${ext}`;
       fs.writeFileSync(path.join(dir, name), buf);
       return send(res, 200, { ok: true, path: `assets/fonts/${name}`, ...info });
+    }
+    // Export: html (with animations), pdf, pptx or odp into dist/ (tools/export.mjs).
+    case 'POST /api/export': {
+      const t = target();
+      if (t.kind !== 'deck') return fail(res, 400, 'Templates are not exported. Make a deck from it first.');
+      const format = url.searchParams.get('format') || 'html';
+      try {
+        const r = await exportDeck(t.name, format, { log: m => console.log(`  ${t.name} → ${format}: ${m}`) });
+        return send(res, 200, { ok: true, path: `/dist/${path.basename(r.file)}`, file: path.basename(r.file), kb: Math.round(r.bytes / 1024), warnings: r.warnings });
+      } catch (e) { return fail(res, 400, e.message); }
     }
     case 'POST /api/build': {
       const t = target();
