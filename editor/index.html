@@ -6,14 +6,26 @@
 <title>Deckelsmouk</title>
 <link rel="icon" href="/editor/logo.svg">
 <link rel="stylesheet" href="/editor/editor.css">
+<!-- The start page is painted on paper (after Sosthène Weis); the editor keeps its dark workshop look. Set before the first paint. -->
+<!-- Firefox draws the art's SVG filters again while the page moves, which stutters: it gets pictures of them instead. -->
+<script>
+if (!/[?&](deck|template)=[^&]/.test(location.search)) document.documentElement.classList.add('paper');
+if (/\bFirefox\//.test(navigator.userAgent)) document.documentElement.classList.add('firefox');
+</script>
 </head>
 <body>
 
 <!-- Deck picker (shown when no deck is open) -->
 <div id="picker" class="picker" hidden>
+  <div class="walk" aria-hidden="true"><img src="/editor/art/walk.svg" alt=""></div>
   <div class="picker-inner">
     <h1><img src="/editor/logo.svg" alt="" class="picker-logo">Deckelsmouk</h1>
     <p class="sub">Animated HTML presentations. Edit by hand, arrange by mouse, animate by asking Claude.</p>
+    <!-- Shown outside Chromium-based browsers (main.js), until dismissed. -->
+    <p class="browser-note" id="browser-note" hidden>
+      <span>Deckelsmouk runs smoothest in a Chromium-based browser, such as Chrome, Brave or Edge.</span>
+      <button type="button" aria-label="Dismiss this note" title="Dismiss">×</button>
+    </p>
     <form id="new-deck" class="new-deck-form folded" novalidate>
       <button type="button" class="new-deck-toggle" aria-expanded="false" aria-controls="new-deck-body">
         <h2>＋ New deck</h2><span class="summary" id="new-deck-summary"></span><span class="chev">▾</span>
@@ -54,6 +66,13 @@
       <div id="archive-list" class="deck-list"></div>
     </details>
   </div>
+  <!-- A note on the paintings: fixed in the bottom-left corner on wide screens, at the end of the page otherwise. -->
+  <aside class="memo" aria-label="About the watercolours">
+    <img class="memo-dabs" src="/editor/art/dabs.svg" alt="">
+    <span class="memo-eyebrow">In the spirit of</span>
+    <b class="memo-name">Sosthène Weis <span>1872–1941</span></b>
+    <p>Watercolourist and architect from Luxembourg.</p>
+  </aside>
   <div id="card-menu" class="menu card-menu" role="menu"></div>
   <div id="drop-hint" class="drop-hint" hidden><div><b>Drop to make a template from it</b><span>PowerPoint (.pptx, .potx) · HTML presentation · PDF · .zip</span></div></div>
   <input type="file" id="import-input" accept=".pptx,.potx,.ppsx,.pptm,.potm,.html,.htm,.pdf,.zip" hidden>

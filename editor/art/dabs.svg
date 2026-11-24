@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 40" role="img" aria-label="Five watercolour test dabs">
+  <!-- A painter's test dabs: cerulean, ultramarine, ochre, sap green, madder. -->
+  <filter id="w" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency=".09" numOctaves="3" seed="14" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="7" xChannelSelector="R" yChannelSelector="G" result="d"/>
+    <feGaussianBlur in="d" stdDeviation="1.6" result="b"/>
+    <feComposite in="d" in2="b" operator="arithmetic" k2="1.8" k3="-1.05" result="rim"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="2" seed="2" result="m"/>
+    <feColorMatrix in="m" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  1.6 0 0 0 -.3" result="ma"/>
+    <feComposite in="rim" in2="ma" operator="arithmetic" k1=".55" k2=".6"/>
+  </filter>
+  <g filter="url(#w)">
+    <ellipse cx="22" cy="21" rx="17" ry="13" fill="#5f9bd0"/>
+    <ellipse cx="64" cy="19" rx="18" ry="14" fill="#3f5fae"/>
+    <ellipse cx="107" cy="21" rx="17" ry="13" fill="#d9a447"/>
+    <ellipse cx="150" cy="20" rx="18" ry="13" fill="#78a043"/>
+    <ellipse cx="194" cy="21" rx="17" ry="13" fill="#cf7a66"/>
+  </g>
+</svg>

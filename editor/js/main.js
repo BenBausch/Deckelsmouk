@@ -25,6 +25,13 @@ const lastLength = {
   get() { try { return +localStorage.getItem('deck-length') || DEFAULT_LENGTH; } catch { return DEFAULT_LENGTH; } },
   set(v) { try { localStorage.setItem('deck-length', String(v)); } catch { /* blocked */ } },
 };
+// Outside Chromium-based browsers (Firefox, Safari) the start page's watercolours and motion are less smooth: the start
+// page says so, until the note is dismissed.
+const chromium = navigator.userAgentData?.brands?.some(b => b.brand === 'Chromium') || /\b(?:Chrome|Chromium)\//.test(navigator.userAgent);
+const browserNote = {
+  dismissed() { try { return localStorage.getItem('browser-note-dismissed') === '1'; } catch { return false; } },
+  dismiss() { try { localStorage.setItem('browser-note-dismissed', '1'); } catch { /* blocked */ } },
+};
 
 /* ── Start page: new deck, templates, decks ── */
 
@@ -38,7 +45,36 @@ function thumb(src) {
   return box;
 }
 
+// Scrolls the start page to `top`, gliding over ms (slower than the browser's smooth scroll). The scroll happens at
+// once and the content slides into place with a transform, which the browser animates off the main thread, so it
+// stays smooth while the thumbnails that just came into view load. A wheel or touch ends the glide. Resolves when done.
+function glide(page, top, ms = 800) {
+  top = Math.max(0, Math.min(top, page.scrollHeight - page.clientHeight));
+  const dist = top - page.scrollTop;
+  if (Math.abs(dist) < 2 || matchMedia('(prefers-reduced-motion: reduce)').matches) { page.scrollTop = top; return Promise.resolve(); }
+  // Scroll anchoring would follow the moving content and cancel the glide (Firefox does): off while it runs.
+  page.style.overflowAnchor = 'none';
+  page.scrollTop = top;
+  // Everything that scrolls with the page (not the fixed memo, menu and drop hint).
+  const movers = [...page.children].filter(el => { const cs = getComputedStyle(el); return cs.position !== 'fixed' && cs.display !== 'none'; });
+  const anims = movers.map(el => el.animate([{ translate: `0 ${dist}px` }, { translate: '0 0' }], { duration: ms, easing: 'cubic-bezier(.65, 0, .35, 1)' }));
+  const end = () => anims.forEach(a => a.finish());
+  const done = () => { page.style.overflowAnchor = ''; page.removeEventListener('wheel', end); page.removeEventListener('touchstart', end); };
+  page.addEventListener('wheel', end, { once: true, passive: true });
+  page.addEventListener('touchstart', end, { once: true, passive: true });
+  return Promise.all(anims.map(a => a.finished)).then(done, done);
+}
+
 async function picker() {
+  // Firefox redraws the art's SVG filters while the page moves: it gets pictures of them (tools/art.mjs; see editor.css).
+  if (document.documentElement.classList.contains('firefox')) {
+    for (const img of $$('#picker img[src^="/editor/art/"][src$=".svg"]')) img.src = img.getAttribute('src').replace(/\.svg$/, '.webp');
+  }
+  if (!chromium && !browserNote.dismissed()) {
+    const note = $('#browser-note');
+    note.hidden = false;
+    note.querySelector('button').onclick = () => { note.hidden = true; browserNote.dismiss(); };
+  }
   $('#picker').hidden = false;
   const form = $('#new-deck');
   // 1. Talk length, 2. audience, 3. template, 4. draft material.
@@ -83,21 +119,68 @@ async function picker() {
   updateCreate();
 
   // The form stays folded until it is clicked; a click anywhere else (or Escape) folds it again.
-  const fold = closed => {
-    form.classList.toggle('folded', closed);
-    $('.new-deck-toggle').setAttribute('aria-expanded', String(!closed));
-    if (!closed) form.elements.name.focus();
+  // Opening: the form unfolds, its contents fade in, then the page glides so the turtle and title sit at the top.
+  // Closing runs backwards: the contents fade out, then the form folds. A click during either starts the other.
+  const body = $('#new-deck-body'), toggle = $('.new-deck-toggle');
+  const UNFOLD_MS = 450, FADE_MS = 250, EASE = 'cubic-bezier(.4, 0, .2, 1)';
+  let open = false, run = 0, anims = [];
+  const play = (el, frames, ms, easing = EASE) => { const a = el.animate(frames, { duration: ms, easing }); anims.push(a); return a.finished; };
+  // The form's padding and the body's height and margin in the current state, as keyframes.
+  const measure = () => {
+    const f = getComputedStyle(form);
+    return { form: { paddingTop: f.paddingTop, paddingBottom: f.paddingBottom }, body: { height: `${body.offsetHeight}px`, marginTop: getComputedStyle(body).marginTop } };
   };
-  $('.new-deck-toggle').onclick = () => fold(!form.classList.contains('folded'));
-  form.addEventListener('click', e => { if (form.classList.contains('folded') && !e.target.closest('.new-deck-toggle')) fold(false); });
+  const fold = async closed => {
+    if (closed === !open) return;
+    open = !closed;
+    const mine = ++run, current = () => mine === run;
+    anims.forEach(a => a.cancel());
+    anims = [];
+    body.style.visibility = body.style.overflow = '';
+    toggle.setAttribute('aria-expanded', String(open));
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    try {
+      if (open) {
+        const from = measure();
+        form.classList.remove('folded');
+        if (!still) {
+          const to = measure();
+          body.style.visibility = 'hidden'; // laid out, not drawn, while it unfolds
+          body.style.overflow = 'hidden';
+          await Promise.all([play(form, [from.form, to.form], UNFOLD_MS), play(body, [from.body, to.body], UNFOLD_MS)]);
+          if (!current()) return;
+          body.style.visibility = body.style.overflow = '';
+          await play(body, [{ opacity: 0 }, { opacity: 1 }], FADE_MS, 'ease-out');
+          if (!current()) return;
+        }
+        form.elements.name.focus({ preventScroll: true });
+        const page = $('#picker');
+        glide(page, $('#picker h1').getBoundingClientRect().top - page.getBoundingClientRect().top + page.scrollTop - 16);
+      } else {
+        if (!still && !form.classList.contains('folded')) {
+          await play(body, [{ opacity: 1 }, { opacity: 0 }], FADE_MS * .8, 'ease-in');
+          if (!current()) return;
+        }
+        const from = measure();
+        form.classList.add('folded');
+        if (!still) {
+          const to = measure();
+          await Promise.all([play(form, [from.form, to.form], UNFOLD_MS * .85), play(body, [from.body, to.body], UNFOLD_MS * .85)]);
+        }
+      }
+    } catch { /* cancelled: a newer click took over */ }
+  };
+  toggle.onclick = () => fold(open);
+  setTimeout(() => (window.requestIdleCallback || (f => f()))(loadTemplatePreviews), 2600); // after the painting has spread
+  form.addEventListener('click', e => { if (!open && !e.target.closest('.new-deck-toggle')) fold(false); });
   document.addEventListener('click', e => {
-    if (form.classList.contains('folded') || !e.target.isConnected) return;
+    if (!open || !e.target.isConnected) return;
     // Its own menus, dialogs and messages don't count as "outside".
     if (e.target.closest('#new-deck, dialog, #card-menu, #toast, #drop-hint')) return;
     fold(true);
   });
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && !form.classList.contains('folded') && !document.querySelector('dialog[open], #card-menu.open')) fold(true);
+    if (e.key === 'Escape' && open && !document.querySelector('dialog[open], #card-menu.open')) fold(true);
   });
 
   form.onsubmit = async e => {
@@ -169,6 +252,14 @@ function choose(name, title) {
   afterChoose();
 }
 
+// The template previews sit in the folded New deck form. Lazy, they would load when it opens, during its glide, and
+// make it stutter; so they load once the start page is idle (and at once when the list is rebuilt after that).
+let previewsDue = false;
+function loadTemplatePreviews() {
+  previewsDue = true;
+  $$('#template-list iframe').forEach(f => { f.loading = 'eager'; });
+}
+
 async function renderTemplates() {
   const templates = await api.get('/api/templates');
   // A server started before an update answers in the old format (names only) and lacks newer routes.
@@ -229,6 +320,7 @@ async function renderTemplates() {
     try { const r = await api.post('/api/template', { name }); location.href = `/?template=${encodeURIComponent(r.name)}`; }
     catch (err) { toast(esc(err.message)); }
   });
+  if (previewsDue) loadTemplatePreviews();
   choose(chosen, chosen ? templates.find(t => t.name === chosen).title : 'a blank deck');
 }
 

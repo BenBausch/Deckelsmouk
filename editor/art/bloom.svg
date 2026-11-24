@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" preserveAspectRatio="none">
+  <!-- A drop spreading on wet paper, used as a CSS mask that grows to reveal the painting. Opaque inside. -->
+  <filter id="b" x="-25%" y="-25%" width="150%" height="150%">
+    <feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="3" seed="2" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="34" xChannelSelector="R" yChannelSelector="G" result="d"/>
+    <feGaussianBlur in="d" stdDeviation="2.5"/>
+  </filter>
+  <ellipse cx="100" cy="100" rx="68" ry="68" fill="#000" filter="url(#b)"/>
+</svg>

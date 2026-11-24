@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 30" preserveAspectRatio="none">
+  <!-- One brush stroke, used as a CSS mask (an underline under headings): tapered, dry at the end. -->
+  <filter id="s" x="-5%" y="-40%" width="110%" height="180%" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency=".06 .2" numOctaves="3" seed="6" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="7" xChannelSelector="R" yChannelSelector="G" result="d"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".02 .5" numOctaves="2" seed="1" result="m"/>
+    <feColorMatrix in="m" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  2 0 0 0 -.45" result="ma"/>
+    <feComposite in="d" in2="ma" operator="arithmetic" k1=".5" k2=".6"/>
+  </filter>
+  <path d="M8 17 C70 9 170 7 294 11 C292 14 280 17 250 19 C170 23 80 24 10 23 C5 22 4 18 8 17 Z" fill="#000" filter="url(#s)"/>
+</svg>

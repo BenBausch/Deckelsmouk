@@ -54,7 +54,9 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
 .new-deck-form:not(.folded) .new-deck-toggle .chev { rotate: 180deg; }
 .new-deck-form.folded { padding: 16px 22px; cursor: pointer; transition: border-color .15s; }
 .new-deck-form.folded:hover { border-color: var(--accent); }
-.new-deck-form.folded .new-deck-body { display: none; }
+/* Folded, the body keeps its layout (zero height, hidden) rather than display:none, so the template previews in it
+   stay laid out: otherwise every unfolding rebuilds those decks during the glide, and it stutters. */
+.new-deck-form.folded .new-deck-body { height: 0; margin-top: 0; overflow: hidden; visibility: hidden; }
 .new-deck-body { margin-top: 18px; }
 .new-deck input.err { border-color: var(--danger); }
 .step { margin-bottom: 22px; }
@@ -343,3 +345,148 @@ textarea.code { width: 100%; min-height: 300px; font: 12px/1.45 var(--mono); res
 .preview-hint { color: var(--muted); margin: 0; }
 .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 70; background: var(--panel-2); border: 1px solid var(--line); padding: 10px 16px; border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,.5); }
 .toast a { color: var(--accent); }
+
+/* ── Start page: watercolour on paper, after Sosthène Weis (1872–1941) ──
+   html.paper is set in index.html's head when no deck or template is open, so none of this reaches the editor.
+   The art is in editor/art/: walk (the painting), paper (texture), dabs (the memo's colours), and wash, wash-button,
+   bloom and stroke, shapes used as masks and coloured here. Firefox (html.firefox) draws their SVG filters again while
+   the page moves, which stutters, so it gets the .webp pictures drawn from them by `node tools/art.mjs` (see the
+   end of this section); other browsers use the .svg files directly. */
+html.paper {
+  --bg: #f5efe3;
+  --panel: #fcf9f2;
+  --panel-2: #efe7d7;
+  --line: rgba(96, 72, 44, .2);
+  --text: #2f2924;
+  --muted: #7d7165;
+  --accent: #34559f;          /* ultramarine */
+  --accent-soft: rgba(52, 85, 159, .11);
+  --danger: #b0473a;          /* madder */
+  --ok: #5b8c3c;
+  --ochre: #d9a447;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Noto Serif", "Liberation Serif", serif;
+  --shadow: 0 1px 1px rgba(90, 66, 36, .07), 0 8px 22px -12px rgba(90, 66, 36, .35);
+  color-scheme: light;
+}
+html.paper body { background: var(--bg) url("/editor/art/paper.svg"); }
+.paper button:hover { background: #e9e0cd; }
+.paper input, .paper select, .paper textarea { background: #fffdf8; }
+.paper input:focus, .paper textarea:focus { box-shadow: 0 0 0 3px var(--accent-soft); }
+.paper ::placeholder { color: #a39889; }
+.paper .menu { box-shadow: 0 14px 40px -10px rgba(70, 50, 30, .35); }
+.paper .toast { box-shadow: 0 10px 30px -8px rgba(70, 50, 30, .35); }
+.paper .dialog { box-shadow: 0 24px 70px -10px rgba(70, 50, 30, .4); }
+.paper .dialog::backdrop { background: rgba(70, 55, 38, .3); }
+.paper .drop-hint { background: rgba(245, 239, 227, .86); }
+.paper .drop-hint div { background: var(--panel); box-shadow: var(--shadow); }
+
+/* The painting across the top: it spreads like a drop on wet paper when the page opens. */
+.walk { max-width: 1600px; margin: 0 auto; padding: 10px 12px 0; }
+.walk img { display: block; width: 100%; height: auto; aspect-ratio: 1600 / 360; }
+@media (prefers-reduced-motion: no-preference) {
+  /* The mask exists only while the animation runs (fill backwards), so the finished painting scrolls unmasked. */
+  .walk img {
+    -webkit-mask-position: center 60%; mask-position: center 60%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+    animation: wash-in 2.2s cubic-bezier(.4, .15, .3, 1) .1s backwards;
+  }
+  .paper .picker h1, .paper .picker-inner > .sub { animation: settle 1s ease .6s both; }
+}
+@keyframes wash-in {
+  from { -webkit-mask-image: url("/editor/art/bloom.svg"); mask-image: url("/editor/art/bloom.svg"); -webkit-mask-size: 8% 20%; mask-size: 8% 20%; opacity: .3; }
+  25% { opacity: 1; }
+  to { -webkit-mask-image: url("/editor/art/bloom.svg"); mask-image: url("/editor/art/bloom.svg"); -webkit-mask-size: 240% 240%; mask-size: 240% 240%; opacity: 1; }
+}
+@keyframes settle { from { opacity: 0; translate: 0 8px; } }
+
+/* Type: a book serif for names and headings, the system sans for controls. */
+.paper .picker-inner { padding-top: 4px; }
+.paper .picker h1 { font: 500 50px/1.1 var(--serif); letter-spacing: -.01em; gap: 12px; }
+.paper .picker-logo { height: 70px; margin: -6px 0 -4px -8px; }
+.paper .picker-inner > .sub, .paper .deck-list > .sub { font: italic 18px/1.45 var(--serif); }
+/* The note outside Chromium-based browsers: a light ochre wash under the tagline. */
+.browser-note { display: flex; align-items: center; gap: 10px; width: fit-content; max-width: 100%; margin: -16px 0 24px; padding: 6px 6px 6px 12px; border-radius: 6px; background: rgba(217, 164, 71, .16); color: var(--text); font-size: 13px; }
+.browser-note button { padding: 0 7px; border: 0; background: none; color: var(--muted); font-size: 16px; line-height: 22px; }
+.browser-note button:hover { background: rgba(0, 0, 0, .06); color: var(--text); }
+.paper .section-head h2, .paper .new-deck-toggle h2, .paper .archive-section summary h2 { font: 600 21px/1.2 var(--serif); }
+.paper .step h3 { font: 600 17px/1.3 var(--serif); }
+.paper .deck-card .meta b, .paper .template-card .meta b { font: 600 15px/1.3 var(--serif); }
+/* An ochre brush stroke under the section headings. */
+.paper .section-head h2, .paper .archive-section summary h2 { position: relative; isolation: isolate; }
+.paper .section-head h2::after, .paper .archive-section summary h2::after {
+  content: ""; position: absolute; z-index: -1; left: -8px; right: -16px; bottom: -4px; height: 13px; background: var(--ochre); opacity: .55;
+  -webkit-mask: url("/editor/art/stroke.svg") 0 0 / 100% 100% no-repeat; mask: url("/editor/art/stroke.svg") 0 0 / 100% 100% no-repeat;
+}
+
+/* Sheets of paper: the new-deck form and the cards. A wash spreads behind the one under the pointer. */
+.paper .new-deck-form { position: relative; background: var(--panel); border-radius: 6px; box-shadow: var(--shadow); }
+.paper .new-deck-form.folded:hover { border-color: var(--line); }
+.paper .deck-card, .paper .template-card { background: var(--panel); border-radius: 4px; box-shadow: var(--shadow); overflow: visible; }
+.paper .deck-card .thumb, .paper .template-card .thumb { border-radius: 3px 3px 0 0; }
+.paper .deck-card:hover, .paper .template-card:hover { border-color: var(--line); }
+.paper .template-card.on { border-color: var(--accent); box-shadow: var(--shadow); }
+.paper .deck-card::before, .paper .template-card::before, .paper .new-deck-form::before {
+  content: ""; position: absolute; z-index: -1; inset: -28px -30px; pointer-events: none;
+  background: var(--halo, #4f8fd0); opacity: 0; scale: .96; transition: opacity .35s ease, scale .6s cubic-bezier(.2, .7, .2, 1);
+  -webkit-mask: url("/editor/art/wash.svg") center / 100% 100% no-repeat; mask: url("/editor/art/wash.svg") center / 100% 100% no-repeat;
+}
+.paper .new-deck-form::before { inset: -26px -42px; --halo: var(--ochre); }
+.paper .deck-card:hover::before, .paper .template-card:hover::before, .paper .new-deck-form.folded:hover::before { opacity: .3; scale: 1; }
+.paper .template-card.on::before { --halo: var(--accent); opacity: .3; scale: 1; }
+.paper .archive-section .deck-card::before { display: none; }
+
+/* Buttons that do something: a wash of colour instead of a flat fill. */
+.paper button.primary, .paper .dialog button.danger {
+  --wash: #2d4b91; position: relative; isolation: isolate; background: transparent; border-color: transparent; color: #fff;
+  text-shadow: 0 1px 1px rgba(20, 28, 60, .3);
+}
+.paper .dialog button.danger { --wash: var(--danger); }
+.paper button.primary::before, .paper .dialog button.danger::before {
+  content: ""; position: absolute; z-index: -1; inset: -3px -6px; background: var(--wash); transition: scale .3s ease, filter .2s;
+  -webkit-mask: url("/editor/art/wash-button.svg") center / 100% 100% no-repeat; mask: url("/editor/art/wash-button.svg") center / 100% 100% no-repeat;
+}
+.paper button.primary:hover, .paper .dialog button.danger:hover { background: transparent; }
+.paper button.primary:hover::before, .paper .dialog button.danger:hover::before { filter: brightness(.88); scale: 1.04; }
+/* The step numbers: a dab of a different pigment each. */
+.paper .step h3 .num { position: relative; isolation: isolate; background: transparent; color: #fff; font: 700 12px/1 var(--font); }
+.paper .step h3 .num::before {
+  content: ""; position: absolute; z-index: -1; inset: -4px; background: var(--dab, var(--accent));
+  -webkit-mask: url("/editor/art/bloom.svg") center / 100% 100% no-repeat; mask: url("/editor/art/bloom.svg") center / 100% 100% no-repeat;
+}
+.paper .step:nth-of-type(2) .num { --dab: #a8741f; }
+.paper .step:nth-of-type(3) .num { --dab: #557d2c; }
+.paper .step:nth-of-type(4) .num { --dab: #a9503e; }
+.paper .draft { background: rgba(255, 253, 248, .55); }
+
+/* The memo: a note taped to the page, fixed in the bottom-left corner when the screen is wide enough. */
+.memo {
+  position: relative; width: 236px; box-sizing: border-box; margin: -24px 0 48px max(24px, calc(50% - 466px)); padding: 20px 19px 15px;
+  background: #fdfaf3; color: #4d433a; font: 13px/1.5 var(--serif); rotate: -1.3deg;
+  box-shadow: 0 1px 2px rgba(90, 66, 36, .12), 0 14px 30px -16px rgba(90, 66, 36, .5);
+}
+.memo::before {
+  content: ""; position: absolute; top: -11px; left: 50%; width: 96px; height: 22px; translate: -50% 0; rotate: 4deg;
+  background: rgba(228, 214, 182, .75);
+  clip-path: polygon(2% 0, 98% 0, 100% 22%, 97% 44%, 100% 66%, 97% 86%, 99% 100%, 1% 100%, 3% 80%, 0 58%, 3% 38%, 0 18%);
+}
+.memo-dabs { display: block; width: 132px; height: auto; margin: 0 0 9px -3px; }
+.memo-eyebrow { display: block; font: 600 10px/1.2 var(--font); letter-spacing: .13em; text-transform: uppercase; color: var(--muted); }
+.memo-name { display: block; margin: 4px 0 6px; font: 600 18px/1.25 var(--serif); color: var(--text); }
+.memo-name span { margin-left: 3px; font-weight: 400; font-size: 13px; color: var(--muted); white-space: nowrap; }
+.memo p { margin: 0; font-style: italic; }
+@media (min-width: 1500px) and (min-height: 620px) {
+  .memo { position: fixed; left: 28px; bottom: 28px; margin: 0; z-index: 5; }
+}
+
+/* Firefox: the same art as pictures (tools/art.mjs), since it redraws SVG filters while the page moves. The <img>s
+   (painting, dabs) are switched in main.js. */
+html.firefox.paper body { background-image: url("/editor/art/paper.webp"); }
+.firefox .walk img { animation-name: wash-in-picture; }
+@keyframes wash-in-picture {
+  from { -webkit-mask-image: url("/editor/art/bloom.webp"); mask-image: url("/editor/art/bloom.webp"); -webkit-mask-size: 8% 20%; mask-size: 8% 20%; opacity: .3; }
+  25% { opacity: 1; }
+  to { -webkit-mask-image: url("/editor/art/bloom.webp"); mask-image: url("/editor/art/bloom.webp"); -webkit-mask-size: 240% 240%; mask-size: 240% 240%; opacity: 1; }
+}
+.firefox .section-head h2::after, .firefox .archive-section summary h2::after { -webkit-mask-image: url("/editor/art/stroke.webp"); mask-image: url("/editor/art/stroke.webp"); }
+.firefox .deck-card::before, .firefox .template-card::before, .firefox .new-deck-form::before { -webkit-mask-image: url("/editor/art/wash.webp"); mask-image: url("/editor/art/wash.webp"); }
+.firefox button.primary::before, .firefox .dialog button.danger::before { -webkit-mask-image: url("/editor/art/wash-button.webp"); mask-image: url("/editor/art/wash-button.webp"); }
+.firefox .step h3 .num::before { -webkit-mask-image: url("/editor/art/bloom.webp"); mask-image: url("/editor/art/bloom.webp"); }
