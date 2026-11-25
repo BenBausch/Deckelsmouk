@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 176" role="img" aria-label="Deckelsmouk turtle">
+  <!-- The Deckelsmouk turtle as a watercolour (after Sosthène Weis): washes with ragged, pooled edges,
+       paper left white between the shell plates, and a pencil underdrawing that doesn't quite match the paint. -->
+  <defs>
+    <!-- A wash: ragged edge, pigment pooled at the rim, uneven density. -->
+    <filter id="wash" x="-12%" y="-12%" width="124%" height="124%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="3" seed="4" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="7" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feGaussianBlur in="d" stdDeviation="2.6" result="b"/>
+      <feComposite in="d" in2="b" operator="arithmetic" k2="1.8" k3="-1.02" result="rim"/>
+      <feTurbulence type="fractalNoise" baseFrequency=".022" numOctaves="2" seed="11" result="m"/>
+      <feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="1" seed="3" result="g"/>
+      <feComposite in="m" in2="g" operator="arithmetic" k2=".85" k3=".4" k4="-.2" result="mg"/>
+      <feColorMatrix in="mg" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  1.8 0 0 0 -.35" result="ma"/>
+      <feComposite in="rim" in2="ma" operator="arithmetic" k1=".6" k2=".62"/>
+    </filter>
+    <!-- A glaze: like a wash but evenly dense (the dark rim). -->
+    <filter id="glaze" x="-12%" y="-30%" width="124%" height="160%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="3" seed="6" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="6" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feGaussianBlur in="d" stdDeviation="2" result="b"/>
+      <feComposite in="d" in2="b" operator="arithmetic" k2="1.9" k3="-1"/>
+    </filter>
+    <!-- A brush line or a reserved (unpainted) line: just a little unsteady. -->
+    <filter id="brush" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency=".09" numOctaves="2" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3.2" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <radialGradient id="shell" cx=".34" cy=".3" r=".85">
+      <stop offset="0" stop-color="#dba24c"/>
+      <stop offset=".4" stop-color="#b0682c"/>
+      <stop offset=".78" stop-color="#874b24"/>
+      <stop offset="1" stop-color="#6c3c1f"/>
+    </radialGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2=".3" y2="1">
+      <stop offset="0" stop-color="#b9c95e"/>
+      <stop offset=".55" stop-color="#6fa552"/>
+      <stop offset="1" stop-color="#3f7d4c"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5c3b22"/>
+      <stop offset=".6" stop-color="#4e321e"/>
+      <stop offset="1" stop-color="#674328"/>
+    </linearGradient>
+    <clipPath id="dome"><path d="M46 118 C44 60 88 31 124 31 C164 31 204 60 202 118 Z"/></clipPath>
+  </defs>
+
+  <!-- legs, tail and head: sap green over a touch of ochre -->
+  <g filter="url(#wash)" fill="url(#skin)">
+    <path d="M42 115 L17 129 L46 126 Z"/>
+    <path d="M63 120 C62 130 61 140 64 150 C70 155 84 155 89 149 C91 138 90 128 89 120 Z"/>
+    <path d="M158 120 C157 130 157 140 160 150 C166 155 180 155 185 149 C187 138 186 128 185 120 Z"/>
+    <path d="M189 105 C199 86 214 71 231 73 C248 76 251 97 241 107 C232 115 214 117 195 117 Z"/>
+  </g>
+  <!-- the shell: yellow ochre running into burnt sienna and umber, wet in wet -->
+  <g filter="url(#wash)">
+    <path d="M46 118 C44 60 88 31 124 31 C164 31 204 60 202 118 Z" fill="url(#shell)"/>
+    <ellipse cx="160" cy="92" rx="34" ry="22" fill="#94501f" fill-opacity=".32"/>
+    <ellipse cx="96" cy="96" rx="40" ry="18" fill="#a65e26" fill-opacity=".22"/>
+  </g>
+  <!-- the plates: paper left unpainted between the washes -->
+  <g clip-path="url(#dome)">
+    <g filter="url(#brush)" fill="none" stroke="#fbf6ea" stroke-opacity=".78" stroke-width="3.1" stroke-dasharray="34 2.5 19 1.5 27 3" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M104 62 L124 50 L144 62 L144 86 L124 98 L104 86 Z"/>
+      <path d="M104 62 L84 50 L64 62 M144 62 L164 50 L184 62 M104 86 L84 98 L84 122 M144 86 L164 98 L164 122 M124 98 L124 122 M124 50 L124 26 M64 62 L64 86 L84 98 M184 62 L184 86 L164 98"/>
+    </g>
+    <!-- a lifted highlight where the light falls -->
+    <path d="M70 66 C74 52 90 41 106 40 C110 44 98 50 90 56 C84 61 78 66 70 66 Z" fill="#fbf6ea" fill-opacity=".2" filter="url(#wash)"/>
+  </g>
+  <!-- the rim: umber, a darker glaze -->
+  <g fill="url(#rim)" filter="url(#glaze)">
+    <path d="M38 113 C70 110 180 110 212 113 C215 116 215 123 211 126 C178 128 72 128 38 126 C34 123 34 116 38 113 Z"/>
+    <path d="M44 114 C90 112 170 112 206 114 C208 117 208 122 205 124 C170 126 90 126 44 124 C41 122 41 116 44 114 Z" fill-opacity=".55"/>
+  </g>
+  <!-- eye and smile -->
+  <circle cx="232" cy="88" r="5" fill="#241a14"/>
+  <circle cx="233.6" cy="86.4" r="1.5" fill="#fdf8ee"/>
+  <path d="M236 102 Q241 100 244 97" fill="none" stroke="#2f5b33" stroke-width="2.4" stroke-linecap="round" filter="url(#brush)"/>
+  <!-- the pencil underdrawing, a little off the paint -->
+  <g fill="none" stroke="#5a4634" stroke-opacity=".42" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" filter="url(#brush)" transform="translate(1.6 -1.4)">
+    <path d="M44 117 C42 58 88 29 125 30 C166 31 206 60 204 112"/>
+    <path d="M188 106 C199 85 215 70 232 72 C250 75 252 98 241 108 C233 116 215 118 196 118"/>
+    <path d="M62 130 C61 140 61 146 64 151 C70 156 85 156 90 150 C91 142 91 134 90 127"/>
+    <path d="M157 130 C157 140 157 146 160 151 C166 156 181 156 186 150 C187 142 187 134 186 127"/>
+    <path d="M36 113 C70 109 182 109 214 113"/>
+  </g>
+  <!-- a few spatters -->
+  <g filter="url(#brush)">
+    <circle cx="214" cy="46" r="2.6" fill="#bf8040" fill-opacity=".55"/>
+    <circle cx="224" cy="38" r="1.4" fill="#8f5a32" fill-opacity=".5"/>
+    <circle cx="28" cy="146" r="1.8" fill="#6fa552" fill-opacity=".55"/>
+  </g>
+</svg>

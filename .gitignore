@@ -8,4 +8,5 @@ dist/
 # Decks are personal: only the example deck belongs to the repository (archived decks too).
 decks/*
 !decks/example/
+!decks/deckelsmouk-keynote/
 archive/

@@ -1,0 +1,919 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deckelsmouk keynote</title>
+<meta name="deck-duration" content="25">
+<meta name="deck-audience" content="keynote">
+<meta name="description" content="The tour of Deckelsmouk, as a keynote on paper and watercolour">
+<meta name="deck-template" content="">
+<link rel="stylesheet" href="../../runtime/deck.css">
+<style id="deck-style">
+  /* ── Theme ── Paper and watercolour, after Sosthène Weis (1872–1941), like Deckelsmouk's start page.
+     The stage is 1920 x 1080 px; every size below is in stage pixels. */
+  :root {
+    --bg: #f5efe3;          /* paper */
+    --fg: #2f2924;          /* ink */
+    --muted: #7d7165;
+    --line: rgba(96, 72, 44, .22);
+    --accent: #34559f;      /* ultramarine */
+    --accent-2: #d9a447;    /* yellow ochre */
+    --cerulean: #5f9bd0;
+    --sap: #78a043;
+    --madder: #cf7a66;
+    --sienna: #b0682c;
+    --panel: #fcf9f2;       /* a fresh sheet */
+    --panel-2: #efe7d7;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", "Noto Sans", Arial, sans-serif;
+    --font-heading: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Noto Serif", "Liberation Serif", serif;
+    --mono: "SF Mono", ui-monospace, Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    --shadow: 0 2px 3px rgba(90, 66, 36, .08), 0 26px 50px -26px rgba(90, 66, 36, .5);
+    /* Watercolour shapes (the start page's art), used as masks and coloured with --pigment. */
+    --wash: url("assets/wash.webp");
+    --bloom: url("assets/bloom.webp");
+    --stroke: url("assets/stroke.webp");
+    --walk: url("assets/walk.webp");    /* the painting: a walk through Luxembourg City */
+  }
+  /* The painting, wherever it appears (a block with role="img"); crops set background-size: cover and a position. */
+  .painting { background: var(--walk) center / 100% 100% no-repeat; }
+  /* Master: cold-pressed paper behind every slide. */
+  .slide { background: url("assets/paper.webp") 0 0 / 420px 420px, var(--bg); }
+  .stage { font-family: var(--font); }
+  .stage p, .stage h1, .stage h2, .stage h3, .stage h4 { margin: 0; }
+
+  /* Type: a book serif for what is said, the system sans for what is clicked. */
+  .hero    { font: 500 168px/1 var(--font-heading); letter-spacing: -.025em; }
+  .h1      { font: 500 116px/1.06 var(--font-heading); letter-spacing: -.02em; }
+  .h2      { font: 500 84px/1.1 var(--font-heading); letter-spacing: -.015em; }
+  .h3      { font: 600 48px/1.2 var(--font-heading); }
+  .lead    { font: italic 400 42px/1.38 var(--font-heading); color: var(--muted); }
+  .body    { font-size: 34px; line-height: 1.45; }
+  .small   { font-size: 26px; line-height: 1.4; color: var(--muted); }
+  .eyebrow { font: 600 24px/1.2 var(--font); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+  .stat    { font: 500 300px/1 var(--font-heading); letter-spacing: -.035em; }
+  .mono    { font-family: var(--mono); }
+  .muted   { color: var(--muted); }
+  .accent  { color: var(--accent); }
+  .accent-2 { color: #a8741f; }
+  .center  { text-align: center; }
+  .grad    { background: linear-gradient(100deg, var(--cerulean), var(--accent) 50%, #8a4f7d); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+  /* Pigments: --pigment for washes, --deep for type and dabs. */
+  .p-ultra    { --pigment: #3f5fae; --deep: #2d4b91; }
+  .p-cerulean { --pigment: #5f9bd0; --deep: #3f78b0; }
+  .p-ochre    { --pigment: #d9a447; --deep: #a8741f; }
+  .p-sap      { --pigment: #78a043; --deep: #557d2c; }
+  .p-madder   { --pigment: #cf7a66; --deep: #a9503e; }
+  .p-sienna   { --pigment: #b0682c; --deep: #874b24; }
+
+  /* Painted shapes. They are masks already: animate them with fade, bleed, dab, wipe…, not wash-in or brush. */
+  .wash, .bloom, .stroke, .bloom-dot { background: var(--pigment, var(--accent)); mix-blend-mode: multiply; pointer-events: none; }
+  .wash   { -webkit-mask: var(--wash) center / 100% 100% no-repeat; mask: var(--wash) center / 100% 100% no-repeat; opacity: .3; }
+  .bloom  { -webkit-mask: var(--bloom) center / 100% 100% no-repeat; mask: var(--bloom) center / 100% 100% no-repeat; opacity: .45; }
+  .stroke { -webkit-mask: var(--stroke) center / 100% 100% no-repeat; mask: var(--stroke) center / 100% 100% no-repeat; opacity: .6; }
+  .bloom-dot { display: block; width: 150px; height: 150px; opacity: .8; -webkit-mask: var(--bloom) center / 100% 100% no-repeat; mask: var(--bloom) center / 100% 100% no-repeat; }
+  /* A dab of paint with a number on it (section numbers, steps). */
+  .dab { position: relative; isolation: isolate; display: grid; place-items: center; color: #fff; font: 500 160px/1 var(--font-heading); text-shadow: 0 2px 4px rgba(30, 20, 10, .2); }
+  .dab::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--deep, var(--accent)); opacity: .9;
+    -webkit-mask: var(--bloom) center / 100% 100% no-repeat; mask: var(--bloom) center / 100% 100% no-repeat; }
+  .dab.sm { font-size: 40px; font-weight: 600; }
+  /* A brush stroke under a word (keep it on one line). */
+  .brushed { position: relative; isolation: isolate; }
+  .brushed::after { content: ""; position: absolute; z-index: -1; left: -.08em; right: -.12em; bottom: .02em; height: .28em; background: var(--pigment, var(--accent-2)); opacity: .5;
+    -webkit-mask: var(--stroke) 0 0 / 100% 100% no-repeat; mask: var(--stroke) 0 0 / 100% 100% no-repeat; }
+
+  /* Sheets of paper: cards, documents, code, the memo. */
+  .card  { background: var(--panel); border-radius: 6px; box-shadow: var(--shadow); box-sizing: border-box; padding: 40px; }
+  .pill  { display: inline-block; padding: 8px 24px; border-radius: 40px; background: rgba(52, 85, 159, .12); color: var(--accent); font: 600 26px/1.3 var(--font); white-space: nowrap; }
+  .pill.on { background: var(--accent); color: #fff; }
+  .list  { list-style: none; padding: 0; margin: 0; display: grid; gap: 20px; font-size: 30px; line-height: 1.35; }
+  .list li { position: relative; padding-left: 38px; }
+  .list li::before { content: ""; position: absolute; left: 0; top: .36em; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); opacity: .7; }
+  .kbd { display: inline-block; min-width: 1.4em; padding: 6px 16px; border-radius: 10px; background: var(--panel); color: var(--fg); text-align: center; white-space: nowrap;
+    box-shadow: inset 0 -4px 0 rgba(90, 66, 36, .16), 0 1px 2px rgba(90, 66, 36, .25); font: 600 28px/1.3 var(--font); }
+  .keyrow { display: grid; grid-template-columns: 150px 1fr; align-items: center; gap: 26px; font: 400 36px/1.25 var(--font-heading); }
+  .keyrow .kbd { justify-self: start; }
+  .code { background: #fffdf8; border-radius: 6px; box-shadow: var(--shadow); box-sizing: border-box; padding: 30px 38px; margin: 0;
+    font: 26px/1.6 var(--mono); color: var(--fg); white-space: pre; overflow: hidden; }
+  .code .tab { display: block; margin: -6px 0 18px; font: 600 18px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .c-tag { color: var(--sienna); } .c-attr { color: var(--accent); } .c-val { color: #a9503e; } .c-com { color: var(--muted); font-style: italic; } .c-key { color: #557d2c; }
+  .doc { display: flex; flex-direction: column; gap: 16px; padding: 38px 32px 28px; box-sizing: border-box; background: var(--panel); box-shadow: var(--shadow); border-radius: 3px; }
+  .doc::after { content: ""; position: absolute; right: 0; top: 0; width: 46px; height: 46px; border-bottom-left-radius: 6px;
+    background: linear-gradient(225deg, var(--bg) 50%, #e8dcc6 50%); filter: drop-shadow(-2px 3px 2px rgba(90, 66, 36, .18)); }
+  .doc i { display: block; height: 12px; border-radius: 6px; background: rgba(47, 41, 36, .14); }
+  .doc i:nth-of-type(2n) { width: 82%; } .doc i:nth-of-type(3n) { width: 64%; }
+  .doc b { margin-top: auto; font: 600 22px/1.2 var(--mono); color: var(--fg); }
+  .tag { align-self: flex-start; padding: 5px 12px; border-radius: 5px; background: var(--deep, var(--accent)); color: #fff; font: 700 20px/1 var(--mono); letter-spacing: .04em; }
+  .memo { box-sizing: border-box; padding: 46px 44px 36px; background: #fdfaf3; color: #4d433a; rotate: -1.3deg;
+    box-shadow: 0 1px 2px rgba(90, 66, 36, .12), 0 26px 46px -24px rgba(90, 66, 36, .55); }
+  .memo::before { content: ""; position: absolute; top: -18px; left: 50%; width: 170px; height: 38px; translate: -50% 0; rotate: 4deg; background: rgba(228, 214, 182, .8);
+    clip-path: polygon(2% 0, 98% 0, 100% 22%, 97% 44%, 100% 66%, 97% 86%, 99% 100%, 1% 100%, 3% 80%, 0 58%, 3% 38%, 0 18%); }
+  .wash-btn { position: relative; isolation: isolate; display: grid; place-items: center; color: #fff; font: 600 30px/1 var(--font); text-shadow: 0 1px 1px rgba(20, 28, 60, .3); }
+  .wash-btn::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #2d4b91; -webkit-mask: var(--wash) center / 100% 100% no-repeat; mask: var(--wash) center / 100% 100% no-repeat; }
+  .frame { box-sizing: border-box; border: 3px dashed var(--line); border-radius: 8px; }
+  /* Anybody's slide: white, grey bars. */
+  .plain { display: grid; align-content: start; gap: 22px; padding: 36px 40px; box-sizing: border-box; border-radius: 4px; box-shadow: 0 1px 2px rgba(0, 0, 0, .08), 0 18px 34px -20px rgba(0, 0, 0, .4); }
+  .plain i { display: block; height: 14px; border-radius: 7px; background: #dcdde2; }
+  .plain i:first-child { width: 66%; height: 28px; margin-bottom: 12px; background: #b9bbc4; }
+  .plain i:nth-child(3) { width: 84%; } .plain i:nth-child(4) { width: 72%; }
+
+  /* Idle motion while a slide is shown: the turtle swims, the painting breathes. */
+  .slide.is-current .swim { animation: swim 4.5s ease-in-out infinite alternate; }
+  .slide.is-current .drift { animation: drift 18s ease-in-out infinite alternate; }
+  @keyframes swim { from { translate: 0 0; rotate: -1.5deg; } to { translate: 0 -16px; rotate: 1.5deg; } }
+  @keyframes drift { from { scale: 1; } to { scale: 1.035; translate: -12px -4px; } }
+
+  /* Mini slides: a slide inside a slide. Sizes inside are in cqw (1% of the mini's width), so it looks the same at any size. */
+  .mini { container-type: size; position: relative; overflow: hidden; box-sizing: border-box; color: var(--fg);
+    background: url("assets/paper.webp") 0 0 / 240px 240px, var(--bg); box-shadow: 0 1px 3px rgba(60, 44, 24, .25), 0 30px 60px -34px rgba(60, 44, 24, .6); }
+  .mini-h { position: absolute; left: 7cqw; top: 7cqw; width: 80cqw; font: 500 5.2cqw/1.1 var(--font-heading); }
+  .mini-p { position: absolute; left: 7cqw; top: 20cqw; width: 36cqw; display: grid; gap: 2.2cqw; }
+  .mini-p i { display: block; height: 1.5cqw; border-radius: 1cqw; background: rgba(47, 41, 36, .16); }
+  .mini-p i:nth-child(3n) { width: 78%; } .mini-p i:last-child { width: 52%; }
+  .mini-pic { position: absolute; left: 52cqw; top: 20cqw; width: 41cqw; height: 23cqw; background: var(--walk) 30% 50% / cover no-repeat; }
+  .mini-cap { position: absolute; left: 52cqw; top: 46cqw; font: italic 2.1cqw/1.2 var(--font-heading); color: var(--muted); }
+  .mini-guide { position: absolute; background: #ff3ea5; }
+  .mini-guide.v { left: 52cqw; top: 0; bottom: 0; width: .25cqw; }
+  .mini-guide.h { top: 20cqw; left: 0; right: 0; height: .25cqw; }
+  .sel { outline: .3cqw solid #4c8dff; outline-offset: .2cqw; }
+  .sel::before { content: ""; position: absolute; inset: -1.1cqw; pointer-events: none; filter: drop-shadow(0 0 .15cqw #4c8dff) drop-shadow(0 0 .1cqw #4c8dff);
+    background: linear-gradient(#fff, #fff) 0 0 / 1.3cqw 1.3cqw no-repeat, linear-gradient(#fff, #fff) 100% 0 / 1.3cqw 1.3cqw no-repeat,
+      linear-gradient(#fff, #fff) 0 100% / 1.3cqw 1.3cqw no-repeat, linear-gradient(#fff, #fff) 100% 100% / 1.3cqw 1.3cqw no-repeat; }
+  .sel-label { position: absolute; left: -.3cqw; top: -4.4cqw; padding: .2cqw .8cqw; border-radius: .5cqw; background: #4c8dff; color: #fff; font: 1.7cqw/1.4 var(--mono); white-space: nowrap; }
+  /* Dragging a picture until it snaps; the guides show while it is aligned. */
+  .slide.is-current .drag { animation: drag-snap 6s cubic-bezier(.45, 0, .25, 1) infinite; }
+  .slide.is-current .mini-guide { animation: guide-show 6s linear infinite; }
+  @keyframes drag-snap { 0%, 12% { translate: 8cqw 11cqw; } 38% { translate: .7cqw .6cqw; } 41%, 72% { translate: 0 0; } 90%, 100% { translate: 8cqw 11cqw; } }
+  @keyframes guide-show { 0%, 40% { opacity: 0; } 41%, 72% { opacity: 1; } 73%, 100% { opacity: 0; } }
+
+  /* The editor's dark workshop, in miniature. */
+  .ui { background: #1b1c1f; color: #e8e9ec; font: 17px/1.35 var(--font); border-radius: 14px; overflow: hidden; box-sizing: border-box;
+    box-shadow: 0 2px 4px rgba(40, 28, 16, .2), 0 44px 80px -38px rgba(40, 28, 16, .75); }
+  .ui-top { display: flex; align-items: center; gap: 7px; height: 54px; padding: 0 14px; box-sizing: border-box; background: #232428; border-bottom: 1px solid #34353b; }
+  .ui-top img { height: 30px; }
+  .ui-title { margin: 0 6px 0 4px; font-weight: 600; white-space: nowrap; }
+  .ui-gap { flex: 1; }
+  .ui-btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid #34353b; border-radius: 7px; background: #2b2c31; color: #e8e9ec; white-space: nowrap; font-size: 15px; }
+  .ui-btn.primary { background: #4c8dff; border-color: #4c8dff; color: #fff; }
+  .ui-muted { color: #9a9ca5; white-space: nowrap; font-size: 15px; }
+  .ui-tabs { display: flex; gap: 4px; padding: 10px; border-bottom: 1px solid #34353b; }
+  .ui-tab { padding: 6px 12px; border-radius: 6px; color: #9a9ca5; }
+  .ui-tab.on { background: #2b2c31; color: #fff; }
+  .ui-field { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 12px; border: 1px solid #34353b; border-radius: 7px; background: #18191c; }
+  .ui-chip { padding: 5px 12px; border-radius: 20px; background: rgba(76, 141, 255, .16); color: #8fb4ff; white-space: nowrap; font: 15px/1.3 var(--mono); }
+  .ed { display: grid; grid-template-rows: 54px 1fr; }
+  .ed-main { display: grid; grid-template-columns: 150px 1fr 250px; min-height: 0; }
+  .ed-slides { display: grid; align-content: start; gap: 14px; padding: 16px 14px; background: #232428; border-right: 1px solid #34353b; }
+  .ed-thumb { position: relative; height: 68px; border-radius: 4px; background: url("assets/paper.webp") 0 0 / 120px 120px, var(--bg); outline: 2px solid transparent; outline-offset: 3px; }
+  .ed-thumb.on { outline-color: #4c8dff; }
+  .ed-thumb::after { content: attr(data-n); position: absolute; left: 4px; bottom: 4px; padding: 0 6px; border-radius: 8px; background: rgba(20, 22, 26, .8); color: #c9ced6; font: 600 11px/16px var(--font); }
+  .ed-thumb i { position: absolute; display: block; border-radius: 2px; }
+  .ed-work { display: grid; grid-template-rows: 1fr 70px; min-width: 0; }
+  .ed-canvas { display: grid; place-items: center; background: #141518; }
+  .ed-prompt { display: flex; align-items: center; gap: 10px; padding: 0 14px; background: #232428; border-top: 1px solid #34353b; }
+  .ed-prompt .ui-input { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: #9a9ca5; }
+  .ed-insp { background: #232428; border-left: 1px solid #34353b; }
+  .insp { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; padding: 16px; font-size: 15px; }
+  .insp label { color: #9a9ca5; align-self: center; }
+  .insp .wide { grid-column: 1 / -1; }
+  .swatches { display: flex; gap: 8px; }
+  .swatches i { width: 26px; height: 26px; border-radius: 50%; background: var(--pigment); }
+  .insp-big { display: grid; grid-template-columns: 150px 1fr; gap: 16px 18px; padding: 26px; font-size: 22px; align-items: center; }
+  .insp-big label { color: #9a9ca5; }
+  .insp-big .ui-field { font-size: 22px; padding: 9px 14px; }
+  .insp-big .ui-btn { grid-column: 1 / -1; justify-self: start; font-size: 20px; padding: 8px 18px; margin-top: 6px; }
+  .ui-log { display: grid; align-content: start; gap: 16px; padding: 24px 28px; font: 22px/1.45 var(--mono); }
+  .ui-log .me { margin-bottom: 8px; padding: 16px 20px; border-radius: 10px; background: #2b2c31; font: 23px/1.45 var(--font); }
+  .ui-log .ok { color: #3ccf6e; }
+  .ui-log .dim { color: #9a9ca5; }
+  .ui-head { display: flex; align-items: center; gap: 10px; padding: 16px 26px; font-size: 22px; border-bottom: 1px solid #34353b; background: #232428; font-weight: 600; }
+  .promptbar { display: flex; align-items: center; gap: 14px; padding: 0 18px; font-size: 22px; }
+  .promptbar .typed { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; }
+  .promptbar .ui-btn { font-size: 20px; padding: 8px 18px; }
+  .promptbar .ui-chip { font-size: 18px; }
+
+  /* The start page, in miniature. */
+  .sp { border-radius: 12px; overflow: hidden; box-shadow: 0 2px 4px rgba(60, 44, 24, .15), 0 44px 80px -40px rgba(60, 44, 24, .6);
+    background: url("assets/paper.webp") 0 0 / 300px 300px, var(--bg); color: var(--fg); }
+  .sp-chrome { display: flex; align-items: center; gap: 9px; height: 46px; padding: 0 18px; background: #e9e0cd; border-bottom: 1px solid var(--line); }
+  .sp-chrome i { width: 13px; height: 13px; border-radius: 50%; background: #cdbfa6; }
+  .sp-chrome span { margin-left: 18px; padding: 4px 18px; border-radius: 14px; background: #f7f1e6; color: var(--muted); font: 15px/1.2 var(--font); }
+  .sp-body { padding: 18px 44px 0; }
+  .sp-walk { display: block; width: 100%; aspect-ratio: 1600 / 360; }
+  .sp-head { display: flex; align-items: center; gap: 12px; margin: 12px 0 4px; font: 500 46px/1.1 var(--font-heading); }
+  .sp-head img { height: 58px; }
+  .sp-sub { font: italic 19px/1.4 var(--font-heading); color: var(--muted); }
+  .sp-form { display: flex; justify-content: space-between; align-items: center; margin: 22px 0 26px; padding: 16px 22px; border-radius: 6px; background: var(--panel); box-shadow: var(--shadow); font: 600 22px/1.2 var(--font-heading); }
+  .sp-form span { color: var(--muted); font: 16px var(--font); }
+  .sp-h { position: relative; isolation: isolate; display: inline-block; margin-bottom: 18px; font: 600 22px/1.2 var(--font-heading); --pigment: var(--accent-2); }
+  .sp-h::after { content: ""; position: absolute; z-index: -1; left: -8px; right: -16px; bottom: -4px; height: 13px; background: var(--accent-2); opacity: .55;
+    -webkit-mask: var(--stroke) 0 0 / 100% 100% no-repeat; mask: var(--stroke) 0 0 / 100% 100% no-repeat; }
+  .sp-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .sp-card { border-radius: 4px; background: var(--panel); box-shadow: var(--shadow); overflow: hidden; font: 15px/1.3 var(--font); }
+  .sp-card > b { display: block; padding: 10px 14px 0; font: 600 16px/1.3 var(--font-heading); }
+  .sp-card > span { display: block; padding: 2px 14px 12px; color: var(--muted); font-size: 13px; }
+  /* Thumbnails of three kinds of deck: the dark default, paper (this one), a house style. */
+  .th { position: relative; aspect-ratio: 16 / 9; overflow: hidden; container-type: inline-size; }
+  .th > b { position: absolute; left: 8cqw; bottom: 12cqw; font: 600 9cqw/1.1 var(--font); }
+  .th-dark { background: radial-gradient(60% 80% at 50% 40%, rgba(76, 141, 255, .45), transparent 70%), #0b0b0f; color: #f5f5f7; }
+  .th-dark > b { left: 0; right: 0; text-align: center; bottom: 36%; font-size: 11cqw; letter-spacing: -.03em; }
+  .th-paper { background: url("assets/paper.webp") 0 0 / 120px 120px, var(--bg); color: var(--fg); }
+  .th-paper .painting { position: absolute; left: 4%; top: 6%; width: 92%; aspect-ratio: 1600 / 360; }
+  .th-paper > b { left: 0; right: 0; bottom: 14%; text-align: center; font: 500 11cqw/1 var(--font-heading); }
+  .th-corp { background: radial-gradient(circle, #c8102e 45%, transparent 52%) right 5% top 8% / 6% 10.7% no-repeat, linear-gradient(#1f3a68, #1f3a68) 0 100% / 100% 7% no-repeat, #fff; color: #1f3a68; }
+  .th-blank { background: #fff; }
+
+  /* New deck: the four choices. */
+  .choice { display: flex; flex-direction: column; gap: 20px; padding: 34px 32px 30px; }
+  .choice .dab.sm { flex-shrink: 0; width: 112px; height: 112px; margin: -18px 0 -16px -20px; font-size: 48px; }
+  .choice .h3 { font-size: 50px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; }
+  .chips i { padding: 9px 15px; border-radius: 26px; border: 2px solid var(--line); font: normal 600 25px/1.2 var(--font); color: var(--fg); }
+  .chips i.on { background: #2d4b91; border-color: #2d4b91; color: #fff; }
+  .chips i.ghost { border-style: dashed; color: var(--muted); }
+  .chips.col { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .chips.col i { padding: 6px 15px; }
+  .stage .choice-cap { margin-top: auto; font: italic 30px/1.3 var(--font-heading); color: var(--muted); }
+  .tpl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 16px; }
+  .tpl-grid .th { border-radius: 3px; box-shadow: 0 1px 3px rgba(60, 44, 24, .3); }
+  .tpl-grid .th.on { outline: 4px solid #2d4b91; outline-offset: 3px; }
+  .tpl-grid .th-blank::after { content: "Blank"; position: absolute; inset: 0; display: grid; place-items: center; font: 15px var(--font); color: #999; }
+  .draft-box { display: grid; gap: 12px; padding: 16px; border: 2px dashed var(--line); border-radius: 8px; background: rgba(255, 253, 248, .6); }
+  .draft-box p { font: italic 25px/1.35 var(--font-heading); color: var(--muted); }
+  .file-row { display: flex; align-items: center; gap: 10px; font: 21px/1.2 var(--mono); }
+  .file-row .tag { font-size: 14px; padding: 4px 7px; }
+
+  /* A house-style template's layouts, in miniature (navy and a red dot: anybody's corporate look). */
+  .lay { position: relative; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 4px; box-shadow: 0 1px 3px rgba(60, 44, 24, .3), var(--shadow); container-type: inline-size;
+    background: radial-gradient(circle, #c8102e 45%, transparent 52%) right 5% top 8% / 6% 10.7% no-repeat, linear-gradient(#1f3a68, #1f3a68) 0 100% / 100% 7% no-repeat, #fff; }
+  .lay i { position: absolute; display: block; border-radius: 1cqw; background: #c9d0dc; }
+  .lay i.t { background: #1f3a68; height: 6cqw; }
+  .lay i.pic { border-radius: 0; background: repeating-linear-gradient(45deg, #dfe4ec 0 3cqw, #eef1f5 3cqw 6cqw); }
+  .lay b { position: absolute; color: #1f3a68; font: 700 22cqw/1 var(--font); }
+  .lay.dark { background: radial-gradient(circle, #c8102e 45%, transparent 52%) right 5% top 8% / 6% 10.7% no-repeat, #1f3a68; }
+  .lay.dark i { background: rgba(255, 255, 255, .85); }
+  .lay-name { margin-top: 12px; font: italic 26px/1.2 var(--font-heading); color: var(--muted); }
+
+  /* Speaker panels, flows, legends. */
+  .legend { display: grid; grid-template-columns: 84px 1fr; gap: 6px 20px; align-items: center; }
+  .legend .dab.sm { width: 84px; height: 84px; grid-row: span 2; }
+  .legend .h3 { font-size: 40px; align-self: end; }
+  .legend .small { align-self: start; }
+  .node { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
+  .node .h3 { font-size: 36px; }
+  .node .small { font-size: 24px; }
+  .fx-grid { display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 34px 40px; }
+  .fx { position: relative; display: grid; place-items: center; border-radius: 6px; background: var(--panel); box-shadow: var(--shadow); }
+  .fx-name { position: absolute; left: 20px; bottom: 14px; font: 600 21px/1 var(--mono); color: var(--muted); }
+  .fx .bloom-dot { width: 140px; height: 140px; margin-top: -24px; }
+  .fx .wash-bar { width: 200px; height: 86px; margin-top: -24px; background: var(--pigment); opacity: .75; mix-blend-mode: multiply; -webkit-mask: var(--wash) center / 100% 100% no-repeat; mask: var(--wash) center / 100% 100% no-repeat; }
+  .fx .word { margin-top: -24px; font: 500 52px/1.1 var(--font-heading); }
+  .th-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px 30px; }
+  .th-grid .th { border-radius: 3px; box-shadow: 0 1px 3px rgba(60, 44, 24, .3), var(--shadow); }
+  .th-grid .th > b { font: 500 9.5cqw/1.1 var(--font-heading); left: 8cqw; right: 8cqw; bottom: auto; top: 12cqw; }
+  .th-grid .th > span { position: absolute; }
+  .th-grid .th .big { font: 500 30cqw/1 var(--font-heading); left: 8cqw; top: 26cqw; color: #557d2c; }
+  .fileline { display: flex; align-items: center; gap: 22px; padding: 0 30px; border-radius: 6px; background: var(--panel); box-shadow: var(--shadow); font: 600 32px/1 var(--mono); }
+  .fileline .tag { align-self: center; font-size: 18px; }
+  .history { display: grid; gap: 0; }
+  .history div { display: flex; align-items: baseline; gap: 18px; padding: 16px 24px; border-radius: 5px; background: var(--panel); box-shadow: var(--shadow); font: 26px/1.3 var(--font); }
+  .history div + div { margin: -6px 14px 0; opacity: .9; }
+  .history div + div + div { margin: -6px 28px 0; opacity: .8; }
+  .history b { font: 600 24px/1 var(--mono); color: var(--accent); }
+
+  /* Example slide for "fit to audience": the same facts, for colleagues and for a keynote. */
+  .fit-num { font: 500 72px/1 var(--font-heading); letter-spacing: -.03em; color: #557d2c; }
+  .stat.fit-num { font-size: 300px; }
+  .ask-cards { position: absolute; left: 7cqw; top: 21cqw; right: 7cqw; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4cqw; }
+  .ask-card { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.6cqw; height: 26cqw; border-radius: .6cqw; background: var(--panel); box-shadow: 0 .2cqw .6cqw rgba(60, 44, 24, .2); }
+  .ask-card b { font: 600 3.2cqw/1 var(--font-heading); }
+  .ask-card .bloom-dot { width: 12cqw; height: 12cqw; }
+  .ask-card svg { width: 16cqw; height: 9cqw; }
+  .ask-badge { position: absolute; right: -1.6cqw; top: -1.6cqw; display: grid; place-items: center; width: 4.6cqw; height: 4.6cqw; border-radius: 50%; background: #4c8dff; color: #fff; font: 700 2.4cqw/1 var(--font); box-shadow: 0 .2cqw .5cqw rgba(0, 0, 0, .25); }
+  .paint-canvas { mix-blend-mode: multiply; pointer-events: none; }
+  .memo-dabs { display: block; width: 180px; height: auto; margin: 0 0 12px -4px; }
+  .memo-name { display: block; margin: 6px 0 8px; font: 600 30px/1.25 var(--font-heading); color: var(--fg); }
+  .memo-name span { margin-left: 6px; font-weight: 400; font-size: 22px; color: var(--muted); }
+  .session { font: 30px/1.5 var(--font-heading); }
+  .session h4 { margin: 22px 0 6px; font: 600 22px/1.3 var(--mono); color: var(--muted); letter-spacing: .02em; }
+  .session h4:first-of-type { margin-top: 0; }
+  .session p { margin: 0; }
+  .session .mono { font-size: 23px; color: var(--muted); }
+  .session-file { display: block; margin-bottom: 18px; font: 700 22px/1 var(--mono); color: #a8741f; }
+</style>
+</head>
+<body>
+<div class="stage" data-width="1920" data-height="1080">
+<!-- ==================== SLIDES ==================== -->
+
+<!-- ===== Slide 1 · title ===== -->
+<section class="slide" id="title" data-title="Deckelsmouk">
+  <div data-el="painting" class="painting drift" role="img" aria-label="A loose watercolour of Luxembourg City" data-anim="wash-in" data-dur="2.8" style="position:absolute;left:80px;top:64px;width:1760px;height:396px"></div>
+  <img data-el="turtle" class="swim" src="assets/turtle.svg" alt="The Deckelsmouk turtle" data-anim="dab" data-delay="1.4" style="position:absolute;left:870px;top:486px;width:180px;height:124px">
+  <h1 data-el="title" class="hero center" data-anim="bleed" data-delay="1.7" style="position:absolute;left:160px;top:626px;width:1600px">Deckelsmouk</h1>
+  <p data-el="tagline" class="lead center" data-anim="rise" data-delay="2.5" style="position:absolute;left:260px;top:826px;width:1400px">Arrange by mouse. Animate by asking. Ship one file.</p>
+  <aside class="notes"><p>Good evening. Let me show you a presentation tool with a turtle for a logo.</p><p>Everything you will see tonight was made with it, this deck included: the painting that just spread across the paper, the type, every transition.</p><p>Three sentences sum it up: arrange by mouse, animate by asking, ship one file. Let's see what that means.</p></aside>
+</section>
+
+<!-- ===== Slide 2 · problem ===== -->
+<section class="slide" id="problem" data-title="Every deck looks the same">
+  <h2 data-el="headline" class="h1 center" data-anim="words" style="position:absolute;left:160px;top:140px;width:1600px">Every deck looks the same.</h2>
+  <div data-el="deck-1" class="th th-blank plain" data-anim="left" data-delay="0.7" style="position:absolute;left:220px;top:400px;width:440px;height:248px"><i></i><i></i><i></i><i></i></div>
+  <div data-el="deck-2" class="th th-blank plain" data-anim="drop" data-delay="0.85" style="position:absolute;left:740px;top:400px;width:440px;height:248px"><i></i><i></i><i></i><i></i></div>
+  <div data-el="deck-3" class="th th-blank plain" data-anim="right" data-delay="1" style="position:absolute;left:1260px;top:400px;width:440px;height:248px"><i></i><i></i><i></i><i></i></div>
+  <div data-el="painted" class="th th-paper" data-step="1" data-anim="wash-in" data-dur="2" style="position:absolute;left:690px;top:372px;width:540px;height:304px;box-shadow:var(--shadow)"><i class="painting"></i><b>Yours</b></div>
+  <p data-el="same" class="lead center" data-anim="fade" data-delay="1.5" style="position:absolute;left:260px;top:740px;width:1400px">Same fades. Same flies. Same bullet points.</p>
+  <p data-el="what-if" class="h3 center accent" data-step="1" data-anim="bleed" data-delay="0.9" style="position:absolute;left:260px;top:850px;width:1400px">What if yours were painted?</p>
+  <aside class="notes"><p>Be honest: when did a slide last surprise you?</p><p>Slide software gives us a timeline of fades and flies, a template, and bullet points. So every deck looks like every other deck.</p><p>Meanwhile the browser on your laptop can draw anything: real typography, drawings that paint themselves, numbers that count, video, code. (Click.) What if your deck could use all of that, and still be as easy to edit as the tools you know?</p></aside>
+</section>
+
+<!-- ===== Slide 3 · meet ===== -->
+<section class="slide" id="meet" data-title="Meet Deckelsmouk" data-transition="zoom">
+  <div data-el="pool" class="wash p-ochre" data-anim="bleed" data-dur="2.2" style="position:absolute;left:600px;top:70px;width:720px;height:410px"></div>
+  <img data-el="turtle" class="swim" src="assets/turtle.svg" alt="The Deckelsmouk turtle" data-anim="dab" data-delay="0.5" style="position:absolute;left:760px;top:120px;width:400px;height:275px">
+  <h2 data-el="name" class="h1 center" data-anim="bleed" data-delay="1" style="position:absolute;left:160px;top:500px;width:1600px">Meet Deckelsmouk.</h2>
+  <div data-el="pillar-html" class="node p-cerulean" data-step="1" data-anim="rise" style="position:absolute;left:200px;top:690px;width:480px">
+    <span class="dab sm" style="width:130px;height:130px;margin-bottom:-14px"></span><b class="h3">Plain HTML</b><span class="small">that you own, line by line</span>
+  </div>
+  <div data-el="pillar-editor" class="node p-ochre" data-step="2" data-anim="rise" style="position:absolute;left:720px;top:690px;width:480px">
+    <span class="dab sm" style="width:130px;height:130px;margin-bottom:-14px"></span><b class="h3">A real editor</b><span class="small">drag, snap, nudge, undo</span>
+  </div>
+  <div data-el="pillar-llm" class="node p-sap" data-step="3" data-anim="rise" style="position:absolute;left:1240px;top:690px;width:480px">
+    <span class="dab sm" style="width:130px;height:130px;margin-bottom:-14px"></span><b class="h3">Any LLM beside you</b><span class="small">local or in the cloud</span>
+  </div>
+  <aside class="notes"><p>This is Deckelsmouk.</p><p>Three ideas. (Click.) Your deck is plain HTML: a file you own, can read, put in git and open in ten years. (Click.) On top of it sits a real editor, the kind you already know: drag, snap, nudge, undo. (Click.) And next to it, a language model: any LLM you like, running locally on your machine or in the cloud. You select something, say what you want, and watch it happen.</p><p>Let's walk through it the way you would use it, from the very first page.</p></aside>
+</section>
+
+<!-- ===== Slide 4 · s-start ===== -->
+<section class="slide" id="s-start" data-title="1 · The start page" data-transition="zoom">
+  <div data-el="number" class="dab p-ultra" data-anim="dab" style="position:absolute;left:200px;top:340px;width:320px;height:320px">1</div>
+  <p data-el="kicker" class="eyebrow" data-anim="fade" data-delay="0.4" style="position:absolute;left:600px;top:396px;width:1180px">The start page</p>
+  <h2 data-el="heading" class="h1 p-ultra" data-anim="ink-title" data-delay="0.5" style="position:absolute;left:600px;top:440px;width:1180px">It starts on <span class="brushed">paper.</span></h2>
+  <p data-el="sub" class="lead" data-anim="rise" data-delay="1.1" style="position:absolute;left:600px;top:590px;width:1200px">Your decks, your templates, and a new talk in four choices.</p>
+  <aside class="notes"><p>Chapter one: where it all starts.</p></aside>
+</section>
+
+<!-- ===== Slide 5 · start-page ===== -->
+<section class="slide" id="start-page" data-title="Everything starts here">
+  <div data-el="start-page" class="sp" data-anim="settle" style="position:absolute;left:140px;top:140px;width:1060px;height:820px">
+    <div class="sp-chrome"><i></i><i></i><i></i><span>localhost:4800</span></div>
+    <div class="sp-body">
+      <div class="sp-walk painting"></div>
+      <div class="sp-head"><img src="assets/turtle.svg" alt="">Deckelsmouk</div>
+      <p class="sp-sub">Animated HTML presentations. Edit by hand, arrange by mouse, animate by asking your LLM companion.</p>
+      <div class="sp-form">+ New deck<span>▾</span></div>
+      <b class="sp-h">Decks</b>
+      <div class="sp-cards">
+        <div class="sp-card"><div class="th th-dark"><b>Q3 review</b></div><b>Q3 review</b><span>Colleagues · 30 min</span></div>
+        <div class="sp-card"><div class="th th-paper"><i class="painting"></i><b>Deckelsmouk</b></div><b>Deckelsmouk keynote</b><span>Product keynote · 25 min</span></div>
+        <div class="sp-card"><div class="th th-corp"><b>Lab meeting</b></div><b>Lab meeting</b><span>Field peers · 20 min</span></div>
+      </div>
+    </div>
+  </div>
+  <h2 data-el="heading" class="h2" data-anim="bleed" data-delay="0.5" style="position:absolute;left:1290px;top:200px;width:520px">Everything starts here.</h2>
+  <p data-el="sub" class="lead" data-anim="rise" data-delay="0.9" style="position:absolute;left:1290px;top:420px;width:500px">Every deck and template, on one painted page.</p>
+  <svg data-el="arrow" data-step="1" data-anim="draw" data-dur="1.1" viewBox="0 0 280 160" style="position:absolute;left:1080px;top:560px;width:280px;height:160px">
+    <path d="M262 132 C 200 140, 120 110, 34 52" fill="none" stroke="#a8741f" stroke-width="7" stroke-linecap="round"/>
+    <path d="M60 40 L 30 50 L 46 78" fill="none" stroke="#a8741f" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  <p data-el="callout" class="h3 accent-2" data-step="1" data-anim="bleed" data-delay="0.6" style="position:absolute;left:1370px;top:660px;width:430px;font-style:italic;font-weight:500">A new deck, in four choices.</p>
+  <aside class="notes"><p>This is the start page, painted on paper, like this deck. A walk through Luxembourg City along the top, in the spirit of the watercolourist Sosthène Weis.</p><p>Below it, every deck and every template you have, as sheets of paper. Open one, duplicate it, archive it. Drop a PowerPoint file here and it becomes a template; we'll come to that.</p><p>(Click.) And at the top: a new deck. It takes four choices.</p></aside>
+</section>
+
+<!-- ===== Slide 6 · choices ===== -->
+<section class="slide" id="choices" data-title="A new deck, in four choices" data-transition="push">
+  <h2 data-el="heading" class="h2" data-anim="bleed" style="position:absolute;left:150px;top:110px;width:1620px">A new deck, in four choices.</h2>
+  <div data-el="choice-length" class="card choice" data-step="1" data-anim="settle" style="position:absolute;left:150px;top:260px;width:360px;height:610px">
+    <span class="dab sm p-ultra">1</span><h3 class="h3">Length</h3>
+    <div class="chips"><i>5</i><i>10</i><i>15</i><i>20</i><i class="on">25</i><i>30</i><i>45</i><i>60</i></div>
+    <p class="choice-cap">Sized to your slot.</p>
+  </div>
+  <div data-el="choice-audience" class="card choice" data-step="2" data-anim="settle" style="position:absolute;left:570px;top:260px;width:360px;height:610px">
+    <span class="dab sm p-ochre">2</span><h3 class="h3">Audience</h3>
+    <div class="chips col"><i>Colleagues</i><i>Field peers</i><i class="on">Product keynote</i><i>Students</i><i>General public</i><i class="ghost">Your own words…</i></div>
+    <p class="choice-cap">Shaped for the room.</p>
+  </div>
+  <div data-el="choice-template" class="card choice" data-step="3" data-anim="settle" style="position:absolute;left:990px;top:260px;width:360px;height:610px">
+    <span class="dab sm p-sap">3</span><h3 class="h3">Template</h3>
+    <div class="tpl-grid">
+      <div class="th th-dark"><b>Default</b></div>
+      <div class="th th-paper on"><i class="painting"></i><b>Paper</b></div>
+      <div class="th th-corp"><b>House style</b></div>
+      <div class="th th-blank"></div>
+    </div>
+    <p class="choice-cap">Your house style.</p>
+  </div>
+  <div data-el="choice-draft" class="card choice" data-step="4" data-anim="settle" style="position:absolute;left:1410px;top:260px;width:360px;height:610px">
+    <span class="dab sm p-madder">4</span><h3 class="h3">Draft</h3>
+    <div class="draft-box">
+      <p>Paste an outline, an abstract, notes or a script…</p>
+      <span class="file-row"><span class="tag p-madder">PDF</span>paper.pdf</span>
+      <span class="file-row"><span class="tag p-ultra">MD</span>notes.md</span>
+      <span class="file-row"><span class="tag p-sap">JPG</span>meadow.jpg</span>
+    </div>
+    <p class="choice-cap">Optional: your LLM companion writes it.</p>
+  </div>
+  <div data-el="create" class="wash-btn" data-step="4" data-anim="dab" data-delay="0.7" style="position:absolute;left:1520px;top:898px;width:250px;height:78px">Create deck</div>
+  <aside class="notes"><p>Four choices, and each one matters later.</p><p>(Click.) How long is the talk? The LLM companion sizes the deck to it.</p><p>(Click.) Who is it for? Colleagues who want the details, peers at a conference, a keynote crowd, students, the general public, or your own words. This deck was made for a keynote, which is why you see so few words.</p><p>(Click.) Which template: the dark default, this paper one, or your organisation's house style.</p><p>(Click.) And optionally, a draft: paste your notes, drop a paper or pictures, and the LLM companion writes the whole deck. More on that at the end.</p></aside>
+</section>
+
+<!-- ===== Slide 7 · templates ===== -->
+<section class="slide" id="templates" data-title="Your house style, in one drop">
+  <h2 data-el="heading" class="h2" data-anim="bleed" style="position:absolute;left:150px;top:110px;width:1620px">Your house style, in one drop.</h2>
+  <p data-el="sub" class="lead" data-anim="rise" data-delay="0.4" style="position:absolute;left:150px;top:230px;width:1400px">Drop your PowerPoint template on the start page. Colours, fonts, logo and layouts come along.</p>
+  <div data-el="potx" class="doc p-madder" data-anim="settle" data-delay="0.8" style="position:absolute;left:190px;top:440px;width:280px;height:360px">
+    <span class="tag">POTX</span><i></i><i></i><i></i><i></i><i></i><b>house-style.potx</b>
+  </div>
+  <svg data-el="arrow" data-step="1" data-anim="draw" data-dur="0.9" viewBox="0 0 300 120" style="position:absolute;left:510px;top:560px;width:300px;height:120px">
+    <path d="M14 64 C 90 30, 180 92, 270 58" fill="none" stroke="#a8741f" stroke-width="7" stroke-linecap="round"/>
+    <path d="M246 34 L 276 56 L 250 84" fill="none" stroke="#a8741f" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  <div data-el="layouts" style="position:absolute;left:850px;top:400px;width:920px;height:450px;display:grid;grid-template-columns:repeat(3,1fr);gap:34px 40px">
+    <div data-step="1" data-anim="settle" data-delay="0.5"><div class="lay dark"><i class="t" style="left:8cqw;top:36cqw;width:60cqw;height:8cqw;background:#fff"></i><i style="left:8cqw;top:50cqw;width:40cqw;height:4cqw"></i></div><p class="lay-name">Title</p></div>
+    <div data-step="1" data-anim="settle" data-delay="0.65"><div class="lay"><i class="t" style="left:8cqw;top:12cqw;width:50cqw"></i><i style="left:8cqw;top:28cqw;width:38cqw;height:3cqw"></i><i style="left:8cqw;top:36cqw;width:34cqw;height:3cqw"></i><i style="left:8cqw;top:44cqw;width:36cqw;height:3cqw"></i><i style="left:54cqw;top:28cqw;width:38cqw;height:3cqw"></i><i style="left:54cqw;top:36cqw;width:30cqw;height:3cqw"></i></div><p class="lay-name">Two columns</p></div>
+    <div data-step="1" data-anim="settle" data-delay="0.8"><div class="lay"><i class="pic" style="left:0;top:0;width:44cqw;height:52.25cqw"></i><i class="t" style="left:52cqw;top:14cqw;width:36cqw"></i><i style="left:52cqw;top:28cqw;width:36cqw;height:3cqw"></i><i style="left:52cqw;top:36cqw;width:28cqw;height:3cqw"></i></div><p class="lay-name">Picture and text</p></div>
+    <div data-step="1" data-anim="settle" data-delay="0.95"><div class="lay"><i class="t" style="left:8cqw;top:12cqw;width:40cqw"></i><b style="left:8cqw;top:22cqw">42</b><i style="left:56cqw;top:30cqw;width:32cqw;height:3cqw"></i></div><p class="lay-name">Big number</p></div>
+    <div data-step="1" data-anim="settle" data-delay="1.1"><div class="lay"><i style="left:0;top:0;width:30cqw;height:56.25cqw;border-radius:0;background:#1f3a68"></i><i class="t" style="left:38cqw;top:22cqw;width:46cqw"></i><i style="left:38cqw;top:34cqw;width:30cqw;height:3cqw"></i></div><p class="lay-name">Section</p></div>
+    <div data-step="1" data-anim="settle" data-delay="1.25"><div class="lay dark"><i style="left:24cqw;top:24cqw;width:52cqw;height:8cqw"></i><i style="left:34cqw;top:38cqw;width:32cqw;height:3cqw"></i></div><p class="lay-name">Thank you</p></div>
+  </div>
+  <p data-el="note" class="small" data-step="1" data-anim="fade" data-delay="1.8" style="position:absolute;left:190px;top:860px;width:1400px">Converted on your machine, in a second. No upload. Brand fonts travel inside the deck.</p>
+  <aside class="notes"><p>Most of us don't start from a blank page: we have a house style. A university, a company, a lab.</p><p>Drop its PowerPoint template on the start page. (Click.) It becomes a Deckelsmouk template: the colours, the fonts, the logo on the slide master, and every layout with its placeholders. The plus-slide menu offers them, just like PowerPoint.</p><p>It's converted on your own machine, in about a second, with no upload and no AI needed. Brand fonts are packed into the deck, so it looks the same on every computer.</p></aside>
+</section>
+
+<!-- ===== Slide 8 · s-edit ===== -->
+<section class="slide" id="s-edit" data-title="2 · Editing by hand" data-transition="zoom">
+  <div data-el="number" class="dab p-cerulean" data-anim="dab" style="position:absolute;left:200px;top:340px;width:320px;height:320px">2</div>
+  <p data-el="kicker" class="eyebrow" data-anim="fade" data-delay="0.4" style="position:absolute;left:600px;top:340px;width:1180px">Editing by hand</p>
+  <h2 data-el="heading" class="h1 p-cerulean" data-anim="ink-title" data-delay="0.5" style="position:absolute;left:600px;top:384px;width:1180px">Precise when you <span class="brushed">want it.</span></h2>
+  <p data-el="sub" class="lead" data-anim="rise" data-delay="1.1" style="position:absolute;left:600px;top:660px;width:1100px">Everything you expect from a slide tool, on real HTML.</p>
+  <aside class="notes"><p>Chapter two: your hands on the slides.</p></aside>
+</section>
+
+<!-- ===== Slide 9 · editor ===== -->
+<section class="slide" id="editor" data-title="Edit like you always have">
+  <h2 data-el="heading" class="h2" data-anim="bleed" style="position:absolute;left:150px;top:100px;width:1620px">Edit like you always have.</h2>
+  <div data-el="editor" class="ui ed" data-anim="settle" data-delay="0.3" style="position:absolute;left:150px;top:240px;width:1200px;height:720px">
+    <div class="ui-top">
+      <img src="assets/turtle.svg" alt=""><span class="ui-title">Keynote</span><span class="ui-btn">◎ Product keynote</span>
+      <span class="ui-btn">↶</span><span class="ui-btn">↷</span>
+      <span class="ui-btn">T Text</span><span class="ui-btn"><b>H</b> Heading</span><span class="ui-btn">▣ Media</span><span class="ui-btn">◯ Shape</span><span class="ui-btn">⊞ Arrange</span>
+      <span class="ui-gap"></span><span class="ui-muted">Saved</span><span class="ui-btn">◷</span><span class="ui-btn">▶ Play</span><span class="ui-btn primary">⬇ Export</span>
+    </div>
+    <div class="ed-main">
+      <div class="ed-slides">
+        <div class="ed-thumb" data-n="1"><i style="left:8%;top:10%;width:84%;height:40%;background:#86b3dc;opacity:.7"></i><i style="left:30%;top:62%;width:40%;height:10%;background:#2f2924"></i></div>
+        <div class="ed-thumb" data-n="2"><i style="left:10%;top:18%;width:60%;height:10%;background:#2f2924"></i><i style="left:10%;top:40%;width:38%;height:36%;background:#d9a447;opacity:.6;border-radius:50%"></i></div>
+        <div class="ed-thumb on" data-n="3"><i style="left:7%;top:12%;width:56%;height:9%;background:#2f2924"></i><i style="left:52%;top:36%;width:41%;height:41%;background:#5f9bd0;opacity:.8"></i></div>
+        <div class="ed-thumb" data-n="4"><i style="left:10%;top:20%;width:30%;height:50%;background:#78a043;opacity:.6;border-radius:50%"></i><i style="left:50%;top:30%;width:40%;height:10%;background:#2f2924"></i></div>
+        <div class="ed-thumb" data-n="5"><i style="left:20%;top:30%;width:60%;height:18%;background:#2f2924"></i></div>
+      </div>
+      <div class="ed-work">
+        <div class="ed-canvas">
+          <div class="mini" data-magic="canvas" style="width:700px;height:394px">
+            <h4 class="mini-h">Spring in the valley</h4>
+            <div class="mini-p"><i></i><i></i><i></i><i></i><i></i></div>
+            <div class="mini-pic sel"><span class="sel-label">img · 451 × 253</span></div>
+            <p class="mini-cap">Fig. 1 · The valley in spring</p>
+          </div>
+        </div>
+        <div class="ed-prompt"><span class="ui-chip">Slide 3 · img</span><span class="ui-input">Ask your LLM companion…  (⌘K)</span><span class="ui-btn primary">Ask</span></div>
+      </div>
+      <div class="ed-insp">
+        <div class="ui-tabs"><span class="ui-tab on">Design</span><span class="ui-tab">Animate</span><span class="ui-tab">Slide</span><span class="ui-tab">Code</span></div>
+        <div class="insp">
+          <label>X</label><span class="ui-field">572</span><label>Y</label><span class="ui-field">220</span>
+          <label>W</label><span class="ui-field">451</span><label>H</label><span class="ui-field">253</span>
+          <label class="wide">Colour</label>
+          <span class="swatches wide"><i class="p-ultra"></i><i class="p-cerulean"></i><i class="p-ochre"></i><i class="p-sap"></i><i class="p-madder"></i></span>
+          <label>Opacity</label><span class="ui-field">100 %</span>
+          <label>Corners</label><span class="ui-field">0 px</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <span data-el="dab-1" class="dab sm p-ultra" data-step="1" data-anim="dab" style="position:absolute;left:183px;top:770px;width:84px;height:84px">1</span>
+  <span data-el="dab-2" class="dab sm p-ochre" data-step="2" data-anim="dab" style="position:absolute;left:318px;top:312px;width:84px;height:84px">2</span>
+  <span data-el="dab-3" class="dab sm p-sap" data-step="3" data-anim="dab" style="position:absolute;left:1183px;top:770px;width:84px;height:84px">3</span>
+  <span data-el="dab-4" class="dab sm p-madder" data-step="4" data-anim="dab" style="position:absolute;left:310px;top:800px;width:84px;height:84px">4</span>
+  <div data-el="legend-1" class="legend p-ultra" data-step="1" data-anim="rise" style="position:absolute;left:1420px;top:280px;width:380px"><span class="dab sm">1</span><b class="h3">Slides</b><span class="small">Drag to reorder.</span></div>
+  <div data-el="legend-2" class="legend p-ochre" data-step="2" data-anim="rise" style="position:absolute;left:1420px;top:440px;width:380px"><span class="dab sm">2</span><b class="h3">Canvas</b><span class="small">Drag, resize, type.</span></div>
+  <div data-el="legend-3" class="legend p-sap" data-step="3" data-anim="rise" style="position:absolute;left:1420px;top:600px;width:380px"><span class="dab sm">3</span><b class="h3">Inspector</b><span class="small">Design, motion, notes, code.</span></div>
+  <div data-el="legend-4" class="legend p-madder" data-step="4" data-anim="rise" style="position:absolute;left:1420px;top:760px;width:380px"><span class="dab sm">4</span><b class="h3">Prompt bar</b><span class="small">Ask your LLM companion. ⌘K.</span></div>
+  <aside class="notes"><p>This is the editor: the workshop. It's dark, so your slide is the brightest thing on screen.</p><p>(Click.) On the left, your slides. Drag to reorder, duplicate, delete. (Click.) In the middle, the slide itself, live: the real HTML, not a picture of it. (Click.) On the right, the inspector: position, type and colour; animation; speaker notes; and the code, if you want it. (Click.) And at the bottom, the prompt bar. Hold that thought.</p><p>Let's zoom into the canvas.</p></aside>
+</section>
+
+<!-- ===== Slide 10 · drag ===== -->
+<section class="slide" id="drag" data-title="Drag. Snap. Done." data-transition="none">
+  <div data-el="canvas" class="mini" data-magic="canvas" style="position:absolute;left:150px;top:250px;width:1100px;height:619px">
+    <h4 class="mini-h">Spring in the valley</h4>
+    <div class="mini-p"><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="mini-pic sel drag"><span class="sel-label">img · 451 × 253</span></div>
+    <p class="mini-cap">Fig. 1 · The valley in spring</p>
+    <i class="mini-guide v"></i><i class="mini-guide h"></i>
+  </div>
+  <h2 data-el="heading" class="h2" data-anim="bleed" data-delay="0.4" style="position:absolute;left:150px;top:100px;width:1620px">Drag. Snap. Done.</h2>
+  <div data-el="key-drag" class="keyrow" data-anim="right" data-delay="0.9" style="position:absolute;left:1310px;top:280px;width:480px"><span class="kbd">Drag</span><span>snaps to edges</span></div>
+  <div data-el="key-nudge" class="keyrow" data-anim="right" data-delay="1.1" style="position:absolute;left:1310px;top:400px;width:480px"><span class="kbd">⇧ →</span><span>nudges 10 px</span></div>
+  <div data-el="key-text" class="keyrow" data-anim="right" data-delay="1.3" style="position:absolute;left:1310px;top:520px;width:480px"><span class="kbd">Enter</span><span>edits text</span></div>
+  <div data-el="key-dup" class="keyrow" data-anim="right" data-delay="1.5" style="position:absolute;left:1310px;top:640px;width:480px"><span class="kbd">⌘D</span><span>duplicates</span></div>
+  <div data-el="key-undo" class="keyrow" data-anim="right" data-delay="1.7" style="position:absolute;left:1310px;top:760px;width:480px"><span class="kbd">⌘Z</span><span>undoes anything</span></div>
+  <aside class="notes"><p>Everything your hands expect is here. Drag an object and pink guides tell you when it lines up with an edge or a centre. Lasso a few, align them, distribute them, bring one to the front.</p><p>Arrow keys nudge by a pixel, with shift by ten. Enter, or a double-click, and you type right on the slide. Drop a picture or a video on it and it's in.</p><p>And command-Z takes back anything: your edits, and, as you'll see, the LLM companion's.</p></aside>
+</section>
+
+<!-- ===== Slide 11 · s-motion ===== -->
+<section class="slide" id="s-motion" data-title="3 · Animation" data-transition="zoom">
+  <div data-el="number" class="dab p-ochre" data-anim="dab" style="position:absolute;left:200px;top:340px;width:320px;height:320px">3</div>
+  <p data-el="kicker" class="eyebrow" data-anim="fade" data-delay="0.4" style="position:absolute;left:600px;top:340px;width:1180px">Animation</p>
+  <h2 data-el="heading" class="h1 p-ochre" data-anim="ink-title" data-delay="0.5" style="position:absolute;left:600px;top:384px;width:1180px">Motion that looks <span class="brushed">expensive.</span></h2>
+  <p data-el="sub" class="lead" data-anim="rise" data-delay="1.1" style="position:absolute;left:600px;top:660px;width:1100px">One attribute away, or anything JavaScript can draw.</p>
+  <aside class="notes"><p>Chapter three: motion.</p></aside>
+</section>
+
+<!-- ===== Slide 12 · one-attribute ===== -->
+<section class="slide" id="one-attribute" data-title="One attribute away">
+  <h2 data-el="heading" class="h2" data-anim="bleed" style="position:absolute;left:150px;top:100px;width:1620px">One attribute away.</h2>
+  <p data-el="label-inspector" class="eyebrow" data-anim="fade" data-delay="0.3" style="position:absolute;left:150px;top:250px;width:470px">The inspector</p>
+  <div data-el="inspector" class="ui" data-anim="settle" data-delay="0.3" style="position:absolute;left:150px;top:300px;width:470px;height:520px">
+    <div class="ui-tabs" style="font-size:20px"><span class="ui-tab">Design</span><span class="ui-tab on">Animate</span><span class="ui-tab">Slide</span><span class="ui-tab">Code</span></div>
+    <div class="insp-big">
+      <label>Entrance</label><span class="ui-field">rise <span class="ui-muted">▾</span></span>
+      <label>On click</label><span class="ui-field">1</span>
+      <label>Delay</label><span class="ui-field">0.2 s</span>
+      <label>Duration</label><span class="ui-field">0.9 s</span>
+      <label>Exit</label><span class="ui-field">none <span class="ui-muted">▾</span></span>
+      <span class="ui-btn">▶ Play this slide</span>
+    </div>
+  </div>
+  <p data-el="or" class="lead center" data-anim="fade" data-delay="0.9" style="position:absolute;left:620px;top:524px;width:100px">or</p>
+  <p data-el="label-code" class="eyebrow" data-anim="fade" data-delay="0.6" style="position:absolute;left:720px;top:250px;width:560px">deck.html</p>
+  <pre data-el="code" class="code" data-anim="settle" data-delay="0.6" style="position:absolute;left:720px;top:300px;width:560px;height:520px;font-size:30px;padding-top:44px"><span class="c-tag">&lt;h2</span> <span class="c-attr">class</span>=<span class="c-val">"h1"</span>
+    <span class="c-attr">data-anim</span>=<span class="c-val">"rise"</span>
+    <span class="c-attr">data-step</span>=<span class="c-val">"1"</span>
+    <span class="c-attr">data-delay</span>=<span class="c-val">"0.2"</span><span class="c-tag">&gt;</span>
+  Hello.
+<span class="c-tag">&lt;/h2&gt;</span></pre>
+  <p data-el="label-result" class="eyebrow" data-anim="fade" data-delay="0.9" style="position:absolute;left:1340px;top:250px;width:430px">This slide</p>
+  <div data-el="frame" class="frame" data-anim="fade" data-delay="0.9" style="position:absolute;left:1340px;top:300px;width:430px;height:520px"></div>
+  <h2 data-el="hello" class="h1 center" data-step="1" data-anim="rise" data-delay="0.2" style="position:absolute;left:1340px;top:490px;width:430px">Hello.</h2>
+  <p data-el="caption" class="lead center" data-anim="rise" data-delay="1.3" style="position:absolute;left:150px;top:880px;width:1620px">Click it together, or write it by hand. Same file either way.</p>
+  <aside class="notes"><p>How does a thing move? One attribute.</p><p>On the left, the inspector's Animate tab: pick an entrance, the click it comes on, a delay, a duration, an exit. In the middle, what that writes into the file: data-anim rise, data-step one, data-delay point two. Plain attributes you can read.</p><p>(Click.) And on the right, this very slide, doing exactly that. No hidden project file, no timeline: the inspector and your text editor write the same file.</p></aside>
+</section>
+
+<!-- ===== Slide 13 · effects ===== -->
+<section class="slide" id="effects" data-title="Fifteen effects, built in">
+  <h2 data-el="heading" class="h2" data-anim="bleed" style="position:absolute;left:130px;top:100px;width:1660px"><span data-anim="count" data-delay="0.3" data-dur="1.4">15</span> effects, built in.</h2>
+  <p data-el="again" class="lead" data-step="1" data-anim="fade" style="position:absolute;left:1190px;top:130px;width:600px;text-align:right;font-size:36px">…and all at once.</p>
+  <div data-el="effects" class="fx-grid" style="position:absolute;left:130px;top:270px;width:1660px;height:690px">
+    <div class="fx p-ultra"><span class="bloom-dot" data-anim="fade" data-delay="0.5"></span><span class="fx-name">fade</span></div>
+    <div class="fx p-ochre"><span class="bloom-dot" data-anim="rise" data-delay="0.65"></span><span class="fx-name">rise</span></div>
+    <div class="fx p-sap"><span class="bloom-dot" data-anim="drop" data-delay="0.8"></span><span class="fx-name">drop</span></div>
+    <div class="fx p-madder"><span class="bloom-dot" data-anim="left" data-delay="0.95"></span><span class="fx-name">left</span></div>
+    <div class="fx p-cerulean"><span class="bloom-dot" data-anim="right" data-delay="1.1"></span><span class="fx-name">right</span></div>
+    <div class="fx p-sienna"><span class="bloom-dot" data-anim="zoom" data-delay="1.25"></span><span class="fx-name">zoom</span></div>
+    <div class="fx p-ultra"><span class="bloom-dot" data-anim="pop" data-delay="1.4"></span><span class="fx-name">pop</span></div>
+    <div class="fx p-cerulean"><span class="bloom-dot" data-anim="blur" data-delay="1.55"></span><span class="fx-name">blur</span></div>
+    <div class="fx p-ochre"><span class="wash-bar" data-anim="wipe" data-delay="1.7"></span><span class="fx-name">wipe</span></div>
+    <div class="fx p-sap"><span class="wash-bar" data-anim="wipe-up" data-delay="1.85"></span><span class="fx-name">wipe-up</span></div>
+    <div class="fx"><span class="word" data-anim="reveal" data-delay="2">Reveal</span><span class="fx-name">reveal</span></div>
+    <div class="fx"><span class="word" data-anim="words" data-delay="2.15" style="font-size:40px">word by word</span><span class="fx-name">words</span></div>
+    <div class="fx"><span class="word" data-anim="count" data-delay="2.3" data-dur="1.6">1,920</span><span class="fx-name">count</span></div>
+    <div class="fx"><svg data-anim="draw" data-delay="2.45" data-dur="1.4" viewBox="0 0 220 90" style="width:220px;height:90px;margin-top:-24px"><path d="M12 70 C 50 8, 92 8, 112 46 S 172 88, 208 20" fill="none" stroke="#a9503e" stroke-width="9" stroke-linecap="round"/></svg><span class="fx-name">draw</span></div>
+    <div class="fx p-madder"><span class="bloom-dot" data-anim="pulse" data-delay="2.6" data-dur="1.2"></span><span class="fx-name">pulse</span></div>
+  </div>
+  <aside class="notes"><p>Fifteen effects come built in, and here they all are, one after the other.</p><p>Fade, rise, drop, from the left, from the right, zoom, pop, blur. Wipes across and up. A reveal. Headlines that arrive word by word. Numbers that count up to whatever you wrote. Lines that draw themselves. And a pulse, to point at something.</p><p>Each has exits too, and click steps, and they all pause when you press K.</p></aside>
+</section>
+
+<!-- ===== Slide 14 · magic-a ===== -->
+<section class="slide" id="magic-a" data-title="Magic move (from)">
+  <h2 data-el="heading" class="h2" data-anim="bleed" style="position:absolute;left:150px;top:100px;width:1000px">Magic move.</h2>
+  <p data-el="sub" class="lead" data-anim="rise" data-delay="0.3" style="position:absolute;left:150px;top:230px;width:900px">Give two things the same name on consecutive slides. They glide.</p>
+  <span data-el="key" class="pill mono" data-anim="fade" data-delay="0.6" style="position:absolute;left:150px;top:400px">data-magic="turtle"</span>
+  <div data-el="pool" class="bloom p-ochre" data-magic="pool" data-anim="dab" data-delay="0.5" style="position:absolute;left:150px;top:560px;width:420px;height:420px"></div>
+  <img data-el="turtle" src="assets/turtle.svg" alt="The Deckelsmouk turtle" data-magic="turtle" data-anim="dab" data-delay="0.8" style="position:absolute;left:250px;top:700px;width:220px;height:151px">
+  <aside class="notes"><p>One of my favourites: magic move. Give two things the same name on two slides in a row, and when you move on, they glide from one place and size to the other.</p><p>Watch the turtle. (Click.)</p></aside>
+</section>
+
+<!-- ===== Slide 15 · magic-b ===== -->
+<section class="slide" id="magic-b" data-title="Magic move (to)" data-transition="none">
+  <h2 data-el="heading" class="h2" style="position:absolute;left:150px;top:100px;width:1000px">Magic move.</h2>
+  <p data-el="sub" class="lead" style="position:absolute;left:150px;top:230px;width:900px">Give two things the same name on consecutive slides. They glide.</p>
+  <span data-el="key" class="pill mono" style="position:absolute;left:150px;top:400px">data-magic="turtle"</span>
+  <div data-el="pool" class="bloom p-ochre" data-magic="pool" style="position:absolute;left:940px;top:140px;width:880px;height:880px"></div>
+  <img data-el="turtle" class="swim" src="assets/turtle.svg" alt="The Deckelsmouk turtle" data-magic="turtle" style="position:absolute;left:1010px;top:330px;width:740px;height:509px">
+  <p data-el="note" class="small" data-step="1" data-anim="fade" style="position:absolute;left:150px;top:880px;width:760px">Position and size come from this slide; the runtime does the rest.</p>
+  <aside class="notes"><p>That's it: same name, two slides, and the runtime animates the difference. No keyframes, no timeline.</p><p>It works for anything: a chart that grows into the next slide, a photo that becomes a background, a number that moves into the headline.</p></aside>
+</section>
+
+<!-- ===== Slide 16 · paint ===== -->
+<section class="slide" id="paint" data-title="Anything JavaScript can draw">
+  <div data-el="drop-1" class="bloom p-cerulean" style="position:absolute;left:1180px;top:500px;width:460px;height:460px"></div>
+  <div data-el="drop-2" class="bloom p-ochre" style="position:absolute;left:1460px;top:240px;width:320px;height:320px"></div>
+  <div data-el="drop-3" class="bloom p-madder" style="position:absolute;left:840px;top:660px;width:300px;height:300px"></div>
+  <div data-el="drop-4" class="bloom p-sap" style="position:absolute;left:300px;top:720px;width:260px;height:260px"></div>
+  <canvas data-el="paint" class="paint-canvas" width="1920" height="1080" style="position:absolute;left:0;top:0;width:1920px;height:1080px"></canvas>
+  <h2 data-el="heading" class="h1" data-anim="bleed" style="position:absolute;left:150px;top:110px;width:1100px">Anything JavaScript can draw.</h2>
+  <p data-el="sub" class="lead" data-anim="rise" data-delay="0.4" style="position:absolute;left:150px;top:390px;width:820px">A slide script paints these drops, live. K pauses them.</p>
+  <span data-el="rain" class="pill" data-step="1" data-anim="pop" style="position:absolute;left:150px;top:540px">Click: rain</span>
+  <aside class="notes"><p>And when fifteen effects aren't enough, a slide can run a script.</p><p>These drops are painted live on a canvas: each one spreads like water on paper, pools at its edge, and fades. That's a few dozen lines of JavaScript in the deck's animations file.</p><p>(Click.) A click can change it: now it rains. Press K and everything pauses, the paint included; leave the slide and the script stops by itself.</p></aside>
+</section>
+
+<!-- ===== Slide 17 · s-llm ===== -->
+<section class="slide" id="s-llm" data-title="4 · Asking the LLM companion" data-transition="zoom">
+  <div data-el="number" class="dab p-sap" data-anim="dab" style="position:absolute;left:200px;top:340px;width:320px;height:320px">4</div>
+  <p data-el="kicker" class="eyebrow" data-anim="fade" data-delay="0.4" style="position:absolute;left:600px;top:396px;width:1180px">The LLM companion</p>
+  <h2 data-el="heading" class="h1 p-sap" data-anim="ink-title" data-delay="0.5" style="position:absolute;left:600px;top:440px;width:1180px">Then just <span class="brushed">ask.</span></h2>
+  <p data-el="sub" class="lead" data-anim="rise" data-delay="1.1" style="position:absolute;left:600px;top:590px;width:1100px">Select anything. Say what you want. Watch it happen.</p>
+  <aside class="notes"><p>Chapter four: the prompt bar.</p></aside>
+</section>
+
+<!-- ===== Slide 18 · ask ===== -->
+<section class="slide" id="ask" data-title="Select. Ask. Done.">
+  <h2 data-el="heading" class="h2" data-anim="bleed" style="position:absolute;left:150px;top:100px;width:1620px">Select. Ask. Done.</h2>
+  <div data-el="slide" class="mini" data-anim="settle" data-delay="0.2" style="position:absolute;left:150px;top:230px;width:960px;height:540px">
+    <h4 class="mini-h">How the survey works</h4>
+    <div class="ask-cards">
+      <div class="ask-card sel p-ultra"><span class="bloom-dot"></span><b>Count</b><span class="ask-badge" data-step="1" data-anim="pop" data-delay="1.6">1</span></div>
+      <div class="ask-card sel p-ochre"><span class="bloom-dot"></span><b>Map</b><span class="ask-badge" data-step="1" data-anim="pop" data-delay="1.9">2</span></div>
+      <div class="ask-card sel"><svg viewBox="0 0 160 90"><path d="M8 80 L 44 58 L 76 64 L 108 32 L 152 10" fill="none" stroke="#557d2c" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><line x1="8" y1="86" x2="152" y2="86" stroke="rgba(47,41,36,.25)" stroke-width="3"/></svg><b>Compare</b><span class="ask-badge" data-step="1" data-anim="pop" data-delay="2.2">3</span></div>
+    </div>
+  </div>
+  <div data-el="prompt" class="ui promptbar" data-anim="rise" data-delay="0.5" style="position:absolute;left:150px;top:800px;width:960px;height:88px">
+    <span class="ui-chip">Slide 4 · 3 objects</span>
+    <span class="typed" data-anim="type" data-delay="1" data-dur="2.6">Bring these in one per click, the chart last, drawing itself.</span>
+    <span class="ui-btn primary">Ask</span>
+  </div>
+  <div data-el="companion" class="ui" data-anim="settle" data-delay="0.4" style="position:absolute;left:1190px;top:230px;width:580px;height:658px">
+    <div class="ui-head"><span style="color:#d9a447">✦</span> LLM companion <span class="ui-muted" style="margin-left:auto">local or cloud</span></div>
+    <div class="ui-log">
+      <p class="me" data-anim="fade" data-delay="3.7">Bring these in one per click, the chart last, drawing itself.</p>
+      <p class="dim" data-step="1" data-anim="fade">Reading slide 4 and the selection</p>
+      <p data-step="1" data-anim="left" data-delay="0.5">Editing deck.html</p>
+      <p class="dim" data-step="1" data-anim="left" data-delay="0.8">· data-step 1, 2, 3 on the cards</p>
+      <p class="dim" data-step="1" data-anim="left" data-delay="1.1">· data-anim="draw" on the chart, slower</p>
+      <p class="ok" data-step="1" data-anim="left" data-delay="2.6">✓ Done: one undo step.</p>
+    </div>
+  </div>
+  <div data-el="undo" class="keyrow" data-step="2" data-anim="rise" style="position:absolute;left:150px;top:924px;width:960px;grid-template-columns:auto 1fr;font-size:34px"><span class="kbd">⌘Z</span><span class="muted" style="font-style:italic">takes it all back, if you don't like it.</span></div>
+  <aside class="notes"><p>Here's how it feels. I select three cards on a slide and type, in plain words: bring these in one per click, the chart last, drawing itself.</p><p>(Click.) The LLM companion reads the slide and exactly what I selected: the HTML, each object's position and size. It edits the file, and the editor reloads live. Step numbers on the cards, a slow draw on the chart. Done.</p><p>(Click.) And the whole change is a single undo step. Don't like it? Command-Z.</p></aside>
+</section>
+
+<!-- ===== Slide 19 · new-effect ===== -->
+<section class="slide" id="new-effect" data-title="New effects, on request">
+  <h2 data-el="heading" class="h2" data-anim="bleed" style="position:absolute;left:150px;top:100px;width:1620px">New effects, on request.</h2>
+  <div data-el="request" class="card" data-anim="settle" data-delay="0.3" style="position:absolute;left:150px;top:280px;width:500px;height:520px">
+    <p class="eyebrow" style="margin-bottom:24px">You ask</p>
+    <p class="h3" style="font-style:italic;font-weight:500;font-size:44px">“Write an effect where the title bleeds in like ink on wet paper.”</p>
+  </div>
+  <pre data-el="code" class="code" data-step="1" data-anim="brush" style="position:absolute;left:710px;top:280px;width:640px;height:520px;font-size:25px"><span class="tab">animations.js</span><span class="c-com">// Bleeds in like ink on wet paper.</span>
+Deck.<span class="c-key">effect</span>(<span class="c-val">'bleed'</span>, {
+  from: {
+    opacity: 0,
+    filter: <span class="c-val">'blur(24px) saturate(.2)'</span>,
+    scale: <span class="c-val">'1.04'</span>,
+  },
+  dur: 1700,
+});</pre>
+  <div data-el="frame" class="frame" data-step="1" data-anim="fade" data-delay="0.6" style="position:absolute;left:1410px;top:280px;width:360px;height:520px"></div>
+  <p data-el="ink" class="hero center accent" data-step="2" data-anim="bleed" style="position:absolute;left:1410px;top:430px;width:360px">Ink.</p>
+  <span data-el="use" class="pill mono" data-step="2" data-anim="fade" data-delay="0.8" style="position:absolute;left:1460px;top:680px">data-anim="bleed"</span>
+  <p data-el="caption" class="lead center" data-step="2" data-anim="rise" data-delay="1.4" style="position:absolute;left:150px;top:870px;width:1620px">Every effect in this deck was written this way.</p>
+  <aside class="notes"><p>Asking isn't only for arranging. You can ask for motion that doesn't exist yet.</p><p>I asked for an effect where the title bleeds in like ink on wet paper. (Click.) The LLM companion wrote it into the deck's animations file: a named effect, short enough to read. (Click.) And now it's one attribute away, like the built-in ones.</p><p>Every custom effect in this deck, the bleeding titles, the wash that reveals the painting, the paper that settles, was made exactly like that.</p></aside>
+</section>
+
+<!-- ===== Slide 20 · context ===== -->
+<section class="slide" id="context" data-title="Your LLM companion sees what you see">
+  <h2 data-el="heading" class="h2" data-anim="bleed" style="position:absolute;left:150px;top:100px;width:1620px">Your LLM companion sees what you see.</h2>
+  <div data-el="node-selection" class="node" data-anim="rise" data-delay="0.3" style="position:absolute;left:140px;top:350px;width:340px">
+    <div class="ui" style="width:300px;padding:22px 24px;display:grid;gap:10px;text-align:left;font:18px/1.4 var(--mono)"><span class="ui-chip" style="justify-self:start">Slide 4 · 3 objects</span><span>#ask .ask-card</span><span class="ui-muted" style="font-size:16px">288 × 146 at 70, 118</span></div>
+    <b class="h3">Your selection</b><span class="small">its HTML and its box, in stage pixels</span>
+  </div>
+  <svg data-el="arrow-1" data-step="1" data-anim="draw" data-dur="0.7" viewBox="0 0 120 60" style="position:absolute;left:490px;top:410px;width:120px;height:60px"><path d="M6 32 C 40 18, 76 44, 108 30 M 90 14 L 110 30 L 92 46" fill="none" stroke="#a8741f" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <div data-el="node-llm" class="node p-sap" data-step="1" data-anim="dab" data-delay="0.4" style="position:absolute;left:620px;top:276px;width:340px">
+    <span class="dab" style="width:220px;height:220px;font-size:58px;font-weight:600">LLM</span>
+    <b class="h3">Local or cloud</b><span class="small">it edits only the deck's files</span>
+  </div>
+  <svg data-el="arrow-2" data-step="2" data-anim="draw" data-dur="0.7" viewBox="0 0 120 60" style="position:absolute;left:970px;top:410px;width:120px;height:60px"><path d="M6 32 C 40 18, 76 44, 108 30 M 90 14 L 110 30 L 92 46" fill="none" stroke="#a8741f" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <div data-el="node-files" class="node" data-step="2" data-anim="settle" data-delay="0.4" style="position:absolute;left:1100px;top:350px;width:300px">
+    <div style="display:grid;gap:12px;width:280px"><span class="fileline p-ultra" style="height:62px;font-size:22px"><span class="tag">HTML</span>deck.html</span><span class="fileline p-ochre" style="height:62px;font-size:22px"><span class="tag">JS</span>animations.js</span></div>
+    <b class="h3">Plain files</b><span class="small">that you can read and diff</span>
+  </div>
+  <svg data-el="arrow-3" data-step="3" data-anim="draw" data-dur="0.7" viewBox="0 0 120 60" style="position:absolute;left:1410px;top:410px;width:120px;height:60px"><path d="M6 32 C 40 18, 76 44, 108 30 M 90 14 L 110 30 L 92 46" fill="none" stroke="#a8741f" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <div data-el="node-editor" class="node" data-step="3" data-anim="rise" data-delay="0.4" style="position:absolute;left:1520px;top:350px;width:270px">
+    <div class="ui" style="width:240px;height:146px;display:grid;place-items:center;font-size:44px;color:#3ccf6e">✓</div>
+    <b class="h3">Live</b><span class="small">one undo step</span>
+  </div>
+  <div data-el="chips" data-step="4" data-anim="rise" style="position:absolute;left:150px;top:800px;width:1620px;display:flex;flex-wrap:wrap;gap:16px;align-items:center">
+    <span class="eyebrow" style="margin-right:10px">One click away</span><span class="pill">Tidy this slide</span><span class="pill">Animate this slide</span><span class="pill">Write notes</span><span class="pill">Next slide from this</span><span class="pill on">Fit to audience</span>
+  </div>
+  <aside class="notes"><p>What makes this work is context. Your LLM companion sees what you see.</p><p>It gets your slide and your selection: each object's HTML, its selector, its exact box in stage pixels. (Click.) The LLM companion runs locally on your machine or in the cloud, and it may only read and edit the deck's files. (Click.) It changes plain files you can read and diff. (Click.) The editor picks up the change live, as one undo step.</p><p>(Click.) And for the things you ask all the time, there are suggestions one click away. The last one is my favourite.</p></aside>
+</section>
+
+<!-- ===== Slide 21 · fit-colleagues ===== -->
+<section class="slide" id="fit-colleagues" data-title="Fit to audience: colleagues">
+  <span data-el="audience" class="pill" data-magic="fit-audience" style="position:absolute;left:1370px;top:96px">Audience · Colleagues</span>
+  <h2 data-el="title" class="h3" style="position:absolute;left:150px;top:100px;width:1180px;font-size:54px">Pollinator visits rose 38 % in rewilded plots, 2024 → 2026</h2>
+  <ul data-el="findings" class="list" style="position:absolute;left:150px;top:310px;width:840px;font-size:34px;gap:30px">
+    <li data-anim="left" data-delay="0.20">412 plots at 6 sites, counted over 3 seasons</li>
+    <li data-anim="left" data-delay="0.32">Mixed model, plot as random effect: p &lt; 0.01</li>
+    <li data-anim="left" data-delay="0.44">Strongest for solitary bees: +52 %</li>
+    <li data-anim="left" data-delay="0.56">Mowing once a year: hay yield unchanged</li>
+    <li data-anim="left" data-delay="0.68">Open: winter survival, drift between sites</li>
+  </ul>
+  <svg data-el="chart" data-magic="fit-chart" data-anim="wipe-up" data-delay="0.6" viewBox="0 0 720 420" style="position:absolute;left:1050px;top:300px;width:720px;height:420px;font:18px var(--font)">
+    <text x="80" y="20" fill="#7d7165">visits per plot per hour</text>
+    <rect x="470" y="8" width="16" height="16" fill="#5f9bd0"/><text x="494" y="22" fill="#7d7165">mown</text>
+    <rect x="574" y="8" width="16" height="16" fill="#78a043"/><text x="598" y="22" fill="#7d7165">rewilded</text>
+    <g stroke="rgba(96,72,44,.18)" stroke-width="1.5"><line x1="80" y1="40" x2="700" y2="40"/><line x1="80" y1="147" x2="700" y2="147"/><line x1="80" y1="253" x2="700" y2="253"/></g>
+    <g fill="#7d7165" text-anchor="end"><text x="70" y="46">60</text><text x="70" y="153">40</text><text x="70" y="259">20</text><text x="70" y="366">0</text></g>
+    <g fill="#5f9bd0"><rect x="125" y="147" width="60" height="213"/><rect x="325" y="141" width="60" height="219"/><rect x="525" y="147" width="60" height="213"/></g>
+    <g fill="#78a043"><rect x="195" y="136" width="60" height="224"/><rect x="395" y="93" width="60" height="267"/><rect x="595" y="67" width="60" height="293"/></g>
+    <line x1="80" y1="360" x2="700" y2="360" stroke="#7d7165" stroke-width="2"/>
+    <g fill="#7d7165" text-anchor="middle"><text x="190" y="392">2024</text><text x="390" y="392">2025</text><text x="590" y="392">2026</text></g>
+  </svg>
+  <p data-el="number" class="fit-num" data-magic="fit-num" data-anim="count" data-delay="1.1" data-dur="1.2" style="position:absolute;left:1050px;top:790px;width:240px">+38 %</p>
+  <p data-el="number-label" class="small" style="position:absolute;left:1310px;top:792px;width:460px">visits per plot, rewilded vs mown, 2026</p>
+  <p data-el="example" class="small" style="position:absolute;left:150px;top:940px;width:900px;font-size:22px">Example slide · illustrative data</p>
+  <aside class="notes"><p>Here's an example slide, written for colleagues: a pollinator survey. A precise title, five findings, a chart with axes and units, the effect size. Dense, and right for people who will ask about the model.</p><p>Now imagine the same result in front of a thousand people. I set the deck's audience to Product keynote and click Fit to audience. (Click.)</p></aside>
+</section>
+
+<!-- ===== Slide 22 · fit-keynote ===== -->
+<section class="slide" id="fit-keynote" data-title="Fit to audience: keynote" data-transition="none">
+  <span data-el="audience" class="pill on" data-magic="fit-audience" style="position:absolute;left:1290px;top:96px">Audience · Product keynote</span>
+  <p data-el="number" class="stat fit-num" data-magic="fit-num" data-anim="count" data-delay="0.2" data-dur="1.4" style="position:absolute;left:140px;top:230px;width:1000px">+38 %</p>
+  <h2 data-el="title" class="h2" data-anim="bleed" data-delay="0.6" style="position:absolute;left:150px;top:560px;width:980px">more bees where we let it grow wild.</h2>
+  <svg data-el="chart" data-magic="fit-chart" viewBox="0 0 540 560" style="position:absolute;left:1230px;top:230px;width:540px;height:560px">
+    <defs><filter id="loose" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".04" numOctaves="2" seed="5"/><feDisplacementMap in="SourceGraphic" scale="9" xChannelSelector="R" yChannelSelector="G"/></filter></defs>
+    <g filter="url(#loose)">
+      <rect x="110" y="190" width="110" height="290" rx="8" fill="#5f9bd0" fill-opacity=".55"/>
+      <rect x="320" y="80" width="110" height="400" rx="8" fill="#78a043" fill-opacity=".6"/>
+      <g fill="#cf7a66" fill-opacity=".75"><circle cx="150" cy="182" r="26"/><circle cx="182" cy="170" r="22"/><circle cx="360" cy="70" r="30"/><circle cx="398" cy="56" r="26"/><circle cx="384" cy="92" r="20"/></g>
+      <path d="M40 482 C 160 476, 360 488, 500 480" fill="none" stroke="#b0682c" stroke-width="8" stroke-linecap="round" stroke-opacity=".7"/>
+    </g>
+    <g font-family="Iowan Old Style, Palatino, Georgia, Noto Serif, serif" font-style="italic" font-size="34" fill="#7d7165" text-anchor="middle"><text x="165" y="536">mown</text><text x="375" y="536">wild</text></g>
+  </svg>
+  <p data-el="example" class="small" data-anim="fade" data-delay="0.6" style="position:absolute;left:1230px;top:830px;width:540px;font-size:22px;text-align:center">Example slide · illustrative data</p>
+  <p data-el="caption" class="lead" data-step="1" data-anim="rise" style="position:absolute;left:150px;top:860px;width:1000px">Same facts. Reworked for the room.</p>
+  <aside class="notes"><p>Same facts. One number, huge. One sentence a person will remember. The chart becomes two stems in a meadow. The details move to the speaker notes and the backup slides.</p><p>(Click.) That's Fit to audience: it reworks depth, wording, amount of text and motion for whoever is listening, and keeps your facts and your own key statements.</p></aside>
+</section>
+
+<!-- ===== Slide 23 · memory ===== -->
+<section class="slide" id="memory" data-title="It remembers">
+  <div data-el="session" class="memo session" data-anim="settle" style="position:absolute;left:170px;top:190px;width:800px;height:690px">
+    <span class="session-file">session.md</span>
+    <h4># About</h4>
+    <p>A keynote on Deckelsmouk, 25 minutes, for a big room. Message: slides that move, made by hand and by asking.</p>
+    <h4># Decisions and preferences</h4>
+    <p>Paper and watercolour, after Sosthène Weis. Serif headings.</p>
+    <p>No bullet lists. One idea per slide.</p>
+    <p>The bee survey stays marked as an example.</p>
+    <h4># Log</h4>
+    <p class="mono" data-anim="type" data-delay="1.4" data-dur="1.3">11-25 14:02 · Animate the cards one per click</p>
+    <p class="mono" data-anim="type" data-delay="2.9" data-dur="1.1">11-25 14:09 · Slower, and the chart last</p>
+  </div>
+  <h2 data-el="heading" class="h1" data-anim="bleed" data-delay="0.4" style="position:absolute;left:1060px;top:236px;width:760px;font-size:104px">It remembers.</h2>
+  <p data-el="sub" class="lead" data-anim="rise" data-delay="0.8" style="position:absolute;left:1060px;top:380px;width:700px">Every deck keeps its own notes. A new conversation starts from them, never from zero.</p>
+  <p data-el="history-label" class="eyebrow" data-step="1" data-anim="fade" style="position:absolute;left:1060px;top:640px;width:700px">◷ History · the last 50 versions</p>
+  <div data-el="history" class="history" data-step="1" data-anim="settle" data-delay="0.2" style="position:absolute;left:1060px;top:690px;width:640px">
+    <div><b>14:09</b>before asking the LLM companion</div>
+    <div><b>14:00</b>while you edited</div>
+    <div><b>13:51</b>when you opened it</div>
+  </div>
+  <aside class="notes"><p>The LLM companion doesn't start from zero each time. Every deck keeps a small file of notes: what the deck is for, who it's for, the decisions you made, what you like and what you don't. A new conversation starts from those notes, and you can read and edit them like any other file.</p><p>(Click.) And nothing is lost. The editor keeps the last fifty versions of every deck: when you open it, every few minutes while you work, and before every request to the LLM companion. Preview any of them and restore it; even the restore can be undone.</p></aside>
+</section>
+
+<!-- ===== Slide 24 · s-draft ===== -->
+<section class="slide" id="s-draft" data-title="5 · Writing the whole deck" data-transition="zoom">
+  <div data-el="number" class="dab p-madder" data-anim="dab" style="position:absolute;left:200px;top:340px;width:320px;height:320px">5</div>
+  <p data-el="kicker" class="eyebrow" data-anim="fade" data-delay="0.4" style="position:absolute;left:600px;top:340px;width:1180px">Generation</p>
+  <h2 data-el="heading" class="h1 p-madder" data-anim="ink-title" data-delay="0.5" style="position:absolute;left:600px;top:384px;width:1180px">Or let it write the <span class="brushed">whole thing.</span></h2>
+  <p data-el="sub" class="lead" data-anim="rise" data-delay="1.1" style="position:absolute;left:600px;top:660px;width:1100px">From your material to a finished deck.</p>
+  <aside class="notes"><p>Chapter five, the big one: the whole deck.</p></aside>
+</section>
+
+<!-- ===== Slide 25 · draft ===== -->
+<section class="slide" id="draft" data-title="Drop a paper. Get a talk." data-transition="push">
+  <h2 data-el="heading" class="h2" data-anim="bleed" style="position:absolute;left:150px;top:100px;width:1620px">Drop a paper. Get a talk.</h2>
+  <div data-el="pdf" class="doc p-madder" data-anim="settle" data-delay="0.3" style="position:absolute;left:160px;top:280px;width:280px;height:340px;rotate:-4deg"><span class="tag">PDF</span><i></i><i></i><i></i><i></i><i></i><i></i><b>paper.pdf</b></div>
+  <div data-el="notes" class="doc p-ultra" data-anim="settle" data-delay="0.5" style="position:absolute;left:290px;top:320px;width:280px;height:340px;rotate:3deg"><span class="tag">MD</span><i></i><i></i><i></i><i></i><b>notes.md</b></div>
+  <div data-el="photo" class="painting" role="img" aria-label="A photo for the talk" data-anim="settle" data-delay="0.7" style="position:absolute;left:190px;top:630px;width:340px;height:200px;box-sizing:border-box;background-size:cover;background-position:62% 50%;border:12px solid #fdfaf3;box-shadow:var(--shadow);rotate:-2deg"></div>
+  <svg data-el="arrow" data-step="1" data-anim="draw" data-dur="0.8" viewBox="0 0 240 100" style="position:absolute;left:620px;top:470px;width:240px;height:100px"><path d="M10 58 C 70 26, 150 82, 214 46 M 190 24 L 218 46 L 194 70" fill="none" stroke="#a8741f" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <p data-el="writes" class="lead center" data-step="1" data-anim="fade" data-delay="0.3" style="position:absolute;left:590px;top:580px;width:300px;font-size:32px">Your LLM companion writes</p>
+  <div data-el="slides" class="th-grid" style="position:absolute;left:900px;top:290px;width:870px">
+    <div class="th th-paper" data-step="1" data-anim="settle" data-delay="0.6"><i class="painting" style="top:6%"></i><b style="top:auto;bottom:10cqw;text-align:center">Let it grow</b></div>
+    <div class="th th-paper" data-step="1" data-anim="settle" data-delay="0.75"><b style="font-size:16cqw;top:16cqw">Why bees?</b></div>
+    <div class="th th-paper" data-step="1" data-anim="settle" data-delay="0.9"><b>The gap</b><span class="wash p-ochre" style="left:8cqw;top:30cqw;width:70cqw;height:18cqw"></span></div>
+    <div class="th th-paper" data-step="1" data-anim="settle" data-delay="1.05"><b>Three sites</b><span class="bloom p-ultra" style="left:4cqw;top:26cqw;width:28cqw;height:28cqw"></span><span class="bloom p-ochre" style="left:36cqw;top:26cqw;width:28cqw;height:28cqw"></span><span class="bloom p-sap" style="left:68cqw;top:26cqw;width:28cqw;height:28cqw"></span></div>
+    <div class="th th-paper" data-step="1" data-anim="settle" data-delay="1.2"><i class="painting" style="left:0;top:0;width:100%;height:100%;aspect-ratio:auto;background-size:cover;background-position:80% 60%"></i></div>
+    <div class="th th-paper" data-step="1" data-anim="settle" data-delay="1.35"><span class="big">+38 %</span></div>
+    <div class="th th-paper" data-step="1" data-anim="settle" data-delay="1.5"><b>Two seasons</b><span style="left:20cqw;top:40cqw;width:14cqw;height:14cqw;background:#5f9bd0;opacity:.6"></span><span style="left:44cqw;top:33cqw;width:14cqw;height:21cqw;background:#78a043;opacity:.7"></span><span style="left:68cqw;top:26cqw;width:14cqw;height:28cqw;background:#78a043;opacity:.7"></span></div>
+    <div class="th th-paper" data-step="1" data-anim="settle" data-delay="1.65"><b>Solitary bees</b><span class="bloom p-madder" style="left:56cqw;top:22cqw;width:36cqw;height:36cqw"></span></div>
+    <div class="th th-paper" data-step="1" data-anim="settle" data-delay="1.8"><b style="font-size:13cqw;top:18cqw">Mow less.<br>Count more.</b></div>
+    <div class="th th-paper" data-step="1" data-anim="settle" data-delay="1.95"><b>Next steps</b><span class="stroke p-sap" style="left:8cqw;top:34cqw;width:60cqw;height:6cqw"></span></div>
+    <div class="th th-paper" data-step="1" data-anim="settle" data-delay="2.1"><b style="font-size:15cqw;top:20cqw;text-align:center">Thank you</b></div>
+    <div class="th th-paper" data-step="1" data-anim="settle" data-delay="2.25" style="opacity:.75"><b style="color:var(--muted)">Backup: methods</b></div>
+  </div>
+  <div data-el="facts" data-step="1" data-anim="rise" data-delay="2.6" style="position:absolute;left:900px;top:780px;width:870px;display:flex;flex-wrap:wrap;gap:14px">
+    <span class="pill"><span data-step="1" data-anim="count" data-delay="2.6" data-dur="1.2">12</span> slides</span><span class="pill">20 minutes</span><span class="pill">your template</span><span class="pill">speaker notes</span>
+  </div>
+  <p data-el="yours" class="h3 center" data-step="2" data-anim="bleed" style="position:absolute;left:150px;top:920px;width:1620px;font-weight:500;font-style:italic">Then it's yours: edit by hand, or keep asking.</p>
+  <aside class="notes"><p>Remember the fourth choice on the start page, the draft? Paste an outline, an abstract or your notes; drop a paper as a PDF and the pictures you want to use.</p><p>(Click.) The LLM companion reads all of it and writes the whole deck: a title, a motivation, the story in the material's own logic, a clear end. Sized to the time you chose, shaped for the audience you chose, built from your template's layouts, with speaker notes written to be spoken. You watch it build in the editor, slide by slide.</p><p>(Click.) And then it's simply your deck. Edit it by hand, or keep asking.</p></aside>
+</section>
+
+<!-- ===== Slide 26 · one-file ===== -->
+<section class="slide" id="one-file" data-title="One file. Forever.">
+  <h2 data-el="heading" class="h2" data-anim="bleed" style="position:absolute;left:150px;top:100px;width:1620px">One file. Forever.</h2>
+  <div data-el="file-html" class="fileline p-ultra" data-anim="right" data-delay="0.3" data-out="gather" data-out-step="1" style="position:absolute;left:170px;top:330px;width:400px;height:104px"><span class="tag">HTML</span>deck.html</div>
+  <div data-el="file-js" class="fileline p-ochre" data-anim="right" data-delay="0.45" data-out="gather" data-out-step="1" data-out-delay="0.1" style="position:absolute;left:170px;top:470px;width:400px;height:104px"><span class="tag">JS</span>animations.js</div>
+  <div data-el="file-assets" class="fileline p-sap" data-anim="right" data-delay="0.6" data-out="gather" data-out-step="1" data-out-delay="0.2" style="position:absolute;left:170px;top:610px;width:400px;height:104px"><span class="tag">DIR</span>assets/</div>
+  <svg data-el="arrow" data-step="1" data-anim="draw" data-dur="0.8" data-delay="0.4" viewBox="0 0 240 100" style="position:absolute;left:620px;top:470px;width:240px;height:100px"><path d="M10 58 C 70 26, 150 82, 214 46 M 190 24 L 218 46 L 194 70" fill="none" stroke="#a8741f" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <div data-el="single" class="doc p-ultra" data-step="1" data-anim="settle" data-delay="0.9" style="position:absolute;left:900px;top:280px;width:440px;height:540px">
+    <span class="tag">HTML</span>
+    <img src="assets/turtle.svg" alt="" style="width:300px;margin:26px auto 8px">
+    <p class="small" style="text-align:center;font-size:24px">slides · player · styles · fonts · pictures · video · animations</p>
+    <b>keynote.html</b>
+  </div>
+  <p data-el="also" class="eyebrow" data-step="2" data-anim="fade" style="position:absolute;left:1430px;top:310px;width:340px">Also exports</p>
+  <div data-el="formats" data-step="2" data-anim="rise" style="position:absolute;left:1430px;top:360px;width:340px;display:grid;gap:16px;justify-items:start">
+    <span class="pill">PDF</span><span class="pill">PowerPoint</span><span class="pill">LibreOffice</span>
+    <span class="small" style="margin-top:8px">every slide fully built, with its notes</span>
+  </div>
+  <p data-el="caption" class="lead center" data-step="1" data-anim="rise" data-delay="1.6" style="position:absolute;left:150px;top:880px;width:1620px">Email it. Put it on a stick. Open it in ten years.</p>
+  <aside class="notes"><p>When the talk is ready, there is one more click: Export.</p><p>(Click.) Slides, the player, styles, fonts, pictures, video and animations all go into a single HTML file. No app, no account, no internet, no "which version do you have". It plays offline in any browser, and it can even be unpacked back into an editable deck.</p><p>(Click.) If someone needs another format, there's PDF, PowerPoint with editable text and notes, and LibreOffice. Those show every slide fully built; only the HTML keeps the motion.</p></aside>
+</section>
+
+<!-- ===== Slide 27 · turtle ===== -->
+<section class="slide" id="turtle" data-title="Why a turtle?" data-transition="zoom">
+  <div data-el="pool" class="wash p-ochre" data-anim="bleed" data-dur="2" style="position:absolute;left:120px;top:150px;width:820px;height:540px"></div>
+  <img data-el="turtle" class="swim" src="assets/turtle.svg" alt="The Deckelsmouk turtle" data-anim="dab" data-delay="0.4" style="position:absolute;left:190px;top:190px;width:680px;height:468px">
+  <h2 data-el="heading" class="h1" data-anim="bleed" data-delay="0.6" style="position:absolute;left:990px;top:210px;width:790px">Why a turtle?</h2>
+  <p data-el="word" class="lead" data-anim="rise" data-delay="1" style="position:absolute;left:990px;top:370px;width:790px"><i>Deckelsmouk</i> is Luxembourgish for turtle.</p>
+  <p data-el="home" class="h3" data-step="1" data-anim="bleed" style="position:absolute;left:990px;top:500px;width:790px;font-weight:500">It carries its whole home on its back.</p>
+  <p data-el="deck" class="h3 accent" data-step="2" data-anim="bleed" style="position:absolute;left:990px;top:650px;width:790px">So does every deck you make with it.</p>
+  <div data-el="memo" class="memo" data-anim="settle" data-delay="1.4" style="position:absolute;left:200px;top:760px;width:440px;height:226px;padding:34px 34px 26px">
+    <img class="memo-dabs" src="assets/dabs.webp" alt="">
+    <span class="eyebrow" style="font-size:16px">In the spirit of</span>
+    <b class="memo-name">Sosthène Weis <span>1872–1941</span></b>
+    <p style="font:italic 22px/1.4 var(--font-heading)">Watercolourist and architect from Luxembourg.</p>
+  </div>
+  <aside class="notes"><p>You may wonder about the name. Deckelsmouk is Luxembourgish for turtle.</p><p>(Click.) A turtle carries its whole home on its back. (Click.) So does every deck you make with it: one file, with everything inside, ready to go wherever you are. Unlike its namesake, it's fast.</p><p>And the paintings are a nod to Sosthène Weis, a Luxembourg architect who painted his city in watercolour for fifty years. Loose, warm, never precise. That's the look of the start page, and of this deck.</p></aside>
+</section>
+
+<!-- ===== Slide 28 · end ===== -->
+<section class="slide" id="end" data-title="Thank you" data-transition="zoom">
+  <h2 data-el="thanks" class="hero center" data-anim="bleed" style="position:absolute;left:160px;top:130px;width:1600px">Thank you.</h2>
+  <p data-el="start" class="eyebrow center" data-anim="fade" data-delay="0.6" style="position:absolute;left:560px;top:350px;width:800px">Start in 60 seconds</p>
+  <pre data-el="command" class="code center" data-anim="settle" data-delay="0.7" style="position:absolute;left:660px;top:396px;width:600px;height:96px;padding:20px 30px;font-size:40px">npm run dev</pre>
+  <p data-el="facts" class="small center" data-anim="fade" data-delay="1" style="position:absolute;left:360px;top:516px;width:1200px">No install. Zero dependencies. Your LLM companion, local or cloud.</p>
+  <div data-el="painting" class="painting drift" role="img" aria-label="A loose watercolour of Luxembourg City" data-anim="wash-in" data-delay="0.9" data-dur="2.6" style="position:absolute;left:80px;top:630px;width:1760px;height:396px"></div>
+  <aside class="notes"><p>That's Deckelsmouk. Clone it, run npm run dev, and the editor opens: no install, zero dependencies, and your LLM companion runs locally or in the cloud.</p><p>Arrange by mouse. Animate by asking. Ship one file. Thank you.</p></aside>
+</section>
+
+<!-- ===== Slide 29 · keys ===== -->
+<section class="slide" id="keys" data-title="Backup: keys" data-backup>
+  <h2 data-el="heading" class="h2" data-anim="bleed" style="position:absolute;left:150px;top:100px;width:1620px">Keys worth knowing.</h2>
+  <p data-el="label-stage" class="eyebrow" style="position:absolute;left:150px;top:260px;width:760px">On stage</p>
+  <div data-el="stage-keys" style="position:absolute;left:150px;top:310px;width:760px;display:grid;gap:22px">
+    <div class="keyrow" data-anim="left" data-delay="0.30"><span class="kbd">→ Space</span><span>next step</span></div>
+    <div class="keyrow" data-anim="left" data-delay="0.40"><span class="kbd">←</span><span>back, instantly</span></div>
+    <div class="keyrow" data-anim="left" data-delay="0.50"><span class="kbd">P</span><span>presenter: notes, next, timer</span></div>
+    <div class="keyrow" data-anim="left" data-delay="0.60"><span class="kbd">K</span><span>pause all motion</span></div>
+    <div class="keyrow" data-anim="left" data-delay="0.70"><span class="kbd">B</span><span>black screen</span></div>
+    <div class="keyrow" data-anim="left" data-delay="0.80"><span class="kbd">F</span><span>fullscreen</span></div>
+  </div>
+  <p data-el="label-editor" class="eyebrow" style="position:absolute;left:1010px;top:260px;width:760px">In the editor</p>
+  <div data-el="editor-keys" style="position:absolute;left:1010px;top:310px;width:760px;display:grid;gap:22px">
+    <div class="keyrow" data-anim="left" data-delay="0.45"><span class="kbd">⌘K</span><span>ask the LLM companion</span></div>
+    <div class="keyrow" data-anim="left" data-delay="0.55"><span class="kbd">⌘↵</span><span>play this slide</span></div>
+    <div class="keyrow" data-anim="left" data-delay="0.65"><span class="kbd">⌘Z</span><span>undo, the LLM companion's too</span></div>
+    <div class="keyrow" data-anim="left" data-delay="0.75"><span class="kbd">T</span><span>new text box</span></div>
+    <div class="keyrow" data-anim="left" data-delay="0.85"><span class="kbd">⌥ click</span><span>the exact element underneath</span></div>
+    <div class="keyrow" data-anim="left" data-delay="0.95"><span class="kbd">⇧ drag</span><span>move in a straight line</span></div>
+  </div>
+  <aside class="notes"><p>For questions about using it live: the keys on stage, and the ones that make the editor fast.</p></aside>
+</section>
+
+<!-- ===== Slide 30 · code ===== -->
+<section class="slide" id="code" data-title="Backup: code with a name" data-backup>
+  <h2 data-el="heading" class="h2" data-anim="bleed" style="position:absolute;left:150px;top:100px;width:1620px">Anything more is code with a name.</h2>
+  <pre data-el="snippet" class="code" data-anim="brush" data-delay="0.3" style="position:absolute;left:150px;top:260px;width:1620px;height:600px;font-size:25px"><span class="tab">animations.js</span><span class="c-com">/* ===== Effects ===== */</span>
+
+<span class="c-com">// Settles like a sheet of paper laid on the table.</span>
+Deck.<span class="c-key">effect</span>(<span class="c-val">'settle'</span>, { from: { opacity: 0, translate: <span class="c-val">'0 -60px'</span>, rotate: <span class="c-val">'-4deg'</span> }, dur: 1000 });
+
+<span class="c-com">/* ===== Slide scripts ===== */</span>
+
+<span class="c-com">// Slide "paint": watercolour drops bloom and fade; step 1 makes it rain.</span>
+Deck.<span class="c-key">slide</span>(<span class="c-val">'paint'</span>, {
+  enter(ctx) { ctx.loop((t, dt) =&gt; { <span class="c-com">/* paint a frame */</span> }); },
+  step(n, ctx) { ctx.rate = n &gt;= 1 ? 7 : 1.4; },
+});</pre>
+  <aside class="notes"><p>For the developers: this is what the code looks like. Named effects, and slide scripts with a small, safe context. Loops and timers stop by themselves when you leave the slide and freeze when you press K.</p></aside>
+</section>
+
+<!-- ==================== END SLIDES ==================== -->
+</div>
+<script src="../../runtime/deck.js"></script>
+<script src="animations.js"></script>
+</body>
+</html>
